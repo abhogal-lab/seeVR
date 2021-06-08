@@ -1,0 +1,24 @@
+function [idx, rdata] = chopTS(data,mask,index)
+%written by Alex Bhogal a.bhogal@umcutrecht.nl
+%function to generate mean timeseries from data based on input mask
+%data is the timeseries data to be shortened
+%mask is any corresponding mask to isolate voxels of interest
+%index are some user-supplied timepoints. If index is not empty, this
+%function will allow manual selection of timepoints
+global opts
+switch nargin
+    case 2
+        figure;  plot(make_mean_ts(data,mask));
+        title('Select start and end point of epoch');
+        [idx,~] = ginput(2); idx = round(idx);
+        close;
+        rdata = data(:,:,:,idx(1):idx(2));
+    case 3
+        rdata = data(:,:,:,index(1):index(2));
+        idx = index;
+        disp('Using user-supplied indices to select epoch')  
+end
+disp('Updating header file to reflect new timeseries lenght')
+opts.headers.ts.dime.dim(2:5) = size(rdata);  
+end
+
