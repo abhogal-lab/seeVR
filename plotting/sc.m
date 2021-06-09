@@ -1,4 +1,4 @@
-SC  Display/output truecolor images with a range of colormaps
+%SC  Display/output truecolor images with a range of colormaps
 %
 % Examples:
 %   sc(image)
@@ -404,121 +404,16 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         [I, limits] = real2rgb(I, cmap2, limits);
         I(repmat(M, [1 1 3])) = 0;
         I = rescale(A + I, [0.2 1.8]);
-        %% Gray_jet
+%% Gray_jet
     case 'gray_jet'
         % Plot first channel as 'jet', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_jet requires a 3 channel image');
         end
-        map = colormap(jet); %map(1,:) = NaN; map(end,:) = NaN;
-        J = real2rgb(I(:,:,1), map, limits);
-        G = real2rgb(I(:,:,2), 'gray', [0 374]);
-        A = real2rgb(I(:,:,3), 'gray');
-        I = J .* A + G .* (1 - A);
-        limits = [];
-        %% Gray_parula
-    case 'gray_parula'
-        % Plot first channel as 'jet', second channel as 'gray', and third
-        % channel as alpha between the two.
-        if c ~= 3
-            error('gray_parula requires a 3 channel image');
-        end
-        map = colormap(parula); %map(1,:) = NaN; map(end,:) = NaN;
-        J = real2rgb(I(:,:,1), map, limits);
-        G = real2rgb(I(:,:,2), 'gray', [0 374]);
-        A = real2rgb(I(:,:,3), 'gray');
-        I = J .* A + G .* (1 - A);
-        limits = [];
-        %% Gray_modjet
-    case 'gray_modjet'
-        % Plot first channel as 'jet', second channel as 'gray', and third
-        % channel as alpha between the two.
-        if c ~= 3
-            error('gray_modjet requires a 3 channel image');
-        end
-        map = modjet; %map(1,:) = NaN; map(end,:) = NaN;
-        J = real2rgb(I(:,:,1), map, limits);
-        G = real2rgb(I(:,:,2), 'gray');
-        A = real2rgb(I(:,:,3), 'gray');
-        I = J .* A + G .* (1 - A);
-        limits = [];
-        %% Gray_viridis
-    case 'gray_viridis'
-        % Plot first channel as 'jet', second channel as 'gray', and third
-        % channel as alpha between the two.
-        if c ~= 3
-            error('gray_viridis requires a 3 channel image');
-        end
-        map = colormap(viridis); %map(1,:) = NaN; map(end,:) = NaN;
-        J = real2rgb(I(:,:,1), map, limits);
-        G = real2rgb(I(:,:,2), 'gray');
-        A = real2rgb(I(:,:,3), 'gray');
-        I = J .* A + G .* (1 - A);
-        limits = [];
-        %% Gray_inferno
-    case 'gray_inferno'
-        % Plot first channel as 'jet', second channel as 'gray', and third
-        % channel as alpha between the two.
-        if c ~= 3
-            error('gray_inferno requires a 3 channel image');
-        end
-        map = colormap(inferno); %map(1,:) = NaN; map(end,:) = NaN;
-        J = real2rgb(I(:,:,1), map, limits);
-        G = real2rgb(I(:,:,2), 'gray');
-        A = real2rgb(I(:,:,3), 'gray');
-        I = J .* A + G .* (1 - A);
-        limits = [];
-        %% Gray_plasma
-    case 'gray_plasma'
-        % Plot first channel as 'jet', second channel as 'gray', and third
-        % channel as alpha between the two.
-        if c ~= 3
-            error('gray_plasma requires a 3 channel image');
-        end
-        map = colormap(plasma); %map(1,:) = NaN; map(end,:) = NaN;
-        J = real2rgb(I(:,:,1), map, limits);
-        G = real2rgb(I(:,:,2), 'gray');
-        A = real2rgb(I(:,:,3), 'gray');
-        I = J .* A + G .* (1 - A);
-        limits = [];
-        %% Gray_magma
-    case 'gray_magma'
-        % Plot first channel as 'jet', second channel as 'gray', and third
-        % channel as alpha between the two.
-        if c ~= 3
-            error('gray_magma requires a 3 channel image');
-        end
-        map = colormap(magma); %map(1,:) = NaN; map(end,:) = NaN;
-        J = real2rgb(I(:,:,1), map, limits);
-        G = real2rgb(I(:,:,2), 'gray');
-        A = real2rgb(I(:,:,3), 'gray');
-        I = J .* A + G .* (1 - A);
-        limits = [];
-        %% Gray_devon
-    case 'gray_devon'
-        % Plot first channel as 'jet', second channel as 'gray', and third
-        % channel as alpha between the two.
-        if c ~= 3
-            error('gray_devon requires a 3 channel image');
-        end
-        map = colormap(devon); %map(1,:) = NaN; map(end,:) = NaN;
-        J = real2rgb(I(:,:,1), map, limits);
-        G = real2rgb(I(:,:,2), 'gray');
-        A = real2rgb(I(:,:,3), 'gray');
-        I = J .* A + G .* (1 - A);
-        limits = [];
-         %% Gray_hot
-    case 'gray_hot'
-        % Plot first channel as 'jet', second channel as 'gray', and third
-        % channel as alpha between the two.
-        if c ~= 3
-            error('gray_hot requires a 3 channel image');
-        end
-        map = colormap(hot);
-        J = real2rgb(I(:,:,1), map, limits);
-        G = real2rgb(I(:,:,2), 'gray');
-        A = real2rgb(I(:,:,3), 'gray');
+        J = real2rgb(I(:,:,1), 'jet', limits);
+        G = real2rgb(I(:,:,2), 'gray', limits);
+        A = real2rgb(I(:,:,3), 'gray', limits);
         I = J .* A + G .* (1 - A);
         limits = [];
 %% Compress
@@ -802,7 +697,7 @@ end
 J = round(I);
 rescaled = any(abs(I - J) > 0.01);
 if rescaled
-    % Appears not to be an index image. rescale over 256 indices
+    % Appears not to be an index image. Rescale over 256 indices
     m = min(I);
     m = m * (1 - sign(m) * eps);
     I = I - m;
