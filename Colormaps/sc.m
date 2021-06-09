@@ -1,4 +1,4 @@
-%SC  Display/output truecolor images with a range of colormaps
+SC  Display/output truecolor images with a range of colormaps
 %
 % Examples:
 %   sc(image)
@@ -503,6 +503,19 @@ switch lower(cmap(1+reverseMap:end-grayMap))
             error('gray_devon requires a 3 channel image');
         end
         map = colormap(devon); %map(1,:) = NaN; map(end,:) = NaN;
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
+         %% Gray_hot
+    case 'gray_hot'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_hot requires a 3 channel image');
+        end
+        map = colormap(hot);
         J = real2rgb(I(:,:,1), map, limits);
         G = real2rgb(I(:,:,2), 'gray');
         A = real2rgb(I(:,:,3), 'gray');
