@@ -1,4 +1,4 @@
-%% PCA, RAPIDTIDE/RIPTIDE by Allen Champagne - CNS, Queen's University, ON on July 16th 2017
+ %% PCA, RAPIDTIDE/RIPTIDE by Allen Champagne - CNS, Queen's University, ON on July 16th 2017
 %% Expanded by Alex Bhogal - UMC Utrecht
 
 % All copyrights are reserved to the authors. Please do not share this code
@@ -36,16 +36,20 @@ if isfield(opts,'norm_regr'); else; opts.norm_regr = 0; end               %norma
 if isfield(opts,'corr_thresh'); else; opts.corr_thresh = 0.7; end         %threshold by which to accept correlated voxels during the refinement of the BOLD regressor
 %refinement
 if isfield(opts,'lowerlagthresh'); else; opts.lowerlagthresh = -2; end    %lower threshold for refinement (generaly -3 to 0)
-if isfield(opts,'upperlagthresh'); else; opts.upperlagthresh = 2; end     %upper threshold for refinement (generaly 0 to +3)
-%correlation
-if isfield(opts,'lowlag'); else; opts.lowlag = -5; end                    %lower threshold for correlation (generaly -3 to 0)
-if isfield(opts,'highlag'); else; opts.highlag = 90; end                  %upper threshold for correlation (in healthy up to 20-40, in disease 60-90)
+if isfield(opts,'upperlagthresh'); else; opts.upperlagthresh = 3; end     %upper threshold for refinement (generaly 0 to +3)
 
 %account for interpolation factor
-opts.adjlowlag = round((opts.lowlag/opts.TR)*opts.interp_factor); %setup lower lag limit; negative for misalignment and noisy correlation
-opts.adjhighlag = round((opts.highlag/opts.TR)*opts.interp_factor); %setups upper lag limit; allow for long lags associated with pathology
-opts.adjlowerlag = round(opts.lowerlagthresh/opts.TR*opts.interp_factor);
-opts.adjupperlag = round(opts.upperlagthresh/opts.TR*opts.interp_factor);
+opts.adjlowerthresh = opts.lowerlagthresh*opts.interp_factor;
+opts.adjupperthresh = opts.lowerlagthresh*opts.interp_factor;
+
+%correlation
+if isfield(opts,'lowlag'); else; opts.lowlag = -2; end                    %lower threshold for correlation (generaly -3 to 0)
+if isfield(opts,'highlag'); else; opts.highlag = 70; end                  %upper threshold for correlation (in healthy up to 20-40, in disease 60-90)
+
+%account for interpolation factor
+opts.adjlowlag = opts.lowlag*opts.interp_factor; %setup lower lag limit; negative for misalignment and noisy correlation
+opts.adjhighlag = opts.highlag*opts.interp_factor; %setups upper lag limit; allow for long lags associated with pathology
+
 
 %check
 if opts.load_probe == 0 && opts.refine_regressor == 0 && opts.trace_corr == 0
@@ -161,8 +165,8 @@ if opts.refine_regressor
             checkcorr(maxcorr<opts.corr_thresh)=1;  % to be removed
             
             checklag=ts_lag;
-            checklag(ts_lag>=opts.adjlowerlag & ts_lag<=opts.adjupperlag)=0;
-            checklag(ts_lag<opts.adjlowerlag | ts_lag>opts.adjupperlag)=1;
+            checklag(ts_lag>=opts.adjlowerthresh & ts_lag<=opts.adjupperthresh)=0;
+            checklag(ts_lag<opts.adjlowerthresh | ts_lag>opts.adjupperthresh)=1;
             
             resultant_filter = zeros(size(checklag));
             resultant_filter(checklag==1 | checkcorr==1)=1;
@@ -275,7 +279,7 @@ else
     newprobe = probe;
     opts.trace_corr = 0;
     [~,lags] = xcorr(newprobe,gm_voxel_ts_nonan(1,:),'coeff');
-    idx = find(lags<=opts.adjlowlag | lags>=opts.adjhighlag);
+    idx = find(lags<=opts.adjlowerlag | lags>=opts.adjupperlag);
     lags(idx)=[];
 end
 %% for final round, take the refined regressor and do final
@@ -323,13 +327,13 @@ if opts.corr_model
         %matrix cross correlation with probe
         a2=mat2cell(wb_voxel_ts,ones(1,size(wb_voxel_ts,1)),size(wb_voxel_ts,2)); %turn into cells so treat all rows independently
         %THE ORDER HERE MATTERS!!!
-        b2=cellfun(@(a2) xcorr(a2,regr,opts.highlag,'normalized'),a2,'uniformoutput',false);
+        b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'normalized'),a2,'uniformoutput',false);
         corr_probe=cell2mat(b2); %reformat into correlation matrix
         corr_probe = corr_probe';
         %use highlag to restrict the number of correlations that need to be done
-        [~,lags] = xcorr(gm_voxel_ts_nonan(1,:),regr,opts.highlag,'normalized');  %%%%%% !!!!!!!!!!
+        [~,lags] = xcorr(gm_voxel_ts_nonan(1,:),regr,opts.adjhighlag,'normalized');  %%%%%% !!!!!!!!!!
         
-        %save correlations overtime
+        %save correlations over time
         corr_ts = zeros([xx*yy*zz size(corr_probe,1)]);
         corr_ts(coordinates,:) = corr_probe';
         corr_ts(isnan(corr_ts)) = 0;
@@ -625,7 +629,7 @@ end
 %% perform shifted regressor GLM
 
 if opts.glm_model
-     [~,lags] = xcorr(newprobe,newprobe,opts.highlag,'normalized');  %%%%%% !!!!!!!!!!
+     [~,lags] = xcorr(newprobe,newprobe,opts.adjhighlag,'normalized');  %%%%%% !!!!!!!!!!
       idx = find(lags<=opts.adjlowlag | lags>=opts.adjhighlag);
       %remove lag values lower that what is possible
       lags(idx)=[];
