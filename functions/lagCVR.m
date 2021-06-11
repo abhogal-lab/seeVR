@@ -279,7 +279,7 @@ else
     newprobe = probe;
     opts.trace_corr = 0;
     [~,lags] = xcorr(newprobe,gm_voxel_ts_nonan(1,:),'coeff');
-    idx = find(lags<=opts.adjlowerlag | lags>=opts.adjupperlag);
+    idx = find(lags<=opts.adjlowlag | lags>=opts.adjhighlag);
     lags(idx)=[];
 end
 %% for final round, take the refined regressor and do final
