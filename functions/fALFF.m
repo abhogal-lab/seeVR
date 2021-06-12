@@ -1,4 +1,4 @@
-function [ALFF fALFF] = fALFF(data, mask, refmask, opts)                  
+function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)                  
 %Script written by ALEX BHOGAL a.bhogal@umcutrecht.nl
 %   Detailed explanation goes here
 %timeseries data is used to generate ALFF and fALFF maps based on specified
@@ -19,7 +19,7 @@ xdft = xdft(1:N/2+1);
 psdx = abs(xdft)/N; %square this to get the power (ampl^2 = pwer)
 psdx(2:end-1) = 2*psdx(2:end-1);
 freq = 0:Fs/length(data):Fs/2;
-%plot(freq,10*log10(psdx))
+
 Lowf = opts.fpass(1); Highf = opts.fpass(2);
 
 %find idx for low & high freq

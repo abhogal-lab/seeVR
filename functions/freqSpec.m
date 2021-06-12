@@ -10,7 +10,7 @@ function[ fSpec, meanSpec, freq ] = freqSpec(data, mask, opts)
         %form frequency graphs
         [voxels,coordinates] = grabTimeseries(data, mask);
         [x,y,z,N] = size(data);
-        freq = 0:Fs/length(data):Fs/2;
+        freq = 0:Fs/N:Fs/2;
         r_xdft = fft(voxels,[],2);           % FFT
         r_xdft = r_xdft(:,1:N/2+1);           % take half of data
         if opts.powerspec
@@ -30,8 +30,8 @@ function[ fSpec, meanSpec, freq ] = freqSpec(data, mask, opts)
         xline(0.01,'k--'); 
         xline(0.027,'k--');
         xline(0.073,'k--');
-        xline(0.198,'k--');
-        xline(0.250,'k--'); 
+        xline(0.17,'k--');
+        xline(0.23,'k--'); 
         hold off
         meanSpec = mean(r_psdx,1);
         fSpec = zeros([x*y*z,size(r_psdx,2)]);

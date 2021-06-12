@@ -16,7 +16,7 @@ imageFilter=fspecial('gaussian',opts.filtWidth,filtSigma);
 
 ndim = ndims(data);
 %create a dilation mask
-SE = strel('disk', 5);
+SE = strel('disk', 3);
 dmask = imdilate(mask, SE);
 delmask = double(dmask - mask); %cuts out center
 ddata = zeros(size(data));
