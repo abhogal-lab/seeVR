@@ -4,7 +4,7 @@ function[ fSpec, meanSpec, freq ] = freqSpec(data, mask, opts)
 %timeseries input data for a region defined by 'mask'. Additional return 
 %variables are the average spectrum inthe ROI as well as the corresponding
 %frequency values 
-
+global opts
         if isfield(opts,'powerspec'); else; opts.powerspec = 0; end
         Fs = 1/opts.TR;
         %form frequency graphs

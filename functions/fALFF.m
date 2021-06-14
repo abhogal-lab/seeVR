@@ -26,7 +26,7 @@ Lowf = opts.fpass(1); Highf = opts.fpass(2);
 [Lowval,Lowidx]=min(abs(freq-Lowf));
 [Highval,Highidx]=min(abs(freq-Highf));
 
-rALFF = sum(sqrt(psdx(1,Lowidx:Highidx))); %whole brain reference ALFF see: https://pubmed.ncbi.nlm.nih.gov/16919409/
+rALFF = sum(sqrt(psdx(1,Lowidx:Highidx))); %whols brain reference ALFF see: https://pubmed.ncbi.nlm.nih.gov/16919409/
 
 %voxel-wise ALFF
 [voxels coordinates] = grabTimeseries(data, mask);

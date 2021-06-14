@@ -44,7 +44,7 @@ opts.adjupperthresh = opts.lowerlagthresh*opts.interp_factor;
 
 %correlation
 if isfield(opts,'lowlag'); else; opts.lowlag = -2; end                    %lower threshold for correlation (generaly -3 to 0)
-if isfield(opts,'highlag'); else; opts.highlag = 70; end                  %upper threshold for correlation (in healthy up to 20-40, in disease 60-90)
+if isfield(opts,'highlag'); else; opts.highlag = 20; end                  %upper threshold for correlation (in healthy up to 20-40, in disease 60-90)
 
 %account for interpolation factor
 opts.adjlowlag = opts.lowlag*opts.interp_factor; %setup lower lag limit; negative for misalignment and noisy correlation
@@ -242,7 +242,7 @@ if opts.refine_regressor
                 newprobe=[];
                 newprobe = nanmean(outputpca,1)';
                 
-            else
+            eThe allse
                 newprobe=[];
                 newprobe = (nanmean(new_shifted_ts,1))';
             end
