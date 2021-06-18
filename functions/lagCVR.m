@@ -40,7 +40,7 @@ if isfield(opts,'upperlagthresh'); else; opts.upperlagthresh = 3; end     %upper
 
 %account for interpolation factor
 opts.adjlowerthresh = opts.lowerlagthresh*opts.interp_factor;
-opts.adjupperthresh = opts.lowerlagthresh*opts.interp_factor;
+opts.adjupperthresh = opts.upperlagthresh*opts.interp_factor;
 
 %correlation
 if isfield(opts,'lowlag'); else; opts.lowlag = -2; end                    %lower threshold for correlation (generaly -3 to 0)
