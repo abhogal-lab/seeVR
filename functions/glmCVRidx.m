@@ -1,16 +1,24 @@
-function [CVRidx BP_ref bpBOLD] = glmCVRidx(data, mask, refmask , opts)
-%Script written by ALEX BHOGAL a.bhogal@umcutrecht.nl
-%resting state BOLD or scrubbed BOLD is used to generate resting state CVR
-%maps based on band-passed signals
-%data: timeseries data
-%mask: mask of voxels of interest (normally whole-brain mask)
-%refmask: mask of region from which regressor signals of interest are
-%calculated. This can be whole-brain or cerebellum or sinus (for example)
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
+
+function [CVRidx_map BP_ref bpBOLD] = glmCVRidx(data, mask, refmask , opts)
 %see: Cerebrovascular Reactivity Mapping Using Resting-State BOLD Functional MRI in Healthy Adults and Patients with Moyamoya Disease
 % https://doi.org/10.1148/radiol.2021203568
 % https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6494444/
-
+warning('off');
 global opts;
+
+if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.08]; end  %default frequency band
+if isfield(opts,'normalizeCVRidx'); else; opts.normalizeCVRidx = 1; end  %default is to normalized data to reference signal
+if isfield(opts,'smoothmap'); else; opts.fpass = 0; end  %default is to not smooth output maps
+
 opts.CVRidxdir = [opts.resultsdir,'CVRidx\']; mkdir(opts.CVRidxdir);
 
 data = double(data);
@@ -30,7 +38,12 @@ mean_ts = meanTimeseries(data,refmask);
 freq = 0:Fs/length(mean_ts):Fs/2;
 Lowf = opts.fpass(1); Highf = opts.fpass(2); %Hz
 
-% filter properties (automated)
+% if opts.filter_order is specified
+if isfield(opts,'filter_order') 
+[b,a] = butter(opts.filter_order,2*[Lowf, Highf]/Fs);
+BP_ref = filtfilt(b,a,(mean_ts));
+else
+% else find optimal filter (automated)
 SSres = []; BP = [];
 for forder = 1:5
     [b,a] = butter(forder,2*[Lowf, Highf]/Fs);
@@ -38,22 +51,28 @@ for forder = 1:5
     SSres(forder,:)= sum((mean_ts - BP(forder,:).^2),2);     
 end
 %select closest filter
-
-
 [M,I] = min(SSres);
 [b,a] = butter(I,2*[Lowf, Highf]/Fs);
 BP_ref = filtfilt(b,a,(mean_ts));
-filter_order = I
+opts.filter_order = I
+end
 
-figure; plot(rescale(mean_ts)); hold on; plot(rescale(BP_ref+mean(mean_ts))); title('reference regressor');
+figure; hold on
+plot(rescale(mean_ts));  
+plot(rescale(BP_ref+mean(mean_ts)));
+title('reference regressor before and after bandpass');
 saveas(gcf,[opts.figdir,'reference_regressor.fig']);
+xlabel('image volumes')
+ylabel('a.u.')
+legend('mean reference time-series', 'BP reference mean-timeseries')
 
-%bandpass whole brain signals
+%bandpass signals of interest contained within mask
 BP_V = zeros(size(voxels));
 parfor ii=1:size(BP_V,1)
     BP_V(ii,:) = filtfilt(b,a,voxels(ii,:));
 end
-%bandpass reference signals
+
+%bandpass reference signals contained within refmask
 BP_rV = zeros(size(ref_voxels));
 parfor ii=1:size(BP_rV,1)
     BP_rV(ii,:) = filtfilt(b,a,ref_voxels(ii,:));
@@ -64,7 +83,7 @@ BP_ref = rescale(BP_ref); %reference regressor rescaled
 D = [ones([length(BP_ref) 1]) BP_ref'];
 coef = D\BP_V';
 rcoef = D\BP_rV';
-%reference average
+%reference average beta value
 avg = mean(rcoef(2,:));
 
 CVRidx = coef(2,:);
@@ -89,6 +108,6 @@ if opts.normalizeCVRidx
 else
     saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64)
 end
-
+CVRidx_map(CVRidx_map == 0) = NaN;
 end
 

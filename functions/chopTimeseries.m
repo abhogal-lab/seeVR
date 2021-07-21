@@ -1,10 +1,15 @@
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
+
 function [idx, rdata] = chopTimeseries(data,mask,idx)
-%written by Alex Bhogal a.bhogal@umcutrecht.nl
-%function to generate mean timeseries from data based on input mask
-%data is the timeseries data to be shortened
-%mask is any corresponding mask to isolate voxels of interest
-%index are some user-supplied timepoints. If index is not empty, this
-%function will allow manual selection of timepoints
+
 global opts
 switch nargin
     case 2

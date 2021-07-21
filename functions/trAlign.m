@@ -1,19 +1,14 @@
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
+
 function varargout = trAlign(varargin)
-% TRALIGN MATLAB code for trAlign.fig
-%      Written by Alex Bhogal 03/10/2021 a.bhogal@umcutrecht.nl
-%      This is a tool to align endtidal breathing traces with a mean BOLD
-%      signal. The function takes as input the trace you want to align
-%      (usually a CO2 trace) and some mean BOLD signal (best is a
-%      normalized GM BOLD trace). The initial correlation starting point is
-%      determined using the index values. This is added because correlation
-%      against the entire trace may lead to poor results - the indices
-%      provide some initial search range. For GEN3 respiract and fixed
-%      inspired traces, this can be helpful. For GEN3 respiract, this is
-%      not needed and the indexes are typically set as the first and last
-%      timepoints for the breathing traces. The function will pause until
-%      the user presses the 'set alignment' button. This will generate
-%      alignment plots and send the aligned gas traces to the workspace for
-%      further analysis.
 
 % Last Modified by GUIDE v2.5 10-Mar-2021 07:55:33
 

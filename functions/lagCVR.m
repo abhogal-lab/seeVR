@@ -1,18 +1,19 @@
- %% PCA, RAPIDTIDE/RIPTIDE by Allen Champagne - CNS, Queen's University, ON on July 16th 2017
-%% Expanded by Alex Bhogal - UMC Utrecht
-
-% All copyrights are reserved to the authors. Please do not share this code
-% without the permission of the authors.
-
-% This script estimates the lag and (correctd)CVR maps and provides statistical outputs
-% using a modified version of the RIPTIDE method (Donahue 2016). This
-% Outputs can be created using a correlation or GLM based approach
-
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
 
 function [newprobe, maps] = lagCVR(GMmask,mask,BOLD_ts,probe,nuisance,opts)
+warning('off');
 global opts; 
 maps = struct();
 if iscolumn(probe); else; probe = probe'; end
+if isempty(nuisance); nuisance = ones(size(probe)); end
 test1 = nuisance(1,:); test2 = nuisance(:,1);
 if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
 
@@ -271,7 +272,7 @@ if opts.refine_regressor
         subplot(3,1,1);
         plot(probe,'LineWidth',2); title('input probe' )
         subplot(3,1,2);
-        plot(keep_probes','LineWidth',2); title('probes iterations'); 
+        plot(keep_probes','LineWidth',2); title('probe iterations'); 
         legend(legendInfo)
         subplot(3,1,3);
         plot(newprobe,'LineWidth',2); title('optimized probe'); 
@@ -526,9 +527,9 @@ if opts.cvr_maps
         for ii = 1:length(coordinates)
             corr_regr = circshift(regr',index(ii));
             if index > 0
-                corr_regr(1,1:index(ii)) = regr(1,1); %formerly NaN
+                corr_regr(1,1:index(ii)) = NaN; %regr(1,1); %formerly NaN
             elseif index < 0
-                corr_regr(1,end-index:end) = regr(1,end); %formerly NaN
+                corr_regr(1,end-index:end) = NaN; %regr(1,end); %formerly NaN
             else
                 %do nothing because index is zero = zero shift
             end

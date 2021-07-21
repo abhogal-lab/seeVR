@@ -1,3 +1,13 @@
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
+
 function [cleanData] = scrubData(data,mask, nuisance, probe, opts)
 %written by Alex Bhogal a.bhogal@umcutrecht.nl
 %Linear regression of input probes and nuisance regressors is performed on
@@ -5,6 +15,7 @@ function [cleanData] = scrubData(data,mask, nuisance, probe, opts)
 %nuisance regressors and co-efficients are summed and removed. For a
 %similar function to determine residual signals after regression, see
 %genGS.
+warning('off');
 global opts;
 
 if isempty(probe); else

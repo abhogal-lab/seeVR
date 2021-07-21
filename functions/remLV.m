@@ -1,14 +1,22 @@
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
+
 function [mmask] = remLV(data,mask,opts)
 %Written by Alex Bhogal, a.bhogal@umcutrecht.nl
 %This function uses the inverse tSNR (tNSR) to isolate bright signals associated
 %with large draining veins. These voxels are removed from the original
 %whole brain mask and returned for further processing: 1/tSD, tSD, tSNR, tNSR are
 %saved
-%opts.LVthresh = 0.18; %threshold for removing bright signals via updated WB mask; this parameters is dataset-specific
 
  global opts
-            
-			
+           			
 			[voxel_ts, coordinates] = grabTimeseries(data, mask);
             SD = nanstd(voxel_ts,0,2);
             MN = nanmean(voxel_ts,2);

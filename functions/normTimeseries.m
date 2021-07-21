@@ -1,9 +1,16 @@
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
 
 function [ndata] = normTimeseries(data,mask,idx)
 %written by Alex Bhogal a.bhogal@umcutrecht.nl
 %function to normalize timeseries to baseline using input mask
-%data is the timeseries data to be normalized
-%mask is any corresponding mask to isolate voxels of interest
 %index are some user-supplied baseline timepoints. If index is not empty, this
 %function will allow manual selection of baseline timepoints
 global opts;
@@ -12,9 +19,9 @@ p = cputime;
 switch nargin
     case 2
 TS = meanTimeseries(data,mask);
-figure(100); plot(TS); title('Isolate first baseline period for normalization: 2 clicks'); 
+figure; plot(TS); title('Select start and end of baseline: 2 clicks'); 
 [idx,~] = ginput(2); idx = round(idx); %select points 
-close(100);
+close(gcf);
     case 3
 end
 

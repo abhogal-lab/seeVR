@@ -1,7 +1,14 @@
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
+
 function [HRF,HRF_probe] = convHRF(HRFprobe, opts)
-%% Written by Alex Bhogal a.bhogal@umcutrecht.nl
-%This function convolves some input with a double gamma HRF function
-%inspired by: https://doi.org/10.1177/0271678X20978582
 
 if isfield(opts,'rratio'); else; opts.rratio = 1000; end %seems to affect the vertical spread of HRF (use large value to limit)
 
@@ -19,7 +26,7 @@ clear HRF
 for ii = opts.onset %onset
     for jj =  opts.disp %dispersion
         for kk = opts.under %undershoot
-            mm = mm+1
+            mm = mm+1;
             V = [ii jj kk];          
             t = [0:1:length(xdata)-1];
             h_final = zeros(length(t),1);

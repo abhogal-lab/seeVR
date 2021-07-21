@@ -1,8 +1,14 @@
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
+
 function [denData] = denoiseData(data,mask,opts)
-%written by Alex Bhogal a.bhogal@umcutrecht.nl
-%This functions performs a wavelet denoising on timeseries data. If wavelet
-%toolbox is unavailable then a standard smoothing is performed based on
-%used specified parameters
 
 if license('test', 'wavelet_toolbox')
     if isfield(opts,'wdlevel'); else; opts.wdlevel = 3; end

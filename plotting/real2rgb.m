@@ -31,7 +31,7 @@
 %          cmap(1:end-1,4) contains the relative widths of the bins between
 %          colors. If cmap is a colormap function name then the prefix '-'
 %          indicates that the colormap is to be reversed, while the suffix
-%          '*' indicates that the colormap bins are to be rescaled so that
+%          '*' indicates that the colormap bins are to be rescale2d so that
 %          each bin produces the same change in gray level, such that the
 %          colormap converts linearly to grayscale when printed in black
 %          and white.
@@ -113,7 +113,7 @@ maxInd = 1 + (size(map, 1) - 2) * (size(map, 2) ~= 4);
 if nargin < 3
     lims = [];
 end
-[B, lims] = rescale(B, lims, [0 maxInd]);
+[B, lims] = rescale2(B, lims, [0 maxInd]);
 
 % Compute indices and offsets
 if size(map, 2) == 4

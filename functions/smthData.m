@@ -1,9 +1,19 @@
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
+
 function [sdata] = smthData(data, mask, opts)
-%written by Alex Bhogal a.bhogal@umcutrecht.nl based on partial code from Jeroen
-%Siero
-global opts;
+
+global opts
+
 if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end 
-if isfield(opts,'voxelsize'); else; opts.voxelsize = opts.headers.ts.dime.pixdim(2:4); end;
+if isfield(opts,'voxelsize'); else; opts.voxelsize = opts.headers.ts.dime.pixdim(2:4); end
 if isfield(opts,'filtWidth'); else; opts.filtWidth = 5; end %originally 7
 if isfield(opts,'FWHM'); else; opts.FWHM = 4; end
 
