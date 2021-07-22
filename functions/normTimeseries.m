@@ -46,5 +46,5 @@ ndata(coordinates,:) = voxel_ts;
 ndata = reshape(ndata, [x y z dyn]);
 end
 opts.norm_idx = idx;
-disp(['Dataset was normalized to baseline period in ',int2str(cputime-p),' seconds']);
+disp(['Dataset has been normalized to baseline period']);
 end

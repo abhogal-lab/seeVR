@@ -16,7 +16,7 @@ switch ndims(data)
 mask = logical(mask(:));
 coordinates = find(mask); 
 disp('grabbing timeseries (4D) at each voxel')
-tic
+
 clean_voxel_ts=zeros([length(coordinates) dyn]);
 data = reshape(data,[x*y*z dyn]);
 clean_voxel_ts = data(coordinates,:);
@@ -28,13 +28,13 @@ coordinates(any(isnan(clean_voxel_ts), 2), :) = [];
 %remove Inf rows
 coordinates(any(isinf(voxel_ts), 2), :) = [];
 voxel_ts(any(isinf(voxel_ts), 2), :) = [];
-toc
+
     case 3
 [x,y,dyn] = size(data);
 mask = logical(mask(:));
 coordinates = find(mask); 
 disp('grabbing timeseries (3D) at each voxel')
-tic
+
 clean_voxel_ts=zeros([length(coordinates) dyn]);
 data = reshape(data,[x*y dyn]);
 clean_voxel_ts = data(coordinates,:);
@@ -46,6 +46,6 @@ coordinates(any(isnan(clean_voxel_ts), 2), :) = [];
 %remove Inf rows
 coordinates(any(isinf(voxel_ts), 2), :) = [];
 voxel_ts(any(isinf(voxel_ts), 2), :) = [];
-toc
+
 end
 end

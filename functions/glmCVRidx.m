@@ -24,12 +24,12 @@ opts.CVRidxdir = [opts.resultsdir,'CVRidx\']; mkdir(opts.CVRidxdir);
 data = double(data);
 [xx yy zz N] = size(data);
 
-opts.voxelsize = opts.headers.map.dime.pixdim(2:4)
+opts.voxelsize = opts.headers.map.dime.pixdim(2:4);
 
 %get voxels
 [voxels coordinates] = grabTimeseries(data, mask);
 [ref_voxels ref_coordinates] = grabTimeseries(data, refmask);
-dim = opts.headers.map.dime.pixdim(2:4)
+dim = opts.headers.map.dime.pixdim(2:4);
 Fs = 1/opts.TR;
 t = 0:1/Fs:1-1/Fs;
 N = size(voxels,2);
@@ -54,7 +54,7 @@ end
 [M,I] = min(SSres);
 [b,a] = butter(I,2*[Lowf, Highf]/Fs);
 BP_ref = filtfilt(b,a,(mean_ts));
-opts.filter_order = I
+opts.filter_order = I;
 end
 
 figure; hold on
@@ -104,9 +104,9 @@ if opts.smoothmap
     CVRidx_map = smthData(CVRidx_map,mask,opts);
 end
 if opts.normalizeCVRidx
-    saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64)
+    saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64);
 else
-    saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64)
+    saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
 end
 CVRidx_map(CVRidx_map == 0) = NaN;
 end
