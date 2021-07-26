@@ -1,3 +1,13 @@
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht,
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes.
+
 function [corrvec_CO2,corrvec_O2] = loadRAMRgen4(opts)
 %written by Alex Bhogal a.bhogal@umcutrecht.nl
 %functions to load respiract endtidal traces from 3rd generation respiract
@@ -10,26 +20,47 @@ if isfield(opts,'extra'); else; opts.extra = 30; end                     %define
 if isfield(opts,'remOUT'); else; opts.remOUT = 0; end                   %remove outliers from breathing traces
 if isfield(opts,'remOUTbh'); else; opts.remOUTbh = 0; end               %for breath hold, only outliers below the baseline are removed
 if isfield(opts,'remOUTmethod'); else; opts.remOUTmethod = 'median'; end %'median' or 'mean' or 'quartiles' or 'grubbs' or 'gesd'
-  
-    
+
+
 %Import EndTidal
 file = ls('EndTidal.*')
-filename = [opts.seqpath,'/',file];
+if ispc
+    filename = [opts.seqpath,'\',file];
+else
+    file(:,end) = [];
+    filename = [opts.seqpath,'/',file];
+end
+
 [MRTimes,DesiredPO2mmHg,DesiredPCO2mmHg,AchievablePO2mmHg,AchievablePCO2mmHg,PO2mmHg,PCO2mmHg,RestingPO2mmHg,RestingPCO2mmHg,PBarommHg,Inspiretimeseconds,Expiretimeseconds,Breathidx,TidalvolumemL,RespirationrateBPM,StartInspiresec,O2AdjustmentmmHg,CO2AdjustmentmmHg,G1TargetvolmL,G1FCO2,G1FO2,G2FCO2,G2FO2] = import_EndTidal(filename);
 
 %import RGM
 file = ls('RGM.*')
-filename = [opts.seqpath,'/',file];
+if ispc
+    filename = [opts.seqpath,'\',file];
+else
+    file(:,end) = [];
+    filename = [opts.seqpath,'/',file];
+end
 [MRTimes1,PO2mmHg1,PCO2mmHg1,PBarommHg1,PMouthmmH2O,FlowMouthmLmin,FlowS1mLmin,FlowS2mLmin,BreathPhase] = import_RGM(filename);
 
 %import events
 file = ls('Events.*')
-filename = [opts.seqpath,'/',file];
+if ispc
+    filename = [opts.seqpath,'\',file];
+else
+    file(:,end) = [];
+    filename = [opts.seqpath,'/',file];
+end
 [MRTimes3, CtrlRoomTimes, Event] = import_Events(filename);
 
 %import physiological parameters
 file = ls('PhysioParams.*')
-filename = [opts.seqpath,'/',file];
+if ispc
+    filename = [opts.seqpath,'\',file];
+else
+    file(:,end) = [];
+    filename = [opts.seqpath,'/',file];
+end
 [MRTimes2, ID, FRCmL, VdmL, TissuestoreO2mL, TissuestoreCO2mL, VO2mLmin, VCO2mLmin, QmLmin, hBconcentrationgdLBlood, Restingmetabolicscalefactor, ResponseReason] = import_Physio(filename)
 
 % resample and realign the breathing trace and the Endtidal trace to have the same start and end and same sampling rate

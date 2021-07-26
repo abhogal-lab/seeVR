@@ -1,3 +1,13 @@
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%a.bhogal@umcutrecht.nl
+%The seeVR toolbox is software, licensed under the Creative Commons 
+%Attribution-NonCommercial-ShareAlike 4.0 International Public License
+%By using seeVR and associated scripts you agree to the license conditions
+%that can be reviewed at:
+%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+%These tools are for research purposes and are not intended for
+%commercial purposes. 
+
 function [xi,yi,yyi,xi1,yi1,yyi1] = resampleEndtidalBreathing(MRTimes,PCO2mmHg,PO2mmHg,MRTimes1,PCO2mmHg1,PO2mmHg1,MRTimes3,Event,opts)
 %This function resamples the end tidal values for gen4 respiract systems
 %extra defines the amount of extra time points before start and end of the
@@ -6,7 +16,13 @@ function [xi,yi,yyi,xi1,yi1,yyi1] = resampleEndtidalBreathing(MRTimes,PCO2mmHg,P
 
 %% make sure MRTimes1 and MRTimes have the same start and end-point
 %use first and last value of MRTimes1 to put at begin and end of MRTimes
-if isfield(opts,'figdir'); else; opts.figdir = [pwd,'\']; end;
+if isfield(opts,'figdir'); else
+    if ispc
+    opts.figdir = [pwd,'\']; 
+else
+    opts.figdir = [pwd,'/'];
+    end
+end
 
 startval = MRTimes1(1,1);
 endval = MRTimes1(end,1);
