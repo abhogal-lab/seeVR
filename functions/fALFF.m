@@ -15,7 +15,12 @@ function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, 
 %see: An improved approach to detection of amplitude of low-frequency fluctuation (ALFF) for resting-state fMRI: Fractional ALFF
 %doi: 10.1016/j.jneumeth.2008.04.012
 global opts
+if ispc
 opts.ALFFdir = [opts.resultsdir,'ALFF/']; mkdir(opts.ALFFdir);
+else
+opts.ALFFdir = [opts.resultsdir,'ALFF\']; mkdir(opts.ALFFdir);  
+end
+
 [xx yy zz N] = size(data);
 [refdata] = meanTimeseries(data, mask);
 

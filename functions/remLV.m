@@ -14,7 +14,7 @@ function [mmask] = remLV(data,mask,opts)
 %with large draining veins. These voxels are removed from the original
 %whole brain mask and returned for further processing: 1/tSD, tSD, tSNR, tNSR are
 %saved
-
+ warning('off')
  global opts
            			
 			[voxel_ts, coordinates] = grabTimeseries(data, mask);

@@ -17,17 +17,21 @@ test1 = nuisance(1,:); test2 = nuisance(:,1);
 if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
 if iscolumn(corrProbe)==0; corrProbe = corrProbe'; end
 
+for ii=1:size(nuisance,2)
+    nuisance(:,ii) = rescale(nuisance(:,ii));
+end
+
 %remove nuisance correlating with probe
-autoCorr = abs(corr(rescale(corrProbe),nuisance)); 
+autoCorr = abs(corr(corrProbe,nuisance)); 
 autoCorr(autoCorr < opts.motioncorr) = 0; autoCorr(autoCorr > 0) = 1; %removes anything with more than weak correlation
 %remove highly correlated nuisance regressors to preserve signal response
 index = ([1:1:size(nuisance,2)]).*autoCorr; 
 keep = index; keep(keep == 0) = [];
-leave = index; leave = find(index == 0)
+leave = index; leave = find(index == 0);
+
 innuisance = nuisance; outnuisance = nuisance;
 
 innuisance(:,keep) = [];
 outnuisance(:,leave) = [];
-
 
 end

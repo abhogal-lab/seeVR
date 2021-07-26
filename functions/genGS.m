@@ -1,12 +1,12 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht,
 %a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons 
+%The seeVR toolbox is software, licensed under the Creative Commons
 %Attribution-NonCommercial-ShareAlike 4.0 International Public License
 %By using seeVR and associated scripts you agree to the license conditions
 %that can be reviewed at:
 %https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 %These tools are for research purposes and are not intended for
-%commercial purposes. 
+%commercial purposes.
 
 function [cleanData,res_ts,resData] = genGS(data, mask, nuisance, probe, opts)
 %Written by Alex Bhogal, a.bhogal@umcutrecht.nl
@@ -15,6 +15,9 @@ function [cleanData,res_ts,resData] = genGS(data, mask, nuisance, probe, opts)
 %added or cleaned from the original data before CVR estimation and lag
 %analysis. The explained data is removed to provide a 'pseudo-resting
 %state' timesereries
+warning('off');
+global opts
+
 if isempty(probe); clear probe; end
 if isempty(nuisance); clear nuisance; end
 
@@ -125,7 +128,11 @@ resData = resData-offBOLD;
 if isfield(opts,'figdir')
     saveas(gcf,[opts.figdir,'genGS.fig']);
 else
-    saveas(gcf,[pwd,'\','genGS.fig']);
+    if ispc
+        saveas(gcf,[pwd,'\','genGS.fig']);
+    else
+        saveas(gcf,[pwd,'/','genGS.fig']);
+    end
 end
 
 res_ts = meanTimeseries(resData,mask);

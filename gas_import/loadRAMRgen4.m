@@ -7,7 +7,7 @@ global opts;
 cd(opts.seqpath)
 
 if isfield(opts,'extra'); else; opts.extra = 30; end                     %defines number of extra samples taken before and after the start and end of the events
-if isfield(opts,'remOUT'); else; opts.remOUT = 1; end                   %remove outliers from breathing traces
+if isfield(opts,'remOUT'); else; opts.remOUT = 0; end                   %remove outliers from breathing traces
 if isfield(opts,'remOUTbh'); else; opts.remOUTbh = 0; end               %for breath hold, only outliers below the baseline are removed
 if isfield(opts,'remOUTmethod'); else; opts.remOUTmethod = 'median'; end %'median' or 'mean' or 'quartiles' or 'grubbs' or 'gesd'
   

@@ -1,12 +1,12 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
+%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht,
 %a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons 
+%The seeVR toolbox is software, licensed under the Creative Commons
 %Attribution-NonCommercial-ShareAlike 4.0 International Public License
 %By using seeVR and associated scripts you agree to the license conditions
 %that can be reviewed at:
 %https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 %These tools are for research purposes and are not intended for
-%commercial purposes. 
+%commercial purposes.
 
 function [cleanData] = scrubData(data,mask, nuisance, probe, opts)
 %written by Alex Bhogal a.bhogal@umcutrecht.nl
@@ -18,17 +18,21 @@ function [cleanData] = scrubData(data,mask, nuisance, probe, opts)
 warning('off');
 global opts;
 
-if isempty(probe); else
-test1 = probe(1,:); test2 = probe(:,1);
-if length(test1) > length(test2); probe = probe'; end; clear test1 test2
-limits = [0 size(probe,1)];
-probemap = plasma(size(probe,2)); %probemap = flip(probemap,1);
+if isempty(probe)
+    probe = zeros(length(nuisance));
+else
+    test1 = probe(1,:); test2 = probe(:,1);
+    if length(test1) > length(test2); probe = probe'; end; clear test1 test2
+    limits = [0 size(probe,1)];
+    probemap = colormap(flip(brewermap(size(probe,2),'Spectral')));
 end
-if isempty(nuisance); else
-test1 = nuisance(1,:); test2 = nuisance(:,1);
-if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
-limits = [0 size(nuisance,1)];
-nuisancemap = parula(size(nuisance,2)); nuisancemap = flip(nuisancemap,1);
+if isempty(nuisance)
+    nuisance = zeros(length(probe));
+else
+    test1 = nuisance(1,:); test2 = nuisance(:,1);
+    if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
+    limits = [0 size(nuisance,1)];
+    nuisancemap = colormap(flip(brewermap(size(nuisance,2),'Spectral')));
 end
 
 [voxel_ts, coordinates] = grabTimeseries(data, mask);
@@ -67,11 +71,15 @@ end
 figure;
 
 if size(probe,2) > 1
-subplot(5,1,1); hold on; for ii=1:size(probe,2); plot(np(:,ii), 'Color', probemap(ii,:)); end; title('data probe(s)'); xlim(limits);
+    subplot(5,1,1); hold on; for ii=1:size(probe,2); plot(np(:,ii), 'Color', probemap(ii,:)); end; title('data probe(s)'); xlim(limits);
 else
-subplot(5,1,1); hold on; for ii=1:size(probe,2); plot(np(:,ii), 'Color', 'k'); end; title('data probe(s)'); xlim(limits);
+    subplot(5,1,1); hold on; for ii=1:size(probe,2); plot(np(:,ii), 'Color', 'k'); end; title('data probe(s)'); xlim(limits);
 end
-subplot(5,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii)), 'Color', nuisancemap(ii,:)); end; title('rescaled nuisance regressors'); xlim(limits);
+if size(nuisance,2) > 1
+    subplot(5,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii)), 'Color', nuisancemap(ii,:)); end; title('rescaled nuisance regressor(s)'); xlim(limits);
+else
+    subplot(5,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii)), 'Color', 'r'); end; title('rescaled nuisance regressor(s)'); xlim(limits);
+end
 subplot(5,1,3); plot(meanTimeseries(data,mask),'k'); title('Original Data'); xlim(limits)
 subplot(5,1,4); plot(nanmean(nuis_TS,2),'k'); title('nuisance Mean'); xlim(limits);
 subplot(5,1,5); plot(meanTimeseries(cleanData,mask),'k'); title('Clean Data'); xlim(limits);
@@ -79,17 +87,25 @@ subplot(5,1,5); plot(meanTimeseries(cleanData,mask),'k'); title('Clean Data'); x
 if isfield(opts,'figdir')
     saveas(gcf,[opts.figdir,'scrubData.fig']);
 else
-    saveas(gcf,[pwd,'\','scrubData.fig']);
+    if ispc
+        saveas(gcf,[pwd,'\','scrubData.fig']);
+    else
+        saveas(gcf,[pwd,'/','scrubData.fig']);
+    end
 end
 
 if isfield(opts,'resultsdir')
 else
-    opts.resultsdir = [pwd,'\'];
+    if ispc
+        opts.resultsdir = [pwd,'\'];
+    else
+        opts.resultsdir = [pwd,'/'];
+    end
 end
 
 if isfield(opts,'save_cleaned'); else opts.save_cleaned = 0; end
 if opts.save_cleaned
-saveImageData(cleanBOLD, opts.headers.ts, opts.resultsdir, 'cleanBOLD.nii.gz', 64); 
+    saveImageData(cleanBOLD, opts.headers.ts, opts.resultsdir, 'cleanBOLD.nii.gz', 64);
 end
 
 

@@ -9,7 +9,10 @@
 %commercial purposes. 
 
 function [HRF,HRF_probe] = convHRF(HRFprobe, opts)
+warning('off')
+global opts
 
+if isfield(opts,'plot'); else; opts.plot = 1; end %turn plotting on or off
 if isfield(opts,'rratio'); else; opts.rratio = 1000; end %seems to affect the vertical spread of HRF (use large value to limit)
 
 input_probe = HRFprobe;
@@ -72,6 +75,10 @@ plot( HRF_probe(1,:), 'k', 'LineWidth', 2);  title('HRF probe');
 if isfield(opts,'figdir')
 saveas(gcf,[opts.figdir,'HRF_fnc.fig']);
 else
-saveas(gcf,[pwd,'\','HRF_fnc.fig']);  
+    if ispc
+    saveas(gcf,[pwd,'\','HRF_fnc.fig']);
+    else
+    saveas(gcf,[pwd,'/','HRF_fnc.fig']);
+    end
 end
 end

@@ -9,7 +9,7 @@
 %commercial purposes. 
 
 function [sdata] = smthData(data, mask, opts)
-
+warning('off')
 global opts
 
 if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end 
