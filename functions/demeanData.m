@@ -12,11 +12,11 @@ function [dmData] = demeanData(data, mask)
 switch ndims(data)
     
     case 2
-        disp('de-meaning timeseries vector')
+        %disp('de-meaning timeseries vector')
         m_ts = mean(data);
         dmData = data-m_ts;
     case 3
-        disp('de-meaning 2D timeseries data')
+        %disp('de-meaning 2D timeseries data')
         [x,y,dyn] = size(data);
         [voxel_ts,coordinates] = grabTimeseries(data,mask);
         m_ts = nanmean(voxel_ts,2);
@@ -26,7 +26,7 @@ switch ndims(data)
         dmData(coordinates,:) = voxel_ts;
         dmData = reshape(dmData,size(data));
     case 4
-        disp('de-meaning 3D timeseries data')
+        %disp('de-meaning 3D timeseries data')
         [x,y,z,dyn] = size(data);
         [voxel_ts,coordinates] = grabTimeseries(data,mask);
         m_ts = nanmean(voxel_ts,2);

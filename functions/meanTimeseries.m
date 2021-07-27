@@ -15,7 +15,7 @@ mask(isnan(mask)) = 0;
 mask = logical(mask(:));
 coordinates = find(mask); 
 
-disp('Generate mean timeseries')
+%disp('Generate mean timeseries')
 
 [voxel_ts,~] = grabTimeseries(data,mask);
 
