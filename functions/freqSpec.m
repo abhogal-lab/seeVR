@@ -1,14 +1,40 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
-%a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons 
-%Attribution-NonCommercial-ShareAlike 4.0 International Public License
-%By using seeVR and associated scripts you agree to the license conditions
-%that can be reviewed at:
-%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-%These tools are for research purposes and are not intended for
-%commercial purposes. 
+% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <freqSpec: returns the frequency amplitude (or power) spectrum of input timeseries data >
+% 
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 function[ fSpec, meanSpec, freq ] = freqSpec(data, mask, opts)        
+% this function takes input data and uses a fourier analysis to generate
+% the frequency spectrum information. If opts.powerspec = 1 is supplied in
+% the opts structure, then the power spectrum will be returned.
+%
+% data: input timeseries data (i.e. 3D (slice) or 4D (volume) MRI dataset)
+%
+% mask: binary mask defining voxels of interest
+%
+% opts: options structure containing required variables for this specific
+% function; i.e. opts.powerspec
+%
+% fSpec: the frequency spectrum data derived from the input data. If
+% opts.powerspec = 1, this variable contains the power spectrum.
+%
+% meanSpec: the average amplitude/power spectrum of the ROI defined by the
+% mask
+%
+% freq: the vector of frequency values
+
 
 global opts
         if isfield(opts,'powerspec'); else; opts.powerspec = 0; end

@@ -1,19 +1,45 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
-%a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons 
-%Attribution-NonCommercial-ShareAlike 4.0 International Public License
-%By using seeVR and associated scripts you agree to the license conditions
-%that can be reviewed at:
-%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-%These tools are for research purposes and are not intended for
-%commercial purposes. 
+% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <fALFF: calculates (fractional) amplitude of low frequency fluctuations ((f)ALFF) >
+% 
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)                  
-
-%timeseries data is used to generate ALFF and fALFF maps based on specified
-%frequency band. 
-%see: An improved approach to detection of amplitude of low-frequency fluctuation (ALFF) for resting-state fMRI: Fractional ALFF
+% Timeseries data is used to generate ALFF and fALFF maps based on specified
+% frequency bands. For details see: 
+% An improved approach to detection of amplitude of low-frequency fluctuation (ALFF) for resting-state fMRI: Fractional ALFF
 %doi: 10.1016/j.jneumeth.2008.04.012
+%
+% data: input timeseries data (i.e. 4D BOLD MRI dataset)
+%
+% mask: binary mask defining voxels of interest
+%
+% refmask: binary mask that defines the reference signals of interest
+%
+% opts: options structure containing required variables for this specific
+% function; i.e. opts.fpass, opts.resultsdir
+%
+% ALFF_map: ALFF map defined by opts.fpass
+%
+% fALFF_map: fALFF map defined by opts.fpass
+%
+% zALFF_map: z-transformed ALFF map defined by the standard deviation of
+% ALFF values defined by the input mask
+%
+% zfALFF_map: z-transformed fALFF map defined by the standard deviation of
+% fALFF values defined by the input mask
+
 global opts
 if ispc
 opts.ALFFdir = [opts.resultsdir,'ALFF/']; mkdir(opts.ALFFdir);

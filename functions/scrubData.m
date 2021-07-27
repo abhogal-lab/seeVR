@@ -1,20 +1,40 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht,
-%a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons
-%Attribution-NonCommercial-ShareAlike 4.0 International Public License
-%By using seeVR and associated scripts you agree to the license conditions
-%that can be reviewed at:
-%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-%These tools are for research purposes and are not intended for
-%commercial purposes.
+% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <scrubData: GLM based nuisance signal regression >
+% 
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-function [cleanData] = scrubData(data,mask, nuisance, probe, opts)
-%written by Alex Bhogal a.bhogal@umcutrecht.nl
-%Linear regression of input probes and nuisance regressors is performed on
-%data in regions specified by the mask. Nuisance timeseries defined by
-%nuisance regressors and co-efficients are summed and removed. For a
-%similar function to determine residual signals after regression, see
-%genGS.
+function [cleanData] = scrubData(data, mask, nuisance, probe, opts)
+% Linear regression of input probes and nuisance regressors is performed on
+% data in regions specified by the mask. Nuisance timeseries defined by
+% nuisance regressors and co-efficients are summed and removed. For a
+% similar function to determine residual signals after regression, see
+% genGS.
+%
+% data: input timeseries data (i.e. 4D BOLD MRI dataset)
+%
+% mask: binary mask defining voxels of interest
+%
+% nuisance: and array of nuisance regressors (or a single regressor) having
+% the same number of time-points as the input data.
+%
+% probe: an array of data-probes (explanatory variables) having the same
+% number of time-points as the input data
+%
+% opts: options structure containing required variables for this specific
+% function; i.e. opts.figdir, opts.headers.ts, opts.resultsdir
+
 warning('off');
 global opts;
 

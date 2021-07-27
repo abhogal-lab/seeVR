@@ -1,14 +1,36 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht,
-%a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons
-%Attribution-NonCommercial-ShareAlike 4.0 International Public License
-%By using seeVR and associated scripts you agree to the license conditions
-%that can be reviewed at:
-%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-%These tools are for research purposes and are not intended for
-%commercial purposes.
+% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <denoiseData: performs wavelet-based denoising or temporal smoothing >
+% 
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 function [denData] = denoiseData(data,mask,opts)
+% Depending on the available toolboxes, this function will perform either a
+% wavelet based de-noising or a temporal smoothing of timeseries data
+%
+% data: input timeseries data (i.e. 4D BOLD MRI dataset)
+%
+% mask: binary mask defining voxels of interest
+%
+% opts: options structure containing required variables for this specific
+% function; i.e. for wavelets: opts.wdlevel, opts.family, opts.figdir. 
+% for temporal smoothing: opts.method, opts.winsize (see MATLAB smoothdata
+% function)
+%
+% denData: a denoised/smoothed version of the input data
+
+
 
 if license('test', 'wavelet_toolbox')
     if isfield(opts,'wdlevel'); else; opts.wdlevel = 3; end

@@ -1,16 +1,29 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
-%a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons 
-%Attribution-NonCommercial-ShareAlike 4.0 International Public License
-%By using seeVR and associated scripts you agree to the license conditions
-%that can be reviewed at:
-%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-%These tools are for research purposes and are not intended for
-%commercial purposes. 
+% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <ROImean: calculates the mean value in a region of interest >
+% 
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-function val = ROImean(data,mask)
-%written by Alex Bhogal a.bhogal@umcutrecht.nl
-%calculates the mean value in an ROI defined my the input mask
+function [val] = ROImean(data,mask)
+% ROImean calculates the mean value of the 'data' within an ROI specified
+% by the mask
+%
+% data: 2D/3D data
+%
+% mask: corresponding 2D/3D mask
+%
+% val: average value within ROI
 
 data(isnan(data)) = 0; data(isinf(data)) = 0;
 temp = data(:).*mask(:);

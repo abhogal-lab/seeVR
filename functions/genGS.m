@@ -1,20 +1,50 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht,
-%a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons
-%Attribution-NonCommercial-ShareAlike 4.0 International Public License
-%By using seeVR and associated scripts you agree to the license conditions
-%that can be reviewed at:
-%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-%These tools are for research purposes and are not intended for
-%commercial purposes.
-
+% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <genGS: GLM based approach to regress out nuisance and data signals in provide residual timeseries data >
+% 
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
 function [cleanData,res_ts,resData] = genGS(data, mask, nuisance, probe, opts)
-%Written by Alex Bhogal, a.bhogal@umcutrecht.nl
-%This function uses input nuissance regressors to scrub data of all
-%stimulus related responses. The result is a global signal that can be
-%added or cleaned from the original data before CVR estimation and lag
-%analysis. The explained data is removed to provide a 'pseudo-resting
-%state' timesereries
+% This function uses input nuissance regressors and data regressors 
+% (i.e. response models) to remove input data of all explainable
+% signal responses. The result is a residual 'global' signal that can be
+% added as a further nuisance regressor (see scrubData) or used as 'pseudo
+% resting-state' data. 
+%
+% data: input timeseries data (i.e. 4D BOLD MRI dataset)
+%
+% mask: binary mask defining voxels of interest
+%
+% nuisance: and array of nuisance regressors (or a single regressor) having
+% the same number of time-points as the input data.
+%
+% probe: an array of data-probes (explanatory variables) having the same
+% number of time-points as the input data
+%
+% opts: options structure containing required variables for this specific
+% function; i.e. opts.figdir
+%
+% cleanData: residual data where nuisance and probe regressor explained
+% signal variance has been removed. This data retains the linear offset
+% from the GLM regression; in this way genGS can also be used to clean data
+% of unwanted signal contributions (see scrubData)
+%
+% res_ts: the mean timeseries (cleanData) signal calculated within the ROI defined by
+% the input mask
+%
+% resData: residual data after nuisance and probe regressor explained
+% signal variance has been removed. Here the linear offset is also removed.
+
 warning('off');
 global opts
 

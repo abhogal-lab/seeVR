@@ -1,18 +1,39 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
-%a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons 
-%Attribution-NonCommercial-ShareAlike 4.0 International Public License
-%By using seeVR and associated scripts you agree to the license conditions
-%that can be reviewed at:
-%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-%These tools are for research purposes and are not intended for
-%commercial purposes. 
+% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <normTimeseres: calculates %change from baseline signal >
+% 
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 function [ndata] = normTimeseries(data,mask,idx)
-%written by Alex Bhogal a.bhogal@umcutrecht.nl
-%function to normalize timeseries to baseline using input mask
-%index are some user-supplied baseline timepoints. If index is not empty, this
-%function will allow manual selection of baseline timepoints
+% This function will normalize timeseries data (i.e. calculate %change) to
+% baseline using input mask index are some user-supplied baseline
+% timepoints. If index is not empty, this function will allow manual 
+% selection of baseline timepoints
+%
+% data: input timeseries data (i.e. 3D (slice) or 4D (volume) MRI dataset)
+%
+% mask: binary mask defining voxels of interest
+%
+% idx: this can be either a 2 element vector consisting of start and end
+% points. If this vector is not supplied, the user will be promted to
+% select the beginning and ending of the desired epoch manually. 
+%
+% ndata: the baseline normalized version of the input data
+%
+% opts.norm_idx: this parameter is changed to reflect the selected baseline
+% start and end indices.
+
 global opts;
 
 p = cputime;

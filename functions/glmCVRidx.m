@@ -1,17 +1,47 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht,
-%a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons
-%Attribution-NonCommercial-ShareAlike 4.0 International Public License
-%By using seeVR and associated scripts you agree to the license conditions
-%that can be reviewed at:
-%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-%These tools are for research purposes and are not intended for
-%commercial purposes.
+% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <glmCVRidx: generates internally normalized CVR maps (i.e. without using respiratory data >
+% 
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-function [CVRidx_map BP_ref bpBOLD] = glmCVRidx(data, mask, refmask , opts)
-%see: Cerebrovascular Reactivity Mapping Using Resting-State BOLD Functional MRI in Healthy Adults and Patients with Moyamoya Disease
+function [CVRidx_map BP_ref bpData] = glmCVRidx(data, mask, refmask , opts)
+% this function is inspited by the following manuscript:
+% Cerebrovascular Reactivity Mapping Using Resting-State BOLD Functional MRI in Healthy Adults and Patients with Moyamoya Disease
 % https://doi.org/10.1148/radiol.2021203568
 % https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6494444/
+% glmCVRidx uses a general linear model to evaluate the voxel-wise signal
+% response relative to some reference signal. Specific data frequency bands
+% can be isolated (i.e. for resting state fMRI analysis).
+%
+% data: input timeseries data (i.e. 4D BOLD MRI dataset)
+%
+% mask: binary mask defining voxels of interest
+%
+% refmask: binary mask that defines the reference signals of interest
+%
+% opts: options structure containing required variables for this specific
+% function; i.e. opts.fpass opts.normalizeCVRidx, opts.headers.map, opts.resultsdir
+%
+% CVRidx_map: map of beta values (normalized to reference betas if
+% opts.normalizeCVRidx = 1)
+%
+% BP_ref: the bandpassed reference signal (defined by opts.fpass) from the
+% ROI defined by refmask
+%
+% bpData: a bandpassed version of the input data
+
+
 warning('off');
 global opts;
 
@@ -91,10 +121,10 @@ rcoef = D\BP_rV';
 avg = mean(rcoef(2,:));
 
 CVRidx = coef(2,:);
-bpBOLD = zeros(size(data));
-bpBOLD = reshape(bpBOLD,[xx*yy*zz N]);
-bpBOLD(coordinates, :) = BP_V;
-bpBOLD = reshape(bpBOLD,size(data));
+bpData = zeros(size(data));
+bpData = reshape(bpData,[xx*yy*zz N]);
+bpData(coordinates, :) = BP_V;
+bpData = reshape(bpData,size(data));
 
 CVRidx_map = zeros([1 numel(mask)]);
 if opts.normalizeCVRidx
