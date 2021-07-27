@@ -1,18 +1,33 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
-%a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons 
-%Attribution-NonCommercial-ShareAlike 4.0 International Public License
-%By using seeVR and associated scripts you agree to the license conditions
-%that can be reviewed at:
-%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-%These tools are for research purposes and are not intended for
-%commercial purposes. 
+% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <loadRAMRgen3: imports GEN3 RespirAct data >
+% 
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 
 function [corrvec_CO2 corrvec_O2] = loadRAMRgen3(opts)
-%written by Alex Bhogal a.bhogal@umcutrecht.nl
-%functions to load respiract endtidal traces from 3rd generation respiract
-%system. Input is path to directory where gas traces are saved. Output is
-%resampled O2 and CO2 traces at the desired sampling frequency (TR of scan)
+% This functions loads respiract endtidal traces from 3rd generation respiract
+% system. 
+% 
+% opts.seqpath: sequence path pointing to saved GEN3 respiratory data
+%
+% opts.TR: TR of MRI data - traces are resampled to match
+%
+% opts.dyn: number of datapoints in MRI timeseries data
+%
+% corrvec_CO2: the temporally resampled (to opts.TR) end-expired CO2 traces
+%
+% corrvec_O2: the temporally resampled (to opts.TR) end-expired O2 traces
 
 cd(opts.seqpath)
 oversample = 1;

@@ -1,18 +1,25 @@
-%Copyright Alex A. Bhogal, 7/15/2021, University Medical Center Utrecht, 
-%a.bhogal@umcutrecht.nl
-%The seeVR toolbox is software, licensed under the Creative Commons 
-%Attribution-NonCommercial-ShareAlike 4.0 International Public License
-%By using seeVR and associated scripts you agree to the license conditions
-%that can be reviewed at:
-%https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-%These tools are for research purposes and are not intended for
-%commercial purposes. 
+% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <resampleEndtidalBreathing: resampled breathing data to the time-step defined by TR >
+% 
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 
 function [xi,yi,yyi,xi1,yi1,yyi1] = resampleEndtidalBreathing(MRTimes,PCO2mmHg,PO2mmHg,MRTimes1,PCO2mmHg1,PO2mmHg1,MRTimes3,Event,opts)
-%This function resamples the end tidal values for gen4 respiract systems
-%extra defines the amount of extra time points before start and end of the
-%sequence; there is also an option to remove outliers for breath hold data
-%and normal data.
+% This function resamples the end tidal values for gen4 respiract systems
+% extra defines the amount of extra time points before start and end of the
+% sequence; there is also an option to remove outliers for breath hold data
+% and normal data.
 
 %% make sure MRTimes1 and MRTimes have the same start and end-point
 %use first and last value of MRTimes1 to put at begin and end of MRTimes
