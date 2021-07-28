@@ -33,18 +33,22 @@ function [HRF,HRF_probe] = convHRF(probe, opts)
 % is the normalized (0-1) probe.
 
 warning('off')
-global opts
-
+global opts;
+%set defaults
 if isfield(opts,'plot'); else; opts.plot = 1; end %turn plotting on or off
 if isfield(opts,'rratio'); else; opts.rratio = 1000; end %seems to affect the vertical spread of HRF (use large value to limit)
+if isfield(opts,'onset'); else; opts.onset = 1; end %parameter that defines response onset
+if isfield(opts,'disp'); else; opts.disp = [1:2:20]; end %dispersion parameter - set a default vector
+if isfield(opts,'under'); else; opts.under = 1; end %parameter that defines undershoot
+
 
 input_probe = probe;
 pad = 2^nextpow2(length(probe));
 probe = zeros(length(input_probe)+2*pad,1);
 probe(1:pad) = input_probe(1,1);
 probe(pad+1:end-pad,1) = input_probe;
-probe(end-pad+1:end,1) = input_probe(1,end)
-mm=0
+probe(end-pad+1:end,1) = input_probe(1,end);
+mm=0;
 xdata = [1:1:length(probe)];
 clear HRF
 
@@ -96,6 +100,7 @@ subplot(1,2,1); plot(t,HRF(ii,:)', 'Color', customMap(ii,:)); ylim([-0.2 1]); xl
 subplot(1,2,2); plot(HRF_probe(ii+1,:)', 'Color', customMap(ii,:)); hold on;
 end
 plot( HRF_probe(1,:), 'k', 'LineWidth', 2);  title('HRF probe');
+set(gcf, 'Units', 'pixels', 'Position', [200, 500, 600, 160]);
 if isfield(opts,'figdir')
 saveas(gcf,[opts.figdir,'HRF_fnc.fig']);
 else

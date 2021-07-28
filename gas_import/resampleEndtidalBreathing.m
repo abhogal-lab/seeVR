@@ -47,9 +47,9 @@ nPO2mmHg = [startval; PO2mmHg; endval];
 
 figure(1); %visual check
 subplot(2,3,1)
-plot(nMRTimes,nPCO2mmHg,'b'); title('lengthened Endtidal CO2 values'); hold on; plot(MRTimes,PCO2mmHg,'r');
+plot(nMRTimes,nPCO2mmHg,'b'); title('Endtidal CO2 values'); hold on; plot(MRTimes,PCO2mmHg,'r');
 subplot(2,3,4) %visual check
-plot(nMRTimes,nPO2mmHg,'b'); title('lengthened Endtidal O2 values'); hold on; plot(MRTimes,PO2mmHg,'r');
+plot(nMRTimes,nPO2mmHg,'b'); title('Endtidal O2 values'); hold on; plot(MRTimes,PO2mmHg,'r');
 
 %% resample entire PCO2mmHg and PO2mmHg trace to the TR of the acquisition
 
@@ -85,8 +85,8 @@ end
 
 %visual check
 figure(1);
-subplot(2,3,2); plot(nMRTimes,nPCO2mmHg); title('raw Endtidal trace'); hold on; plot(nMRTimes,nPCO2mmHg,'.'); 
-subplot(2,3,5); plot(xi,yi); title('resampled Endtidal trace'); hold on; plot(xi,yi,'.');
+subplot(2,3,2); plot(nMRTimes,nPCO2mmHg); title('raw trace'); hold on; plot(nMRTimes,nPCO2mmHg,'.'); 
+subplot(2,3,5); plot(xi,yi); title('resampled trace'); hold on; plot(xi,yi,'.');
 
 %%% RGM values %%%
 [xi1,yi1] = resampletoTR(opts.TR,MRTimes1,PCO2mmHg1); %yi = resampled CO2
@@ -94,8 +94,8 @@ subplot(2,3,5); plot(xi,yi); title('resampled Endtidal trace'); hold on; plot(xi
 
 %visual check
 figure(1);
-subplot(2,3,3); plot(MRTimes1,PCO2mmHg1); title('raw breathing trace'); hold on; plot(MRTimes1,PCO2mmHg1,'.'); 
-subplot(2,3,6); plot(xi1,yi1); title('resampled breathing trace'); hold on; plot(xi1,yi1,'.');
+subplot(2,3,3); plot(MRTimes1,PCO2mmHg1); title('raw trace'); hold on; plot(MRTimes1,PCO2mmHg1,'.'); 
+subplot(2,3,6); plot(xi1,yi1); title('resampled trace'); hold on; plot(xi1,yi1,'.');
 
 
 

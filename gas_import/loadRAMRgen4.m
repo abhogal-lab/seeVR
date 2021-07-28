@@ -19,7 +19,7 @@ function [corrvec_CO2,corrvec_O2] = loadRAMRgen4(opts)
 % This is the main function (used to call relevant sub-functions) to load
 % the GEN4 respiratory data. This function can also perform outlier
 % removal.
-
+warning('off')
 global opts;
 cd(opts.seqpath)
 

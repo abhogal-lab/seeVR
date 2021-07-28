@@ -31,6 +31,8 @@ if isfield(opts,'level'); else opts.level = 2; end
 if isfield(opts,'DenMeth'); else opts.DenMeth = 'UniversalThreshold'; end
 if isfield(opts,'ThreshRule'); else opts.ThreshRule = 'Hard'; end
 if isfield(opts,'NoEst'); else opts.NoEst = 'LevelIndependent'; end
+if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
+
 % WB coordinates
 [x,y,z,dyn] = size(data);
 data(data == 0) = NaN;
@@ -52,6 +54,6 @@ wdenData  = reshape(wdenData ,[ x y z dyn]);
 % ssimval(ii,:) = ssim(wdenBOLD(:,:,:,ii),data(:,:,:,ii));
 % end
 ssimval = [];
-disp(['finished discreet wavelet denoising in: ',int2str(cputime-t),' seconds'])
+if opts.verbose; disp(['finished discreet wavelet denoising in: ',int2str(cputime-t),' seconds']); end
 
 end

@@ -34,6 +34,7 @@ if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end
 if isfield(opts,'voxelsize'); else; opts.voxelsize = opts.headers.ts.dime.pixdim(2:4); end
 if isfield(opts,'filtWidth'); else; opts.filtWidth = 5; end %originally 7
 if isfield(opts,'FWHM'); else; opts.FWHM = 4; end
+if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
 
 sigma=opts.FWHM/2.355;
 inplanevoxelsize=opts.voxelsize(1);
@@ -51,7 +52,7 @@ ddata = zeros(size(data));
 
 switch ndim
     case 3
-        disp('Smoothing 3D image data' )
+        if opts.verbose; disp('Smoothing 3D image data' ); end
     data(isnan(data)) = 0;
     ddata = imdilate(data,SE);% dilate dataset to pad
     
@@ -60,7 +61,7 @@ switch ndim
    
     switch opts.spatialdim
     case 2
-        disp('Performing 2D spatial smoothing on image data' )
+        if opts.verbose; disp('Performing 2D spatial smoothing on image data' ); end
         for s=1:size(data, 3)
             if ~isempty(isnan(data))
                 
@@ -70,8 +71,8 @@ switch ndim
             end
         end
     case 3
-        disp('Applying dilation to image to mitigate edge effects: check image edges' )
-            disp('Performing 3D spatial smoothing on image data' )
+        if opts.verbose; disp('Applying dilation to image to mitigate edge effects: check image edges' ); end
+            if opts.verbose; disp('Performing 3D spatial smoothing on image data' ); end
             if isnan(data)
             
             ddata(isnan(ddata)) = 0;
@@ -82,7 +83,7 @@ switch ndim
         end
     end
     case 4
-        disp('Smoothing 4D timeseries data' )
+        if opts.verbose; disp('Smoothing 4D timeseries data' ); end
     data(isnan(data)) = 0;
     
     for ii = 1:size(ddata,4)
@@ -93,15 +94,15 @@ switch ndim
     
     switch opts.spatialdim
     case 2
-        disp('Performing 2D spatial smoothing on timeseries data' )
+        if opts.verbose; disp('Performing 2D spatial smoothing on timeseries data' ); end
         for t=1:size(data,4)
             for s=1:size(data, 3)
                 data_smooth(:,:,s,t)= nanconv(data(:,:,s,t),imageFilter, 'nanout');
             end  
         end
         case 3
-            disp('Applying dilation to image to mitigate edge effects: check image edges' )
-            disp('Performing 3D spatial smoothing on timeseries data' )
+            if opts.verbose; disp('Applying dilation to image to mitigate edge effects: check image edges' ); end
+            if opts.verbose; disp('Performing 3D spatial smoothing on timeseries data' ); end
         if isnan(data)
             ddata(isnan(ddata)) = 0;
             for t=1:size(data,4)

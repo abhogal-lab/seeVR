@@ -32,8 +32,13 @@ function [idx, rdata] = chopTimeseries(data,mask,idx)
 %
 % opts.xdata and opts.dyn are updated to reflect the new shortened
 % timeseries
+warning('off');
+global opts;
 
-global opts
+if isfield(opts,'save_rdata'); else; opts.save_rdata = 0; end %saves the shortened timeseries
+if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
+
+
 switch nargin
     case 2
         figure;  plot(meanTimeseries(data,mask));
@@ -67,12 +72,20 @@ switch nargin
                 end
                 rdata = data(:,:,idx(1):idx(2));
         end
-        disp('Using user-supplied indices to select epoch')
+        if opts.verbose; disp('Using user-supplied indices to select epoch'); end
 end
-disp('Updated header file to reflect new timeseries length')
+if opts.verbose; 
+    disp('Updated header file to reflect new timeseries length'); 
+    disp('Updated opts.xdata and opts.dyn to reflect new timeseries length'); 
+end
 opts.headers.ts.dime.dim(2:5) = size(rdata);
 opts.dyn = []; [opts.xdim,opts.ydim,opts.zdim,opts.dyn] = size(rdata);
 opts.xdata = [opts.TR:opts.TR:opts.TR*opts.dyn];
-disp('Updated opts.xdata and opts.dyn to reflect new timeseries length');
+
+
+%save shortened timeseries
+if opts.save_rdata
+saveImageData(rdata, opts.headers.ts, opts.resultsdir, 'rBOLD.nii.gz', 64);
+end
 end
 

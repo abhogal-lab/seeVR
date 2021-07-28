@@ -34,6 +34,8 @@ test1 = nuisance(1,:); test2 = nuisance(:,1);
 if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
 
 %setup default parameters
+
+if isfield(opts,'plot'); else; opts.plot = 0; end                         %show or hide selected plots
 if isfield(opts,'prewhite'); else; opts.prewhite = 0; end                 %zero mean and unit variance of data. normally leads to bad results
 if isfield(opts,'interp_factor'); else; opts.interp_factor = 4; end       %factor by which to temporally interpolate data. Better for picking up lags between TR
 if isfield(opts,'load_probe'); else; opts.load_probe = 0; end             %saves time for creating regressor if one with the correct length already exists
@@ -45,7 +47,7 @@ if isfield(opts,'refine_regressor'); else; opts.refine_regressor = 1; end %refin
 if isfield(opts,'pca_analysis'); else; opts.pca_analysis = 1; end         %PCA analysis to optimize BOLD regressor
 if isfield(opts,'corr_model'); else; opts.corr_model = 1; end             %perform correlation based analysis
 if isfield(opts,'cvr_maps'); else; opts.cvr_maps = 1; end                 %generate CVR maps based on regression of BOLD signal with gas probe
-if isfield(opts,'eff_probe'); else; opts.eff_probe = 1; end               %uses effective probe to calculate probe response
+if isfield(opts,'eff_probe'); else; opts.eff_probe = 0; end               %uses effective probe to calculate probe response
 if isfield(opts,'glm_model'); else; opts.glm_model = 0; end               %perform GLM based lag regression. This works well for high temporal resolution data
 if isfield(opts,'uni'); else; opts.uni = 0; end                           %if this is set to 1 negative correlations will be ignored
 if isfield(opts,'norm_regr'); else; opts.norm_regr = 0; end               %normalize the regressor for correlation analysis between 0-1
@@ -734,7 +736,7 @@ if opts.glm_model
         estimaTS = reshape(estimaTS, [xx yy zz length(lags)]);
         
         tmp = opts.TR*(lagmatrix/opts.interp_factor);
-        tmpLag = zeros([xx*yy*zz,1]);  tmpLag(coordinates,:) = tmp + abs(min(tmpLag(:))); clear tmp
+        tmpLag = zeros([xx*yy*zz,1]);  tmpLag(coordinates,:) = tmp + abs(min(tmp(:))); clear tmp
         tmpLag = reshape(tmpLag,[xx yy zz]);
         
         %calculate statistics
@@ -785,15 +787,15 @@ if opts.glm_model
         end
         
         %plot regressors
+        if opts.plot
         figure;
         subplot(4,1,1); plot(nanmean(wb_voxel_ts,1)); title('Original Data')
         subplot(4,1,2); plot(nanmean(regr_TS,2)); title('Main EV Component')
         subplot(4,1,3); plot(nanmean(wb_voxel_ts,1)'-nanmean(combi_TS,2)); title('Original data minus Nuissance Signal')
         subplot(4,1,4); plot(nanmean(wb_voxel_ts,1)'-nanmean(combi_TS,2)-nanmean(regr_TS,2)); title('Residual Data + Error Term')
+        end
         
-        %save maps - shift lags to set minimum lag to zero (might not be
-        %appropriate with pathology)
-        
+        %save maps 
         switch pp
             case 1
                 saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'optiReg_ES.nii.gz', datatype); maps.GLM.optiReg_ES = GLM_Estimate;

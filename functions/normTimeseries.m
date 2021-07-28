@@ -33,7 +33,7 @@ function [ndata] = normTimeseries(data,mask,idx)
 %
 % opts.norm_idx: this parameter is changed to reflect the selected baseline
 % start and end indices.
-
+warning('off')
 global opts;
 
 p = cputime;
@@ -67,5 +67,6 @@ ndata(coordinates,:) = voxel_ts;
 ndata = reshape(ndata, [x y z dyn]);
 end
 opts.norm_idx = idx;
-disp(['Dataset has been normalized to baseline period']);
+%disp(['Dataset has been normalized to baseline period']);
+
 end

@@ -102,7 +102,7 @@ else
 end
 subplot(5,1,3); plot(meanTimeseries(data,mask),'k'); title('Original Data'); xlim(limits)
 subplot(5,1,4); plot(nanmean(nuis_TS,2),'k'); title('nuisance Mean'); xlim(limits);
-subplot(5,1,5); plot(meanTimeseries(cleanData,mask),'k'); title('Clean Data'); xlim(limits);
+subplot(5,1,5); plot(meanTimeseries(cleanData,mask),'k'); title('Clean Data'); xlabel('datapoints'); xlim(limits);
 
 if isfield(opts,'figdir')
     saveas(gcf,[opts.figdir,'scrubData.fig']);
