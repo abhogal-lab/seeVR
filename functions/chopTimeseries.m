@@ -78,14 +78,14 @@ if opts.verbose;
     disp('Updated header file to reflect new timeseries length'); 
     disp('Updated opts.xdata and opts.dyn to reflect new timeseries length'); 
 end
-opts.headers.ts.dime.dim(2:5) = size(rdata);
-opts.dyn = []; [opts.xdim,opts.ydim,opts.zdim,opts.dyn] = size(rdata);
-opts.xdata = [opts.TR:opts.TR:opts.TR*opts.dyn];
+if isfield(opts,'headers.ts'); opts.headers.ts.dime.dim(2:5) = size(rdata); end
+if isfield(opts,'dyn'); opts.dyn = []; [opts.xdim,opts.ydim,opts.zdim,opts.dyn] = size(rdata); end
+if isfield(opts,'xdata'); opts.xdata = [opts.TR:opts.TR:opts.TR*opts.dyn]; end
 
 
 %save shortened timeseries
 if opts.save_rdata
-saveImageData(rdata, opts.headers.ts, opts.resultsdir, 'rBOLD.nii.gz', 64);
+saveImageData(rdata, opts.headers.ts, opts.resultsdir, 'rBOLD.nii.gz', 8);
 end
 end
 

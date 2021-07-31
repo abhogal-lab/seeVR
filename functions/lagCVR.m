@@ -139,7 +139,7 @@ if opts.refine_regressor
         disp('found existing probe; skipping generation of BOLD regressor')
     else
         
-        %% RipTIDE based on Donahue/Frederick 2016
+        %% 
         
         disp('Creating optimized regressor')
         %grab GM timeseries to generate probe
