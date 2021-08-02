@@ -108,8 +108,40 @@
 %   map - 256x3 colormap of the output. [] if clim is []. 
 %
 % See also IMAGE, IMAGESC, IMSC, COLORMAP, COLORBAR.
-
+%
 % Copyright: Oliver Woodford, 2007-2013
+%
+% Updated by Alex Bhogal 8/2/2021 
+% a.bhogal@umcutrecht.nl for use with seeVR toolbox (www.seeVR.nl)
+%
+% Added several additional colormap options for overlay
+% 					'gray_hot' - first channel is plotted as hot colormap, second
+%                   channel as gray, and third channel as alpha between the
+%                   two.
+% 					'gray_devon' - first channel is plotted as hot colormap, second
+%                   channel as devon, and third channel as alpha between the
+%                   two.
+% 					'gray_plasma' - first channel is plotted as plasma colormap, second
+%                   channel as gray, and third channel as alpha between the
+%                   two.
+% 					'gray_magma' - first channel is plotted as magma colormap, second
+%                   channel as gray, and third channel as alpha between the
+%                   two.
+% 					'gray_viridis' - first channel is plotted as viridis colormap, second
+%                   channel as gray, and third channel as alpha between the
+%                   two.
+% 					'gray_inferno' - first channel is plotted as inferno colormap, second
+%                   channel as gray, and third channel as alpha between the
+%                   two.
+% 					'gray_parula' - first channel is plotted as parula colormap, second
+%                   channel as gray, and third channel as alpha between the
+%                   two.
+%
+% Also renamed the rescale.m function to rescale2.m located in the /private/ folder. 
+% This function sometimes cused issues with Matlabs own rescale function. Associated 
+% function calls were updated within the other functions in this package. The private 
+% folder was removed and functions were moved to the sc root folder. 
+
 
 function [I, limits, map] = sc(I, varargin)
 %% Check for arguments
