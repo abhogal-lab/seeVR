@@ -1,2 +1,35 @@
+![seeVR_sml](https://user-images.githubusercontent.com/76702516/127998873-93f9a3d4-3a93-4ed0-acc9-7db1313c8988.png)
+
 # seeVR
-Toolbox for analyzing cerebrovascular imaging data based on BOLD MRI
+A toolbox for analyzing cerebro-vascular other related hemodynamic data:
+
+SeeVR is an open-source toolbox MATLAB distributed under the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later option. Most of the optimization has been done using Matlab 2020+. SeeVR makes use of the parallel computing toolbox (workaround = replace parfor with for loops), the statistics toolbox and the wavelet toolbox. Wherever possible alternative implementations are avilable when these toolboxes are not available. If you run into any errors or bugs, have any feedback or would like to see new things implemented please dont hesitate to contact me at a.bhogal@umcutrecht.nl or via the contact for at https://www.seevr.nl/contact-collaboration/.
+
+If you use any CVR functionality for your work (or any derivatives based on the seeVR toolbox) please cite the following paper:
+
+Insights into cerebral tissue-specific response to respiratory challenges at 7T: evidence for combined blood flow and CO2-mediated effects
+AA Champagne, AA Bhogal - Frontiers in physiology, 2021, https://doi.org/10.3389/fphys.2021.601369
+
+Functionality:
+
+* basic functions for data handling (grabTimeseries, normTimeseries, chopTimeseries, demeanData, trAlign + WIP functions for loading of respiratory data for RespirAct only)
+* nuissance regression and de-noising (filtRegressor, scrubData, genGS, remLV, smthData, denoiseData)
+* convolution (fitHRF, convHRF, convEXP) 
+* spectral/hemodynamic analysis (basicCVR, glmCVRidx, fALFF, freqSpec, lagCVR)
+
+For more details download the user manual from www.seeVR.nl or have a look at the example data and tutorials at https://www.seevr.nl/tutorials/
+
+The toolbox does include some dependencies, each provided with their own specific licences. These include:
+
+* Wonsang You (2021). Easy Bandpass Filter (https://www.mathworks.com/matlabcentral/fileexchange/58219-easy-bandpass-filter)
+* John D'Errico (2021). inpaint_nans (https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans)
+* Daniel Baboiu (2021). Legendre polynomials (https://www.mathworks.com/matlabcentral/fileexchange/28008-legendre-polynomials)2021.
+* Matt J (2021). Extract linearly independent subset of matrix columns  (https://www.mathworks.com/matlabcentral/fileexchange/77437-extract-linearly-independent-subset-of-matrix-columns)
+* Benjamin Kraus (2021). nanconv (https://www.mathworks.com/matlabcentral/fileexchange/41961-nanconv)
+* John D'Errico (2021). SLM - Shape Language Modeling (https://www.mathworks.com/matlabcentral/fileexchange/24443-slm-shape-language-modeling)
+* Oliver Woodford (2021). SC - powerful image rendering (https://github.com/ojwoodford/sc)
+* Stephen Cobeldick (2021). ColorBrewer: Attractive and Distinctive Colormaps (https://github.com/DrosteEffect/BrewerMap)
+* Ander Biguri (2021). Perceptually uniform colormaps (https://www.mathworks.com/matlabcentral/fileexchange/51986-perceptually-uniform-colormaps)
+
+
+
