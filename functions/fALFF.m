@@ -14,8 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)                  
+%
+% *************************************************************************
 % Timeseries data is used to generate ALFF and fALFF maps based on specified
 % frequency bands. For details see: 
 % An improved approach to detection of amplitude of low-frequency fluctuation (ALFF) for resting-state fMRI: Fractional ALFF
@@ -39,6 +39,8 @@ function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, 
 %
 % zfALFF_map: z-transformed fALFF map defined by the standard deviation of
 % fALFF values defined by the input mask
+function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)                  
+
 
 global opts
 if ispc

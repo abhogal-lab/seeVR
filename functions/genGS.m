@@ -14,7 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-function [cleanData,res_ts,resData] = genGS(data, mask, nuisance, probe, opts)
+%
+% *************************************************************************
 % This function uses input nuissance regressors and data regressors 
 % (i.e. response models) to remove input data of all explainable
 % signal responses. The result is a residual 'global' signal that can be
@@ -44,6 +45,7 @@ function [cleanData,res_ts,resData] = genGS(data, mask, nuisance, probe, opts)
 %
 % resData: residual data after nuisance and probe regressor explained
 % signal variance has been removed. Here the linear offset is also removed.
+function [cleanData,res_ts,resData] = genGS(data, mask, nuisance, probe, opts)
 
 warning('off');
 global opts

@@ -14,8 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [sdata] = smthData(data, mask, opts)
+%
+% *************************************************************************
 % smthData applies a 2D or 3D smoothing kernel to the input data. 
 %
 % data: Timeseries data (i.e. 3D or 4D BOLD MRI dataset)
@@ -26,6 +26,8 @@ function [sdata] = smthData(data, mask, opts)
 % function; i.e. opts.spatialdim, opts.voxelsize, opts.filtWidth, opts.FWHM
 %
 % sdata: this is smoothed version of the input data
+function [sdata] = smthData(data, mask, opts)
+
 
 warning('off')
 global opts

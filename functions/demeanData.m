@@ -14,8 +14,8 @@
 %
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [dmData] = demeanData(data, mask)
+%
+% *************************************************************************
 % This function calculates the mean value at each voxel and subtracts it
 % from every element in the voxel timeseries. This can be used for 2-4D
 % data.
@@ -25,6 +25,8 @@ function [dmData] = demeanData(data, mask)
 % mask: binary mask defining region of interest
 %
 % dmData: a de-meaned version of the input data
+function [dmData] = demeanData(data, mask)
+
 warning('off')
 global opts;
 

@@ -14,8 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [denData] = denoiseData(data,mask,opts)
+%
+% *************************************************************************
 % Depending on the available toolboxes, this function will perform either a
 % wavelet based de-noising or a temporal smoothing of timeseries data
 %
@@ -29,8 +29,7 @@ function [denData] = denoiseData(data,mask,opts)
 % function)
 %
 % denData: a denoised/smoothed version of the input data
-
-
+function [denData] = denoiseData(data,mask,opts)
 
 if license('test', 'wavelet_toolbox')
     if isfield(opts,'wdlevel'); else; opts.wdlevel = 3; end

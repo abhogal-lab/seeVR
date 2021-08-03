@@ -14,8 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [val] = ROImean(data,mask)
+%
+% *************************************************************************
 % ROImean calculates the mean value of the 'data' within an ROI specified
 % by the mask
 %
@@ -24,6 +24,8 @@ function [val] = ROImean(data,mask)
 % mask: corresponding 2D/3D mask
 %
 % val: average value within ROI
+function [val] = ROImean(data,mask)
+
 
 data(isnan(data)) = 0; data(isinf(data)) = 0;
 temp = data(:).*mask(:);

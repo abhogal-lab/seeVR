@@ -14,13 +14,15 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [mask] = make_mask(input)
+%
+% *************************************************************************
 % function to generate a slice-by-slice brain mask based on user input
 %
 % input: input image to mask
 %
 % mask: resultant binary mask
+
+function [mask] = make_mask(input)
 
 slice = size(input,3);
 

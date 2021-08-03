@@ -14,8 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function[ fSpec, meanSpec, freq ] = freqSpec(data, mask, opts)        
+%
+% *************************************************************************
 % this function takes input data and uses a fourier analysis to generate
 % the frequency spectrum information. If opts.powerspec = 1 is supplied in
 % the opts structure, then the power spectrum will be returned.
@@ -34,8 +34,9 @@ function[ fSpec, meanSpec, freq ] = freqSpec(data, mask, opts)
 % mask
 %
 % freq: the vector of frequency values
+function[ fSpec, meanSpec, freq ] = freqSpec(data, mask, opts)        
 
-
+warning('off')
 global opts
         if isfield(opts,'powerspec'); else; opts.powerspec = 0; end
         Fs = 1/opts.TR;

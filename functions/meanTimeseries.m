@@ -14,13 +14,15 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>. 
-
-function [img_ts] = meanTimeseries(data, mask)
+%
+% *************************************************************************
 % function to generate mean timeseries from data based on input mask
 %
 % data: input timeseries data (i.e. 4D BOLD MRI dataset)
 %
 % mask: binary mask defining voxels of interest
+function [img_ts] = meanTimeseries(data, mask)
+
 
 mask(isnan(mask)) = 0;
 mask = logical(mask(:));

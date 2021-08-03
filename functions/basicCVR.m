@@ -14,11 +14,10 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [delta] = basicCVR(data, mask, base_idx, stim_idx, savefile, opts)
 % Using a defined baseline period and stimulus period, this function
 % returns a map of the signal change at each voxel between those epochs.
 %
+% *************************************************************************
 % data: absolute timeseries data (i.e. 4D BOLD MRI dataset that is not 
 % expressed in %signal change)
 %
@@ -33,6 +32,8 @@ function [delta] = basicCVR(data, mask, base_idx, stim_idx, savefile, opts)
 % opts.headers.map, opts.resultsdir
 %
 % delta: a map of calculated signal changes from baseline
+function [delta] = basicCVR(data, mask, base_idx, stim_idx, savefile, opts)
+
 
 warning('off')
 global opts

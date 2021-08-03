@@ -14,8 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [ndata] = normTimeseries(data,mask,idx)
+%
+% *************************************************************************
 % This function will normalize timeseries data (i.e. calculate %change) to
 % baseline using input mask index are some user-supplied baseline
 % timepoints. If index is not empty, this function will allow manual 
@@ -33,6 +33,8 @@ function [ndata] = normTimeseries(data,mask,idx)
 %
 % opts.norm_idx: this parameter is changed to reflect the selected baseline
 % start and end indices.
+function [ndata] = normTimeseries(data,mask,idx)
+
 warning('off')
 global opts;
 

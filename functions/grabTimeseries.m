@@ -30,7 +30,6 @@
 % voxel timeseries
 function [voxel_ts, coordinates] = grabTimeseries(data, mask)
 
-
 switch ndims(data)
     case 4
 [x,y,z,dyn] = size(data); 

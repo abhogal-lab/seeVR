@@ -14,8 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [CVRidx_map BP_ref bpData] = glmCVRidx(data, mask, refmask , opts)
+%
+% *************************************************************************
 % this function is inspited by the following manuscript:
 % Cerebrovascular Reactivity Mapping Using Resting-State BOLD Functional MRI in Healthy Adults and Patients with Moyamoya Disease
 % https://doi.org/10.1148/radiol.2021203568
@@ -40,7 +40,7 @@ function [CVRidx_map BP_ref bpData] = glmCVRidx(data, mask, refmask , opts)
 % ROI defined by refmask
 %
 % bpData: a bandpassed version of the input data
-
+function [CVRidx_map BP_ref bpData] = glmCVRidx(data, mask, refmask , opts)
 
 warning('off');
 global opts;

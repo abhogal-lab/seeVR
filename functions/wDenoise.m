@@ -14,10 +14,12 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [ wdenData ssimval ]  = wDenoise(data, mask, opts)
+%
+% *************************************************************************
 % This is a wrapper function which uses the wavelet toolbox to de-noise
 % input signals. For more information see the MATLAB wdenoise function.
+function [ wdenData ssimval ]  = wDenoise(data, mask, opts)
+
 
 global opts;
 t = cputime;

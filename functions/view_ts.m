@@ -14,13 +14,15 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [] = view_ts(data,slice,scale)
+%
+% *************************************************************************
 % This function that displays timeseries data
 %
 % data: input 4D timeseries
 % slice: which slice of the 3D volume to show
 % scale: range of the data to be shown
+function [] = view_ts(data,slice,scale)
+
 
 figure;
 for ii=1:size(data,4)
