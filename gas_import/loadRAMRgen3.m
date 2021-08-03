@@ -14,8 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>. 
-
-function [corrvec_CO2 corrvec_O2] = loadRAMRgen3(opts)
+%
+% *************************************************************************
 % This functions loads respiract endtidal traces from 3rd generation respiract
 % system. 
 % 
@@ -28,6 +28,8 @@ function [corrvec_CO2 corrvec_O2] = loadRAMRgen3(opts)
 % corrvec_CO2: the temporally resampled (to opts.TR) end-expired CO2 traces
 %
 % corrvec_O2: the temporally resampled (to opts.TR) end-expired O2 traces
+function [corrvec_CO2 corrvec_O2] = loadRAMRgen3(opts)
+
 
 cd(opts.seqpath)
 oversample = 1;

@@ -82,6 +82,7 @@ end
 
 %setup save directories (for unix change slashes - need to generalize this)
 if ispc
+    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end     
     if opts.corr_model; opts.corrlagdir = [opts.resultsdir,'corrLAG\']; mkdir(opts.corrlagdir); end
     if opts.corr_model && opts.cvr_maps; opts.corrCVRdir = [opts.corrlagdir,'CVR\']; mkdir(opts.corrCVRdir); end
     if opts.corr_model == 0; opts.cvr_maps = 0; end
@@ -90,6 +91,7 @@ if ispc
         opts.glmCVRdir = [opts.glmlagdir,'CVR\']; mkdir(opts.glmCVRdir);
     end
 else
+    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'/']; end 
     if opts.corr_model; opts.corrlagdir = [opts.resultsdir,'corrLAG/']; mkdir(opts.corrlagdir); end
     if opts.corr_model && opts.cvr_maps; opts.corrCVRdir = [opts.corrlagdir,'CVR/']; mkdir(opts.corrCVRdir); end
     if opts.corr_model == 0; opts.cvr_maps = 0; end
@@ -124,8 +126,7 @@ end
 %interpolate variables
 probe = interp(probe,opts.interp_factor); %interpolate data by a factor of the number of slices for more accurate timing
 orig_regr = interp(orig_regr,opts.interp_factor); %save input regressor to generate corrected CVR maps
-if opts.glm_model; for ii=1:size(nuisance,2); np(:,ii) = interp(nuisance(:,ii),opts.interp_factor); end; end
-
+for ii=1:size(nuisance,2); np(:,ii) = demeanData(rescale(interp(nuisance(:,ii),opts.interp_factor))); end;
 gm_voxel_ts_nonan=zeros([length(gmcoordinates),opts.interp_factor*dyn]);
 parfor ii = 1:length(gmcoordinates)
     gm_voxel_ts_nonan(ii,:) = interp(gm_voxel_ts(ii,:),opts.interp_factor);
@@ -693,8 +694,7 @@ if opts.glm_model
                 regr = probe;
         end
         %removes linearly dependent components
-        
-        for ii=1:size(np,1); np(ii,:) = np(ii,:)-rescale(np(ii,:)); end
+       
         [norm_np,idx]=licols(np);
         %setup regression matrix
         for ii = 1:size(lags,2)

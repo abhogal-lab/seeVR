@@ -14,8 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [voxel_ts, coordinates] = grabTimeseries(data, mask)
+%
+% *************************************************************************
 % takes 3D or 4D input data and extracts voxel timeseries data defined by
 % the input mask
 %
@@ -28,6 +28,8 @@ function [voxel_ts, coordinates] = grabTimeseries(data, mask)
 %
 % coordinates: a tall array of spatial coordinates associated with each
 % voxel timeseries
+function [voxel_ts, coordinates] = grabTimeseries(data, mask)
+
 
 switch ndims(data)
     case 4

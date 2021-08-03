@@ -14,8 +14,8 @@
 %
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [mmask] = remLV(data,mask,opts)
+%
+% *************************************************************************
 % remLV function uses the inverse tSNR (tNSR) to isolate bright signals associated
 % with large draining veins. These voxels are removed from the original
 % mask and returned for further processing: 1/tSD, tSD, tSNR, tNSR are
@@ -30,11 +30,19 @@ function [mmask] = remLV(data,mask,opts)
 %
 % mmask: this is the modified mask where voxels above the specified
 % threshold have been removed
+function [mmask] = remLV(data,mask,opts)
+
 
 warning('off')
 global opts
 
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
+
+if ispc
+if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end 
+else
+if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'/']; end  
+end
 
 [voxel_ts, coordinates] = grabTimeseries(data, mask);
 SD = nanstd(voxel_ts,0,2);

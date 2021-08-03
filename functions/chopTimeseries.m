@@ -14,8 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [idx, rdata] = chopTimeseries(data,mask,idx)
+%
+% *************************************************************************
 % chopTimeseries shortens the input data in the temporal dimension as
 % specified by either user input or supplied indices.
 %
@@ -31,12 +31,16 @@ function [idx, rdata] = chopTimeseries(data,mask,idx)
 % rdata: this is the shortened version of the input data
 %
 % opts.xdata and opts.dyn are updated to reflect the new shortened
+function [idx, rdata] = chopTimeseries(data,mask,idx)
+
 % timeseries
 warning('off');
 global opts;
 
 if isfield(opts,'save_rdata'); else; opts.save_rdata = 0; end %saves the shortened timeseries
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
+if isfield(opts,'dyn'); else; opts.dyn = size(data,ndims(data)); end %setup option if its not there
+if isfield(opts,'xdata'); else; opts.xdata = [opts.TR:opts.TR:opts.TR*opts.dyn]; end %setup option if its not there yet
 
 
 switch nargin
@@ -74,7 +78,7 @@ switch nargin
         end
         if opts.verbose; disp('Using user-supplied indices to select epoch'); end
 end
-if opts.verbose; 
+if opts.verbose
     disp('Updated header file to reflect new timeseries length'); 
     disp('Updated opts.xdata and opts.dyn to reflect new timeseries length'); 
 end

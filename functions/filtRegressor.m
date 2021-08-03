@@ -14,9 +14,8 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-
-function [innuisance outnuisance] = filtRegressor(nuisance, probe, opts)
+%
+% *************************************************************************
 % This function correlates a series of nuisance regressors (typically 
 % motion parameters derived from realignment) with the input probe. Based
 % on the correlation threshold (opts.motioncorr, nuisance regressors are
@@ -33,6 +32,8 @@ function [innuisance outnuisance] = filtRegressor(nuisance, probe, opts)
 % innuisance: regressors having a correlation lower than the threshold
 %
 % outnuisance: regressors having a correlation higher than the threshold
+function [innuisance outnuisance] = filtRegressor(nuisance, probe, opts)
+
 
 warning('off');
 global opts
