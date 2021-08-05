@@ -18,7 +18,6 @@
 % *************************************************************************
 %
 %
-%
 function [maps] = fitHRF(mask,data,probe,opts)
 global opts
 warning('off')
@@ -37,7 +36,7 @@ end
 
 t = cputime;
 
-[x y z dyn] = size(data);
+[x, y, z, dyn] = size(data);
 
 
 %% grab coordinates
@@ -87,7 +86,8 @@ disp('Fitting HRF functions')
 
 parfor ii=1:size(voxel_ts,1)
     A = voxel_ts(ii,:);
-    C = [ones([length(A) 1]) A'];
+    % with linear term
+    C = [ones([length(A) 1])  A'];
     regr_coef = C\HRF_probe';
     
     %original observations
@@ -102,7 +102,7 @@ parfor ii=1:size(voxel_ts,1)
     end
     
     R2 = 1 - SSE./SST;
-    [M I] = max(R2);
+    [M, I] = max(R2);
     r2_vec(1,ii) = M;
     HRF_vec(1,ii) = I;
 end
