@@ -4,6 +4,9 @@
 
 function [image info header] = loadImageData(pathname, filename)
 
+if ~ispc
+  if filename(end) == char(10); filename(end) = []; end  
+end
 image_path = [pathname,filename];
 data = load_untouch_nii(image_path);
 image = double(data.img);
@@ -22,4 +25,7 @@ info.resz = data.hdr.dime.pixdim(4);
 info.dim = [info.resx info.resy info.resz];
 
 header = load_untouch_header_only(image_path);
+
+
+
 end
