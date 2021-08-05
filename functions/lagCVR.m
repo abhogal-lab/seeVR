@@ -805,7 +805,7 @@ if opts.glm_model
                 saveImageData(mask.*cR2, opts.headers.map, opts.glmlagdir, 'optiReg_R2.nii.gz', datatype); maps.GLM.optiReg_R2 = cR2;
                 saveImageData(mask.*cSSE, opts.headers.map, opts.glmlagdir, 'optiReg_SSE.nii.gz', datatype); maps.GLM.optiReg_SSE = cSSE;
                 saveImageData(mask.*cTstat, opts.headers.map, opts.glmlagdir, 'optiReg_Tstat.nii.gz', datatype); maps.GLM.optiReg_Tstat = cTstat;
-                saveas(gcf,[opts.glmlagdir,'regression_optiReg.fig']);
+                if opts.plot; saveas(gcf,[opts.glmlagdir,'regression_optiReg.fig']); end
             case 2
                 %save maps using CO2 regressor
                 saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'inputReg_ES.nii.gz', datatype); maps.GLM.inputReg_ES = GLM_Estimate;
@@ -815,7 +815,7 @@ if opts.glm_model
                 saveImageData(mask.*cR2, opts.headers.map, opts.glmlagdir, 'inputReg_R2.nii.gz', datatype); maps.GLM.inputReg_R2 = cR2;
                 saveImageData(mask.*cSSE, opts.headers.map, opts.glmlagdir, 'inputReg_SSE.nii.gz', datatype); maps.GLM.inputReg_SSE = cSSE;
                 saveImageData(mask.*cTstat, opts.headers.map, opts.glmlagdir, 'inputReg_Tstat.nii.gz', datatype); maps.GLM.inputReg_Tstat = cTstat;
-                saveas(gcf,[opts.glmlagdir,'regression_inputReg.fig']);
+                if opts.plot; saveas(gcf,[opts.glmlagdir,'regression_inputReg.fig']); end
         end
         
         %%%%% generate lag-corrected CVR maps %%%%

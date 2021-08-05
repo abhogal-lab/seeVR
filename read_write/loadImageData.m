@@ -4,9 +4,13 @@
 
 function [image info header] = loadImageData(pathname, filename)
 
+warning('off')
+global opts
+
 if ~ispc
-  if filename(end) == char(10); filename(end) = []; end  
+    if filename(end) == char(10); filename(end) = []; end
 end
+
 image_path = [pathname,filename];
 data = load_untouch_nii(image_path);
 image = double(data.img);
@@ -15,7 +19,7 @@ info.xdim = data.hdr.dime.dim(2);
 info.xdim = data.hdr.dime.dim(3);
 info.zdim = data.hdr.dime.dim(4);
 if size(data.hdr.dime.dim,2)>4
-info.dyn = data.hdr.dime.dim(5);
+    info.dyn = data.hdr.dime.dim(5);
 end
 
 info.resx = data.hdr.dime.pixdim(2);
@@ -26,6 +30,67 @@ info.dim = [info.resx info.resy info.resz];
 
 header = load_untouch_header_only(image_path);
 
-
-
+switch ndims(image)
+    case 4
+        if header.dime.dim(5) > 1
+            disp('initializing opts.TR in opts structure - please check if correct otherwise modify opts.TR');
+            disp('.');disp('.');
+            opts.TR = header.dime.pixdim(5);
+            if opts.TR > 10; opts.TR = opts.TR/1000; end
+            opts.dyn = header.dime.dim(5);
+            opts.xdata = (opts.TR:opts.TR:opts.TR*opts.dyn);
+        end
+        if isfield(opts,'headers'); else
+            disp('initializing timeseries header in opts.header.ts - used for saving 4D data');
+            disp('.');disp('.');
+            opts.headers.ts = header;
+            disp('initializing parameter map header in opts.header.map - used for saving 3D data');
+            disp('.');disp('.');
+            opts.headers.map =  header;
+            opts.headers.map.dime.dim(5) = 1;
+            disp('initializing mask header in opts.header.map - used for saving masks');
+            disp('.');disp('.');
+            opts.headers.mask = opts.headers.map;
+            opts.headers.mask.dime.datatype = 4;
+            opts.voxelsize = header.dime.pixdim(2:4);
+        end
+    case 3        
+        if header.dime.dim(5) > 1
+            disp('initializing opts.TR in opts structure - please check if correct otherwise modify opts.TR');
+            disp('.');disp('.');
+            opts.TR = header.dime.pixdim(5);
+            if opts.TR > 10; opts.TR = opts.TR/1000; end
+            opts.dyn = header.dime.dim(5);
+            opts.xdata = (opts.TR:opts.TR:opts.TR*opts.dyn);         
+        end
+        if header.dime.datatype == 4
+            disp('Based on the datatype this could be a mask')
+            disp('.');disp('.');
+            opts.headers.mask = header;
+            opts.headers.mask.dime.dim(5) = 1;
+            opts.headers.mask.dime.datatype = 4;
+            opts.voxelsize = header.dime.pixdim(2:4);
+        else
+        disp('initializing parameter map header in opts.header.map - used for 3D data');  
+        disp('.');disp('.');
+        opts.headers.map =  header;
+        opts.headers.map.dime.dim(5) = 1;
+        opts.voxelsize = header.dime.pixdim(2:3);
+        if isfield(opts.headers,'mask')
+        disp('Mask header information already exists in opts.headers.mask')
+        else 
+        disp('Initializing mask header in opts.header.mask - used for saving masks');
+            disp('.');disp('.');
+            opts.headers.mask = header;
+            opts.headers.mask.dime.dim(5) = 1;
+            opts.headers.mask.dime.datatype = 4;
+            opts.voxelsize = header.dime.pixdim(2:4);
+        end
+        end
 end
+    
+image(isinf(image)) = 0;
+image = double(image);
+end
+
+
