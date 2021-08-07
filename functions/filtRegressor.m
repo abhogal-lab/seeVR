@@ -43,10 +43,6 @@ test1 = nuisance(1,:); test2 = nuisance(:,1);
 if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
 if iscolumn(probe)==0; probe = probe'; end
 
-for ii=1:size(nuisance,2)
-    nuisance(:,ii) = rescale(nuisance(:,ii));
-end
-
 %remove nuisance correlating with probe
 autoCorr = abs(corr(probe,nuisance)); 
 autoCorr(autoCorr < opts.motioncorr) = 0; autoCorr(autoCorr > 0) = 1; %removes anything with more than weak correlation
