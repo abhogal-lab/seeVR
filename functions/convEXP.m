@@ -22,7 +22,7 @@ warning('off')
 global opts;
 %set defaults
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn plotting on or off
-if isfield(opts,'disp'); else; opts.disp = [1:.5:30]; end %dispersion parameter - set a default vector
+if isfield(opts,'disp'); else; opts.disp = (1:.5:30); end %dispersion parameter - set a default vector
 if isfield(opts,'pad'); else; opts.pad = 1; end %pad before fft
 if isfield(opts,'padfront'); else; opts.padfront = 0; end %pad before fft
 
