@@ -125,7 +125,7 @@ end
 
 if isfield(opts,'save_cleaned'); else opts.save_cleaned = 0; end
 if opts.save_cleaned
-    saveImageData(cleanBOLD, opts.headers.ts, opts.resultsdir, 'cleanBOLD.nii.gz', 64);
+    saveImageData(cleanData, opts.headers.ts, opts.resultsdir, 'cleanBOLD.nii.gz', 64);
 end
 
 
