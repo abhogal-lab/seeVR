@@ -17,7 +17,7 @@ Functionality:
 * convolution (fitHRF, convHRF, convEXP) 
 * spectral/hemodynamic analysis (basicCVR, glmCVRidx, fALFF, freqSpec, lagCVR)
 
-For more details download the user manual from www.seeVR.nl or have a look at the example data and tutorials at https://www.seevr.nl/tutorials/
+For more details download the user manual from www.seeVR.nl or have a look at the example data and tutorials at https://www.seevr.nl/tutorials/. Some documentation still needs to be updated so check the updates section of the site regularly to see what I've fixed.
 
 The toolbox does include some dependencies, each provided with their own specific licences. These include:
 
@@ -30,6 +30,4 @@ The toolbox does include some dependencies, each provided with their own specifi
 * Oliver Woodford (2021). SC - powerful image rendering (https://github.com/ojwoodford/sc)
 * Stephen Cobeldick (2021). ColorBrewer: Attractive and Distinctive Colormaps (https://github.com/DrosteEffect/BrewerMap)
 * Ander Biguri (2021). Perceptually uniform colormaps (https://www.mathworks.com/matlabcentral/fileexchange/51986-perceptually-uniform-colormaps)
-
-
-
+* Jimmy Shen (2021). Tools for NIfTI and ANALYZE image (https://www.mathworks.com/matlabcentral/fileexchange/8797-tools-for-nifti-and-analyze-image), MATLAB Central File Exchange. Retrieved August 12, 2021.
