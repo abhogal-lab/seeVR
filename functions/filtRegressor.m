@@ -60,20 +60,20 @@ outnuisance(:,leave) = [];
 if isempty(outnuisance)
 cols = 3; else; cols = 4; 
 end
-
+xdata = opts.TR:opts.TR:length(probe)*opts.TR;
 figure; 
-subplot(cols,1,1); plot(opts.xdata, probe); 
+subplot(cols,1,1); plot(xdata, probe); 
 title('reference signal'); xlabel('time(s)'); 
 xlim([0 opts.xdata(end)]);
 set(gcf, 'Units', 'pixels', 'Position', [200, 500, 600, 800]);
-subplot(cols,1,2); plot(opts.xdata, nuisance); 
+subplot(cols,1,2); plot(xdata, nuisance); 
 title('motion parameters & derivatives'); xlabel('time(s)'); 
 xlim([0 opts.xdata(end)]);
-subplot(cols,1,3); plot(opts.xdata, innuisance); 
+subplot(cols,1,3); plot(xdata, innuisance); 
 title('nuisance < r-threshold'); xlabel('time(s)');
 xlim([0 opts.xdata(end)]);
-if ~isempty(outnuisance);
-subplot(cols,1,4); plot(opts.xdata, outnuisance); 
+if ~isempty(outnuisance)
+subplot(cols,1,4); plot(xdata, outnuisance); 
 title('nuisance > r-threshold'); xlabel('time(s)');
 xlim([0 opts.xdata(end)]);
 end

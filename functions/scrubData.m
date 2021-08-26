@@ -96,9 +96,9 @@ else
     subplot(5,1,1); hold on; for ii=1:size(probe,2); plot(np(:,ii), 'Color', 'k'); end; title('data probe(s)'); xlim(limits);
 end
 if size(nuisance,2) > 1
-    subplot(5,1,2); hold on; for ii=1:size(nuisance,2); plot(nuisance(:,ii), 'Color', nuisancemap(ii,:)); end; title('nuisance regressor(s)'); xlim(limits);
+    subplot(5,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii)), 'Color', nuisancemap(ii,:)); end; title('rescaled nuisance regressor(s)'); xlim(limits);
 else
-    subplot(5,1,2); hold on; for ii=1:size(nuisance,2); plot(nuisance(:,ii), 'Color', 'r'); end; title('nuisance regressor(s)'); xlim(limits);
+    subplot(5,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii)), 'Color', 'r'); end; title('rescaled nuisance regressor(s)'); xlim(limits);
 end
 subplot(5,1,3); plot(meanTimeseries(data,mask),'k'); title('Original Data'); xlim(limits)
 subplot(5,1,4); plot(nanmean(nuis_TS,2),'k'); title('nuisance Mean'); xlim(limits);
@@ -123,7 +123,7 @@ else
     end
 end
 
-if isfield(opts,'save_cleaned'); else opts.save_cleaned = 0; end
+if isfield(opts,'save_cleaned'); else; opts.save_cleaned = 0; end
 if opts.save_cleaned
     saveImageData(cleanData, opts.headers.ts, opts.resultsdir, 'cleanBOLD.nii.gz', 64);
 end
