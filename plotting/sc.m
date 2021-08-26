@@ -14,7 +14,7 @@
 % Generates a truecolor RGB image based on the input values in 'image' and
 % any maximum and minimum limits specified, using the colormap specified.
 % The image is displayed on screen if there is no output argument.
-% 
+%
 % SC has these advantages over MATLAB image rendering functions:
 %   - images can be displayed or output; makes combining/overlaying images
 %     simple.
@@ -105,13 +105,13 @@
 %   out - MxNx3xP truecolour (double) RGB image array in range [0, 1].
 %   clim - 1x2 vector of colorbar limits used. [] if this mapping is not
 %          available, e.g. if output image is multi-spectral.
-%   map - 256x3 colormap of the output. [] if clim is []. 
+%   map - 256x3 colormap of the output. [] if clim is [].
 %
 % See also IMAGE, IMAGESC, IMSC, COLORMAP, COLORBAR.
 %
 % Copyright: Oliver Woodford, 2007-2013
 %
-% Updated by Alex Bhogal 8/2/2021 
+% Updated by Alex Bhogal 8/2/2021
 % a.bhogal@umcutrecht.nl for use with seeVR toolbox (www.seeVR.nl)
 %
 % Added several additional colormap options for overlay
@@ -136,11 +136,20 @@
 % 					'gray_parula' - first channel is plotted as parula colormap, second
 %                   channel as gray, and third channel as alpha between the
 %                   two.
+% 					'gray_spectral' - first channel is plotted as spectral brewer colormap, second
+%                   channel as gray, and third channel as alpha between the
+%                   two.
+% 					'gray_ryb' - first channel is plotted as RedYellowBlue brewer colormap, second
+%                   channel as gray, and third channel as alpha between the
+%                   two.
+% 					'gray_ryg' - first channel is plotted as RedYellowGreen brewer colormap, second
+%                   channel as gray, and third channel as alpha between the
+%                   two.
 %
-% Also renamed the rescale.m function to rescale2.m located in the /private/ folder. 
-% This function sometimes cused issues with Matlabs own rescale function. Associated 
-% function calls were updated within the other functions in this package. The private 
-% folder was removed and functions were moved to the sc root folder. 
+% Also renamed the rescale.m function to rescale2.m located in the /private/ folder.
+% This function sometimes cused issues with Matlabs own rescale function. Associated
+% function calls were updated within the other functions in this package. The private
+% folder was removed and functions were moved to the sc root folder.
 
 
 function [I, limits, map] = sc(I, varargin)
@@ -192,9 +201,9 @@ if n > 1
         if n > 12
             sz = [3 4];
         else
-           sz = []; 
+            sz = [];
         end
-        imdisp(A, 'Size', sz, 'Border', 0.01); 
+        imdisp(A, 'Size', sz, 'Border', 0.01);
     end
     return
 end
@@ -206,7 +215,7 @@ end
 if isnumeric(map) && (size(map, 2) == 3 || size(map, 2) == 4)
     % Table-based colormap
     [I, limits, map] = table_wrapper(I, map, limits);
-elseif ischar(map)    
+elseif ischar(map)
     % Predefined colormap
     [I, limits, map] = colormap_switch(I, map, limits);
 else
@@ -264,7 +273,7 @@ reverseMap = cmap(1) == '-';
 grayMap = cmap(end) == '*';
 % Large switch statement for all the colormaps
 switch lower(cmap(1+reverseMap:end-grayMap))
-%% Prism
+    %% Prism
     case 'prism'
         % Similar to the MATLAB internal prism colormap, but only works on
         % index images, assigning each index (or rounded float) to a
@@ -278,7 +287,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         % Lookup the colours
         I = mod(I, 6) + 1;
         I = map(I,:);
-%% Rand
+        %% Rand
     case 'rand'
         % Assigns a random colour to each index
         [I, limits, num_vals] = index_im(I);
@@ -286,7 +295,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         map = rand(num_vals, 3);
         % Lookup the colours
         I = map(I,:);
-%% Diff
+        %% Diff
     case 'diff'
         % Show positive as blue and negative as red, white is 0
         switch c
@@ -333,7 +342,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         I = 1 - I * [1 1 0.4; 0.4 1 1; 1 0.4 1]; % (Blue/Red)
         I = min(max(I, 0), 1);
         limits = [-limits limits]; % For colorbar
-%% Flow and Complex
+        %% Flow and Complex
     case {'flow', 'complex'}
         % Calculate amplitude and phase, and use 'phase'
         if c ~= 2
@@ -368,7 +377,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         % Set NaNs (unknown flow) to 0
         I(isnan(I)) = reverseMap;
         limits = []; % This colormap doesn't have a valid colorbar
-%% Phase
+        %% Phase
     case 'phase'
         % Plot amplitude as intensity and angle as hue
         if c < 2
@@ -389,15 +398,15 @@ switch lower(cmap(1+reverseMap:end-grayMap))
             I = real2rgb(mod(I(:,1) / (2 * pi), 1), 'hsv');
         end
         limits = []; % This colormap doesn't have a valid colorbar
-%% RGB2Gray
+        %% RGB2Gray
     case {'rgb2gray', 'rgb2grey'}
         % Compress RGB to greyscale
         [I, limits] = rgb2gray(I, limits, reverseMap);
-%% RGB2YUV
+        %% RGB2YUV
     case 'rgb2yuv'
         % Convert RGB to YUV - not for displaying or saving to disk!
         [I, limits] = rgb2yuv(I);
-%% YUV2RGB
+        %% YUV2RGB
     case 'yuv2rgb'
         % Convert YUV to RGB - undo conversion of rgb2yuv
         if c ~= 3
@@ -406,7 +415,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         I = I(:,:) * [1 1 1; 0, -0.39465, 2.03211; 1.13983, -0.58060  0];
         I = rescale(I, limits);
         limits = []; % This colormap doesn't have a valid colorbar
-%% Prob
+        %% Prob
     case 'prob'
         % Plot first channel as grey variation of 'bled' and modulate
         % according to other channels
@@ -420,7 +429,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         cmap2((1:4)+reverseMap) = 'bled';
         [I, limits] = real2rgb(I, cmap2, limits);
         I = rescale(A + I, [-0.1 1.3]);
-%% Prob_jet
+        %% Prob_jet
     case 'prob_jet'
         % Plot first channel as 'jet' and modulate according to other
         % channels
@@ -547,14 +556,117 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         if c ~= 3
             error('gray_hot requires a 3 channel image');
         end
-        map = colormap(hot); 
+        map = colormap(hot);
         J = real2rgb(I(:,:,1), map, limits);
         G = real2rgb(I(:,:,2), 'gray');
         A = real2rgb(I(:,:,3), 'gray');
         I = J .* A + G .* (1 - A);
         limits = [];
-
-%% Compress
+        %% Gray_spectral
+    case 'gray_spectral'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_spectral requires a 3 channel image');
+        end
+        map = colormap(flip(brewermap(256,'Spectral')));
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
+        %% Gray_BuYlRd
+    case 'gray_byr'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_byr requires a 3 channel image');
+        end
+        map = colormap(flip(brewermap(256,'RdYlBu')));
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
+        %% Gray_GrYlRd
+    case 'gray_gyr'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_gyr requires a 3 channel image');
+        end
+        map = colormap(flip(brewermap(256,'RdYlGn')));
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
+        %% Gray_RdYlBu
+    case 'gray_ryb'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_ryb requires a 3 channel image');
+        end
+        map = colormap(brewermap(256,'RdYlBu'));
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
+        %% Gray_RdYlBu
+    case 'gray_ryg'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_ryg requires a 3 channel image');
+        end
+        map = colormap(brewermap(256,'RdYlGn'));
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
+        %% Gray_PuOr
+    case 'gray_po'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_po requires a 3 channel image');
+        end
+        map = colormap(brewermap(256,'PuOr'));
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
+        %% Gray_OrPu
+    case 'gray_op'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_op requires a 3 channel image');
+        end
+        map = colormap(flip(brewermap(256,'PuOr')));
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
+         %% Gray_ACCENT
+    case 'gray_acc'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_acc requires a 3 channel image');
+        end
+        map = colormap(flip(brewermap(256,'ACCENT')));
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];   
+        %% Compress
     case 'compress'
         % Compress to RGB, maximizing variance
         % Determine and scale to limits
@@ -589,7 +701,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         % Put components in order of human eyes' response to channels
         I = I(:,[2 1 3]);
         limits = []; % This colormap doesn't have a valid colorbar
-%% Contrast
+        %% Contrast
     case 'contrast'
         % Use MATLAB's CONTRAST function to spread the gray levels evenly
         [I, limits] = intensity(I, limits, 0);
@@ -598,7 +710,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
             map = map(end:-1:1,:);
         end
         I = real2rgb(I, map, [0 1]);
-%% Stereo (anaglyph)
+        %% Stereo (anaglyph)
     case 'stereo'
         % Convert 2 colour images to intensity images
         % Show first channel as red and second channel as cyan
@@ -610,7 +722,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
             I(:,1) = A(:,1); % Make first image red
         end
         limits = []; % This colormap doesn't have a valid colorbar
-%% Coloured anaglyph
+        %% Coloured anaglyph
     case 'stereo_col'
         if c ~= 6
             error('''stereo_col'' requires a 6 channel image');
@@ -624,7 +736,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         end
         I = I(:,1:3);
         limits = []; % This colormap doesn't have a valid colorbar
-%% Coloured segments
+        %% Coloured segments
     case 'segment'
         % Last channel assumed to be an index image. Output each segment as
         % a mean of the other channels in the segment.
@@ -645,11 +757,11 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         end
         % Generate the image
         I = J(S,:);
-%% None
+        %% None
     case 'none'
         % No colormap - just output the image
         if c == 3
-            I = rescale(I, limits);
+            I = rescale2(I, limits);
             limits = [];
             if reverseMap
                 I = 1 - I;
@@ -658,11 +770,11 @@ switch lower(cmap(1+reverseMap:end-grayMap))
             cmap((1:4)+reverseMap) = 'gray';
             [I, limits, map] = table_wrapper(I, cmap, limits);
         end
-%% Grey
+        %% Grey
     case 'grey'
         cmap(3+reverseMap) = 'a';
         [I, limits, map] = table_wrapper(I, cmap, limits);
-%% Colourcube
+        %% Colourcube
     case {'colorcube2', 'colourcube2'}
         % Psychedelic colormap inspired by MATLAB's version
         [I, limits] = intensity(I, limits, reverseMap); % Intensity map
@@ -671,7 +783,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         J = I * step;
         K = floor(J);
         I = cat(3, mod(K, step)/(step-1), J - floor(K), mod(floor(I), step)/(step-1));
-%% Functional colormap
+        %% Functional colormap
     otherwise
         [I, limits, map] = table_wrapper(I, cmap, limits);
 end
@@ -778,7 +890,7 @@ end
 % Replicate channels
 B = B(:,:,[1 1 1]);
 return
-        
+
 %% RGB2YUV
 function [B, limits] = rgb2yuv(A)
 % Convert RGB to YUV - not for displaying or saving to disk!
@@ -816,7 +928,7 @@ if size(I, 3) > 1
     I = sqrt(sum(I .^ 2, 3));
 end
 % Determine and scale to limits
-[I, limits] = rescale(I, limits);
+[I, limits] = rescale2(I, limits);
 if limits(1) == limits(2)
     limits(2) = limits(1) + 1;
 end
@@ -848,7 +960,7 @@ elseif nargout > 2
     num_vals = max(J);
 end
 % These colormaps don't have valid colorbars
-limits = [];    
+limits = [];
 return
 
 %% Calculate principle components
@@ -877,22 +989,22 @@ function demo
 %% Demo gray & lack of border
 figure; fig = gcf; Z = peaks(256); sc(Z);
 display_text([...
-' Lets take a standard, MATLAB, real-valued function:\n\n    peaks(256)\n\n'...
-' Calling:\n\n    figure\n    Z = peaks(256);\n    sc(Z)\n\n'...
-' gives (see figure). SC automatically scales intensity to fill the\n'...
-' truecolor range of [0 1].\n\n'...
-' If your figure isn''t docked, then the image will have no border, and\n'...
-' will be magnified by an integer factor (in this case, 2) so that the\n'...
-' image is a reasonable size.']);
+    ' Lets take a standard, MATLAB, real-valued function:\n\n    peaks(256)\n\n'...
+    ' Calling:\n\n    figure\n    Z = peaks(256);\n    sc(Z)\n\n'...
+    ' gives (see figure). SC automatically scales intensity to fill the\n'...
+    ' truecolor range of [0 1].\n\n'...
+    ' If your figure isn''t docked, then the image will have no border, and\n'...
+    ' will be magnified by an integer factor (in this case, 2) so that the\n'...
+    ' image is a reasonable size.']);
 
-%% Demo colour image display 
+%% Demo colour image display
 figure(fig); clf;
 load mandrill; mandrill = ind2rgb(X, map); sc(mandrill);
 display_text([...
-' That wasn''t so interesting. The default colormap is ''none'', which\n'...
-' produces RGB images given a 3-channel input image, otherwise it produces\n'...
-' a grayscale image. So calling:\n\n    load mandrill\n'...
-'    mandrill = ind2rgb(X, map);\n    sc(mandrill)\n\n gives (see figure).']);
+    ' That wasn''t so interesting. The default colormap is ''none'', which\n'...
+    ' produces RGB images given a 3-channel input image, otherwise it produces\n'...
+    ' a grayscale image. So calling:\n\n    load mandrill\n'...
+    '    mandrill = ind2rgb(X, map);\n    sc(mandrill)\n\n gives (see figure).']);
 
 %% Demo discretization
 figure(fig); clf;
@@ -900,13 +1012,13 @@ subplot(121); sc(Z, 'jet'); label(Z, 'sc(Z, ''jet'')');
 subplot(122); imagesc(Z); axis image off; colormap(jet(64)); % Fix the fact we change the default depth
 label(Z, 'imagesc(Z); axis image off; colormap(''jet'');');
 display_text([...
-' However, if we want to display intensity images in color we can use any\n'...
-' of the MATLAB colormaps implemented (most of them) to give truecolor\n'...
-' images. For example, to use ''jet'' simply call:\n\n'...
-'    sc(Z, ''jet'')\n\n'...
-' The MATLAB alternative, shown on the right, is:\n\n'...
-'    imagesc(Z)\n    axis equal off\n    colormap(jet)\n\n'...
-' which generates noticeable discretization artifacts.']);
+    ' However, if we want to display intensity images in color we can use any\n'...
+    ' of the MATLAB colormaps implemented (most of them) to give truecolor\n'...
+    ' images. For example, to use ''jet'' simply call:\n\n'...
+    '    sc(Z, ''jet'')\n\n'...
+    ' The MATLAB alternative, shown on the right, is:\n\n'...
+    '    imagesc(Z)\n    axis equal off\n    colormap(jet)\n\n'...
+    ' which generates noticeable discretization artifacts.']);
 
 %% Demo intensity colormaps
 figure(fig); clf;
@@ -915,22 +1027,22 @@ subplot(222); sc(Z, 'colorcube'); label(Z, 'sc(Z, ''colorcube'')');
 subplot(223); sc(Z, 'hicontrast'); label(Z, 'sc(Z, ''hicontrast'')');
 subplot(224); sc(Z-round(Z), 'diff'); label(Z, 'sc(Z-round(Z), ''diff'')');
 display_text([...
-' There are several other intensity colormaps to choose from. Calling:\n\n'...
-'    help sc\n\n'...
-' will give you a list of them. Here are several others demonstrated.']);
+    ' There are several other intensity colormaps to choose from. Calling:\n\n'...
+    '    help sc\n\n'...
+    ' will give you a list of them. Here are several others demonstrated.']);
 
 %% Demo saturation limits & colormap reversal
 figure(fig); clf;
 subplot(121); sc(Z, [0 max(Z(:))], '-hot'); label(Z, 'sc(Z, [0 max(Z(:))], ''-hot'')');
 subplot(122); sc(mandrill, [-0.5 0.5]); label(mandrill, 'sc(mandrill, [-0.5 0.5])');
 display_text([...
-' SC can also rescale intensity, given an upper and lower bound provided\n'...
-' by the user, and invert most colormaps simply by prefixing a ''-'' to the\n'...
-' colormap name. For example:\n\n'...
-'    sc(Z, [0 max(Z(:))], ''-hot'');\n'...
-'    sc(mandrill, [-0.5 0.5]);\n\n'...
-' Note that the order of the colormap and limit arguments are\n'...
-' interchangable.']);
+    ' SC can also rescale intensity, given an upper and lower bound provided\n'...
+    ' by the user, and invert most colormaps simply by prefixing a ''-'' to the\n'...
+    ' colormap name. For example:\n\n'...
+    '    sc(Z, [0 max(Z(:))], ''-hot'');\n'...
+    '    sc(mandrill, [-0.5 0.5]);\n\n'...
+    ' Note that the order of the colormap and limit arguments are\n'...
+    ' interchangable.']);
 
 %% Demo prob
 load gatlin;
@@ -938,62 +1050,62 @@ gatlin = X;
 figure(fig); clf; im = cat(3, abs(Z)', gatlin(1:256,end-255:end)); sc(im, 'prob');
 label(im, 'sc(cat(3, prob, gatlin), ''prob'')');
 display_text([...
-' SC outputs the recolored data as a truecolor RGB image. This makes it\n'...
-' easy to combine colormaps, either arithmetically, or by masking regions.\n'...
-' For example, we could combine an image and a probability map\n'...
-' arithmetically as follows:\n\n'...
-'    load gatlin\n'...
-'    gatlin = X(1:256,end-255:end);\n'...
-'    prob = abs(Z)'';\n'...
-'    im = sc(prob, ''hsv'') .* sc(prob, ''gray'') + sc(gatlin, ''rgb2gray'');\n'...
-'    sc(im, [-0.1 1.3]);\n\n'...
-' In fact, that particular colormap has already been implemented in SC.\n'...
-' Simply call:\n\n'...
-'    sc(cat(3, prob, gatlin), ''prob'');']);
+    ' SC outputs the recolored data as a truecolor RGB image. This makes it\n'...
+    ' easy to combine colormaps, either arithmetically, or by masking regions.\n'...
+    ' For example, we could combine an image and a probability map\n'...
+    ' arithmetically as follows:\n\n'...
+    '    load gatlin\n'...
+    '    gatlin = X(1:256,end-255:end);\n'...
+    '    prob = abs(Z)'';\n'...
+    '    im = sc(prob, ''hsv'') .* sc(prob, ''gray'') + sc(gatlin, ''rgb2gray'');\n'...
+    '    sc(im, [-0.1 1.3]);\n\n'...
+    ' In fact, that particular colormap has already been implemented in SC.\n'...
+    ' Simply call:\n\n'...
+    '    sc(cat(3, prob, gatlin), ''prob'');']);
 
 %% Demo colorbar
 colorbar;
 display_text([...
-' SC also makes possible the generation of a colorbar in the normal way, \n'...
-' with all the colours and data values correct. Simply call:\n\n'...
-'    colorbar\n\n'...
-' The colorbar doesn''t work with all colormaps, but when it does,\n'...
-' inverting the colormap (using ''-map'') maintains the integrity of the\n'...
-' colorbar (i.e. it works correctly) - unlike if you invert the input data.']);
+    ' SC also makes possible the generation of a colorbar in the normal way, \n'...
+    ' with all the colours and data values correct. Simply call:\n\n'...
+    '    colorbar\n\n'...
+    ' The colorbar doesn''t work with all colormaps, but when it does,\n'...
+    ' inverting the colormap (using ''-map'') maintains the integrity of the\n'...
+    ' colorbar (i.e. it works correctly) - unlike if you invert the input data.']);
 
 %% Demo combine by masking
 figure(fig); clf;
 sc(Z, [0 max(Z(:))], '-hot', sc(Z-round(Z), 'diff'), Z < 0);
 display_text([...
-' It''s just as easy to combine generated images by masking too. Here''s an\n'...
-' example:\n\n'...
-'    im = cat(4, sc(Z, [0 max(Z(:))], ''-hot''), sc(Z-round(Z), ''diff''));\n'...
-'    mask = repmat(Z < 0, [1 1 3]);\n'...
-'    mask = cat(4, mask, ~mask);\n'...
-'    im = sum(im .* mask, 4);\n'...
-'    sc(im)\n\n'...
-' In fact, SC can also do this for you, by adding image/colormap and mask\n'...
-' pairs to the end of the argument list, as follows:\n\n'...
-'    sc(Z, [0 max(Z(:))], ''-hot'', sc(Z-round(Z), ''diff''), Z < 0);\n\n'...
-' A benefit of the latter approach is that you can still display a\n'...
-' colorbar for the first colormap.']);
+    ' It''s just as easy to combine generated images by masking too. Here''s an\n'...
+    ' example:\n\n'...
+    '    im = cat(4, sc(Z, [0 max(Z(:))], ''-hot''), sc(Z-round(Z), ''diff''));\n'...
+    '    mask = repmat(Z < 0, [1 1 3]);\n'...
+    '    mask = cat(4, mask, ~mask);\n'...
+    '    im = sum(im .* mask, 4);\n'...
+    '    sc(im)\n\n'...
+    ' In fact, SC can also do this for you, by adding image/colormap and mask\n'...
+    ' pairs to the end of the argument list, as follows:\n\n'...
+    '    sc(Z, [0 max(Z(:))], ''-hot'', sc(Z-round(Z), ''diff''), Z < 0);\n\n'...
+    ' A benefit of the latter approach is that you can still display a\n'...
+    ' colorbar for the first colormap.']);
 
 %% Demo user defined colormap
 figure(fig); clf; sc(abs(Z), rand(10, 3)); colorbar;
 display_text([...
-' SC can also use user defined colormaps to display indexed images.\n'...
-' These can be defined as a linear colormap. For example:\n\n'...
-'    sc(abs(Z), rand(10, 3))\n    colorbar;\n\n'...
-' Note that the colormap is automatically linearly interpolated.']);
+    ' SC can also use user defined colormaps to display indexed images.\n'...
+    ' These can be defined as a linear colormap. For example:\n\n'...
+    '    sc(abs(Z), rand(10, 3))\n    colorbar;\n\n'...
+    ' Note that the colormap is automatically linearly interpolated.']);
 
 %% Demo non-linear user defined colormap
 figure(fig); clf; sc(abs(Z), [rand(10, 3) exp((1:10)/2)']); colorbar;
 display_text([...
-' Non-linear colormaps can also be defined by the user, by including the\n'...
-' relative distance between the given colormap points on the colormap\n'...
-' scale in the fourth column of the colormap matrix. For example:\n\n'...
-'    sc(abs(Z), [rand(10, 3) exp((1:10)/2)''])\n    colorbar;\n\n'...
-' Note that the colormap is still linearly interpolated between points.']);
+    ' Non-linear colormaps can also be defined by the user, by including the\n'...
+    ' relative distance between the given colormap points on the colormap\n'...
+    ' scale in the fourth column of the colormap matrix. For example:\n\n'...
+    '    sc(abs(Z), [rand(10, 3) exp((1:10)/2)''])\n    colorbar;\n\n'...
+    ' Note that the colormap is still linearly interpolated between points.']);
 
 %% Demo compress
 load mri;
@@ -1001,36 +1113,36 @@ mri = D;
 figure(fig); clf;
 sc(squeeze(mri(:,:,:,1:6)), 'compress');
 display_text([...
-' SC has many colormaps for displaying multi-dimensional data, including\n'...
-' ''flow'' for optic flow fields, ''phase'' for edge maps with phase, and\n'...
-' ''stereo'' for generating anaglyphs.\n\n'...
-' For images with more than 3 channels, SC can compress these images to RGB\n'...
-' while maintaining the maximum amount of variance in the data. For\n'...
-' example, this 6 channel image:\n\n'...
-'    load mri\n    mri = D;\n    sc(squeeze(mri(:,:,:,1:6), ''compress'')']);
+    ' SC has many colormaps for displaying multi-dimensional data, including\n'...
+    ' ''flow'' for optic flow fields, ''phase'' for edge maps with phase, and\n'...
+    ' ''stereo'' for generating anaglyphs.\n\n'...
+    ' For images with more than 3 channels, SC can compress these images to RGB\n'...
+    ' while maintaining the maximum amount of variance in the data. For\n'...
+    ' example, this 6 channel image:\n\n'...
+    '    load mri\n    mri = D;\n    sc(squeeze(mri(:,:,:,1:6), ''compress'')']);
 
 %% Demo texture map
 figure(fig); clf;
 surf(Z, sc(Z, 'hicontrast'), 'edgecolor', 'none');
 display_text([...
-' Further benefits of SC outputting the image as an array (on top of being\n'...
-' able to combine images) are that the image can be saved straight to disk\n'...
-' using imwrite(), or can be used to texture map a surface, thus:\n\n'...
-'    tex = sc(Z, ''hicontrast'');\n'...
-'    surf(Z, tex, ''edgecolor'', ''none'');']);
+    ' Further benefits of SC outputting the image as an array (on top of being\n'...
+    ' able to combine images) are that the image can be saved straight to disk\n'...
+    ' using imwrite(), or can be used to texture map a surface, thus:\n\n'...
+    '    tex = sc(Z, ''hicontrast'');\n'...
+    '    surf(Z, tex, ''edgecolor'', ''none'');']);
 
 %% Demo multiple images
 close(fig); % Only way to get round loss of focus (bug?)
 fig = figure(); clf; sc(mri, 'bone');
 display_text([...
-' Finally, SC can process multiple images when passed in as a 4d array,\n'...
-' either for export or for display. In the latter case, images are\n'...
-' displayed as a montage of up to 12 images. For example:\n\n'...
-'    sc(mri, ''bone'')']);
+    ' Finally, SC can process multiple images when passed in as a 4d array,\n'...
+    ' either for export or for display. In the latter case, images are\n'...
+    ' displayed as a montage of up to 12 images. For example:\n\n'...
+    '    sc(mri, ''bone'')']);
 
 display_text([...
-' Any additional images can then be viewed by scrolling through them using\n'...
-' using the scroll (arrow) keys. Try it and see.']);
+    ' Any additional images can then be viewed by scrolling through them using\n'...
+    ' using the scroll (arrow) keys. Try it and see.']);
 
 clc; fprintf('End of demo.\n');
 return
