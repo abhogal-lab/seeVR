@@ -71,7 +71,7 @@ if opts.verbose
     customMap = colormap(flip(brewermap(size(HRF,1),'Spectral')));
     for ii=1:size(HRF,1)
         subplot(1,2,1); plot(t,HRF(ii,:)', 'Color', customMap(ii,:)); ylim([-0.2 1]); xlim([0 200]); title('exponential HRF'); hold on;
-        subplot(1,2,2); plot(HRF_probe(ii+1,:)', 'Color', customMap(ii,:)); hold on;
+        subplot(1,2,2); plot(HRF_probe(ii+1,:)', 'Color', customMap(ii,:)); xlim([0 size(HRF_probe,2)]); hold on;
     end
     plot( HRF_probe(1,:), 'k', 'LineWidth', 2);  title('HRF probe');
     set(gcf, 'Units', 'pixels', 'Position', [200, 500, 600, 160]);
