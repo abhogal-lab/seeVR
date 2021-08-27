@@ -1,5 +1,6 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
+% sections of this code were contributed by Jeroen Siero, j.c.w.siero@umcutrecht.nl 
 % <smthData: smoothes input images using a gaussian kernel >
 % 
 % This program is free software: you can redistribute it and/or modify

@@ -1,5 +1,6 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
+% sections of this code were contributed by Allen A. Champagne, a.champagne@queensu.ca 
 % <lagCVR: calculates hemodynamic parameter maps with associated statistical maps >
 % 
 % This program is free software: you can redistribute it and/or modify
