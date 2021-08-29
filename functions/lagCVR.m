@@ -367,7 +367,7 @@ if opts.corr_model
         corr_probe=[];idx_matrix=[]; a2=[];
         %matrix cross correlation with probe
         a2=mat2cell(wb_voxel_ts,ones(1,size(wb_voxel_ts,1)),size(wb_voxel_ts,2)); %turn into cells so treat all rows independently
-        %THE ORDER HERE MATTERS!!!
+     
         b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'normalized'),a2,'uniformoutput',false);
         corr_probe=cell2mat(b2); %reformat into correlation matrix
         corr_probe = corr_probe';
@@ -500,7 +500,7 @@ if opts.cvr_maps
         %create base CVR map
         A = regr;
         C = [ones([length(A) 1]) A]; clear A
-        regr_coef = C\clean_voxel_ts'; %perform least squares linear regression
+        regr_coef = C\clean_voxel_ts'; 
         
         bCVR(1,coordinates) = regr_coef(2,:); %extract slope
         bCVR(bCVR > 10) = 0; bCVR(bCVR < -10) = 0; %cleanup base CVR map
