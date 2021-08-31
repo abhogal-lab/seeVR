@@ -18,10 +18,11 @@
 % *************************************************************************
 % function to calculate the mean value of a vector between specified points
 %
-% data: 1-vector
+% data: 1D vector
 %
 % idx: user supplied index (optional)
-function [avgVal] = calcAVG(vector, idx)
+% if no index is specified use can select start and end point themselves
+function [idx, avgVal] = calcAVG(vector, idx)
 
 if iscolumn(vector); else; vector = vector'; end
 switch nargin

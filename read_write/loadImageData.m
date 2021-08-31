@@ -67,7 +67,7 @@ switch ndims(image)
             end
             opts.headers.map =  header;
             opts.headers.map.dime.dim(5) = 1;
-            opts.voxelsize = header.dime.pixdim(2:3);
+            opts.voxelsize = header.dime.pixdim(2:4);
             if isfield(opts.headers,'mask')
                 if opts.verbose; disp('Mask header information already exists in opts.headers.mask'); end
             else

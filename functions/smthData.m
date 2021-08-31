@@ -43,6 +43,11 @@ sigma=opts.FWHM/2.355;
 inplanevoxelsize=opts.voxelsize(1);
 data_smooth=zeros(size(data));
 
+if ndims(inplanevoxelsize) == 2
+    disp('check that the opts.voxel size parameter is correct; performing 2D smoothing')
+    opts.spatialdim = 2;
+end
+
 filtSigma = sigma/inplanevoxelsize;
 imageFilter=fspecial('gaussian',opts.filtWidth,filtSigma);
 

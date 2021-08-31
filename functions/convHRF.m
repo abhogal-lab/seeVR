@@ -115,7 +115,11 @@ for ii=1:size(HRF_probe,1); HRF_probe(ii,:) = rescale(HRF_probe(ii,:)); end
 if opts.verbose
     figure;
  
+    if size(HRF,1) == 1
+    customMap = colormap(viridis(128));
+    else
     customMap = colormap(flip(brewermap(size(HRF,1),'Spectral')));
+    end
     
     for ii=1:size(HRF,1)
         subplot(1,2,1); plot(t,HRF(ii,:)', 'Color', customMap(ii,:)); ylim([-0.2 1]); xlim([0 30]); title('double gamma HRF'); hold on;
