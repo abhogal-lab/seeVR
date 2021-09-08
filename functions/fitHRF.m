@@ -22,10 +22,11 @@ function [maps] = fitHRF(mask,data,probe,opts)
 global opts
 warning('off')
 
-if isfield(opts,'verbose'); else; opts.verbose = 0; end                     %turn on/off select command output
-if isfield(opts,'prewhite'); else; opts.prewhite = 0; end                   %pre-whiten data
-if isfield(opts,'interp_factor'); else; opts.interp_factor = 1; end         %interpolate timeseries
-if isfield(opts,'expHRF'); else; opts.expHRF = 0; end                       %convolve with exponential HRF (default = 0; use double gamma)
+if isfield(opts,'verbose'); else; opts.verbose = 0; end                    %turn on/off select command output
+if isfield(opts,'prewhite'); else; opts.prewhite = 0; end                  %pre-whiten data
+if isfield(opts,'interp_factor'); else; opts.interp_factor = 1; end        %interpolate timeseries
+if isfield(opts,'expHRF'); else; opts.expHRF = 0; end                      %convolve with exponential HRF (default = 0; use double gamma)
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                  %depending on how data is loaded this can be set to 1 to use native load/save functions
 
 
 if ispc
@@ -117,7 +118,7 @@ parfor ii=1:size(voxel_ts,1)
     [M, I] = max(R2);
     r2_vec(1,ii) = M;
     HRF_vec(1,ii) = I;
-    if opts.expHRF == 0      
+    if opts.expHRF == 0
         onset_vec(1,ii) = HRFidx(I,1);
         disp_vec(1,ii) = HRFidx(I,2);
         under_vec(1,ii) = HRFidx(I,3);
@@ -130,31 +131,63 @@ HRF_map(1, coordinates) = HRF_vec; HRF_map = reshape(HRF_map, [x y z]);
 
 if ~opts.expHRF
     if length(opts.onset) > 1; onset_map(1, coordinates) = onset_vec; onset_map = reshape(onset_map, [x y z]);
-        saveImageData(onset_map,opts.headers.map,opts.hrfdir,'onset_map.nii.gz',64);
+        if opts.niiwrite
+            niftiwrite(onset_map,[opts.hrfdir, 'onset_map',],opts.info.map,'Compressed',1);
+        else
+            saveImageData(onset_map,opts.headers.map,opts.hrfdir,'onset_map.nii.gz',64);
+        end
     end
     if length(opts.disp) > 1; disp_map(1, coordinates) = disp_vec; disp_map = reshape(disp_map, [x y z]);
-        saveImageData(disp_map,opts.headers.map,opts.hrfdir,'dispersion_map.nii.gz',64);
+        if opts.niiwrite
+            niftiwrite(disp_map,[opts.hrfdir, 'dispersion_map',],opts.info.map,'Compressed',1);
+        else
+            saveImageData(disp_map,opts.headers.map,opts.hrfdir,'dispersion_map.nii.gz',64);
+        end
     end
     if length(opts.under) > 1; under_map(1, coordinates) = under_vec; under_map = reshape(under_map, [x y z]);
-        saveImageData(under_map,opts.headers.map,opts.hrfdir,'undershoot_map.nii.gz',64);
+        if opts.niiwrite
+            niftiwrite(under_map,[opts.hrfdir, 'undershoot_map',],opts.info.map,'Compressed',1);
+        else
+            saveImageData(under_map,opts.headers.map,opts.hrfdir,'undershoot_map.nii.gz',64);
+        end
     end
 end
 
 
 
 if opts.expHRF
-    saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'expHRF_map.nii.gz',64);
-    saveImageData(r2_map,opts.headers.map,opts.hrfdir,'expHRF_r2_map.nii.gz',64);
+    if opts.niiwrite
+        niftiwrite(HRF_map,[opts.hrfdir, 'expHRF_map',],opts.info.map,'Compressed',1);
+        niftiwrite(r2_map,[opts.hrfdir, 'expHRF_r2_map',],opts.info.map,'Compressed',1);
+    else
+        saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'expHRF_map.nii.gz',64);
+        saveImageData(r2_map,opts.headers.map,opts.hrfdir,'expHRF_r2_map.nii.gz',64);
+    end
 else
     if length(opts.disp) > length(opts.onset)
-        saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'dispHRF_map.nii.gz',64);
-        saveImageData(r2_map,opts.headers.map,opts.hrfdir,'dispHRF_r2_map.nii.gz',64);
+        if opts.niiwrite
+            niftiwrite(HRF_map,[opts.hrfdir, 'dispHRF_map',],opts.info.map,'Compressed',1);
+            niftiwrite(r2_map,[opts.hrfdir, 'dispHRF_r2_map',],opts.info.map,'Compressed',1);
+        else
+            saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'dispHRF_map.nii.gz',64);
+            saveImageData(r2_map,opts.headers.map,opts.hrfdir,'dispHRF_r2_map.nii.gz',64);
+        end
     elseif length(opts.disp) < length(opts.onset)
-        saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'onsetHRF_map.nii.gz',64);
-        saveImageData(r2_map,opts.headers.map,opts.hrfdir,'onsetHRF_r2_map.nii.gz',64);
+        if opts.niiwrite
+            niftiwrite(HRF_map,[opts.hrfdir, 'onsetHRF_map',],opts.info.map,'Compressed',1);
+            niftiwrite(r2_map,[opts.hrfdir, 'onsetHRF_r2_map',],opts.info.map,'Compressed',1);
+        else
+            saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'onsetHRF_map.nii.gz',64);
+            saveImageData(r2_map,opts.headers.map,opts.hrfdir,'onsetHRF_r2_map.nii.gz',64);
+        end
     else
-        saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'HRF_map.nii.gz',64);
-        saveImageData(r2_map,opts.headers.map,opts.hrfdir,'HRF_r2_map.nii.gz',64);
+        if opts.niiwrite
+            niftiwrite(HRF_map,[opts.hrfdir, 'HRF_map',],opts.info.map,'Compressed',1);
+            niftiwrite(r2_map,[opts.hrfdir, 'HRF_r2_map',],opts.info.map,'Compressed',1);
+        else
+            saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'HRF_map.nii.gz',64);
+            saveImageData(r2_map,opts.headers.map,opts.hrfdir,'HRF_r2_map.nii.gz',64);
+        end
     end
 end
 

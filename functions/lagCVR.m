@@ -1,25 +1,25 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% sections of this code were contributed by Allen A. Champagne, a.champagne@queensu.ca 
+% sections of this code were contributed by Allen A. Champagne, a.champagne@queensu.ca
 % <lagCVR: calculates hemodynamic parameter maps with associated statistical maps >
-% 
+%
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % This program is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 function [newprobe, maps] = lagCVR(GMmask,mask,BOLD_ts,probe,nuisance,opts)
-% This function calculates hemodynamic parameter maps with associated 
+% This function calculates hemodynamic parameter maps with associated
 % statistical maps. For full usage details download the user manual from
-% https://www.seevr.nl/download-seevr/ or look at usage tutorials 
+% https://www.seevr.nl/download-seevr/ or look at usage tutorials
 % https://www.seevr.nl/tutorials/
 
 warning('off');
@@ -35,7 +35,7 @@ test1 = nuisance(1,:); test2 = nuisance(:,1);
 if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
 
 %setup default parameters
-
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                 %depending on how data is loaded this can be set to 1 to use native load/save functions
 if isfield(opts,'plot'); else; opts.plot = 0; end                         %show or hide selected plots
 if isfield(opts,'prewhite'); else; opts.prewhite = 0; end                 %zero mean and unit variance of data. normally leads to bad results
 if isfield(opts,'interp_factor'); else; opts.interp_factor = 4; end       %factor by which to temporally interpolate data. Better for picking up lags between TR
@@ -83,7 +83,7 @@ end
 
 %setup save directories (for unix change slashes - need to generalize this)
 if ispc
-    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end     
+    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end
     if opts.corr_model; opts.corrlagdir = [opts.resultsdir,'corrLAG\']; mkdir(opts.corrlagdir); end
     if opts.corr_model && opts.cvr_maps; opts.corrCVRdir = [opts.corrlagdir,'CVR\']; mkdir(opts.corrCVRdir); end
     if opts.corr_model == 0; opts.cvr_maps = 0; end
@@ -92,7 +92,7 @@ if ispc
         opts.glmCVRdir = [opts.glmlagdir,'CVR\']; mkdir(opts.glmCVRdir);
     end
 else
-    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'/']; end 
+    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'/']; end
     if opts.corr_model; opts.corrlagdir = [opts.resultsdir,'corrLAG/']; mkdir(opts.corrlagdir); end
     if opts.corr_model && opts.cvr_maps; opts.corrCVRdir = [opts.corrlagdir,'CVR/']; mkdir(opts.corrCVRdir); end
     if opts.corr_model == 0; opts.cvr_maps = 0; end
@@ -141,7 +141,7 @@ if opts.refine_regressor
         disp('found existing probe; skipping generation of BOLD regressor')
     else
         
-        %% 
+        %%
         
         disp('Creating optimized regressor')
         %grab GM timeseries to generate probe
@@ -367,7 +367,7 @@ if opts.corr_model
         corr_probe=[];idx_matrix=[]; a2=[];
         %matrix cross correlation with probe
         a2=mat2cell(wb_voxel_ts,ones(1,size(wb_voxel_ts,1)),size(wb_voxel_ts,2)); %turn into cells so treat all rows independently
-     
+        
         b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'normalized'),a2,'uniformoutput',false);
         corr_probe=cell2mat(b2); %reformat into correlation matrix
         corr_probe = corr_probe';
@@ -411,14 +411,29 @@ if opts.corr_model
         
         switch pp
             case 1
-                saveImageData(mask.*tmpLag, opts.headers.map, opts.corrlagdir, 'lag_map.nii.gz', datatype); maps.XCORR.lag_opti = tmpLag;
-                saveImageData(mask.*lag_map, opts.headers.map, opts.corrlagdir, 'uncorr_lag_map.nii.gz', datatype); maps.XCORR.uncorrlag_opti = lag_map;
-                saveImageData(mask.*r_map, opts.headers.map, opts.corrlagdir, 'r_map.nii.gz', datatype); maps.XCORR.r_opti = r_map;
+                if opts.niiwrite
+                    niftiwrite(mask.*tmpLag,[opts.corrlagdir, 'lag_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*lag_map,[opts.corrlagdir, 'uncorr_lag_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*r_map,[opts.corrlagdir, 'r_map',],opts.info.map,'Compressed',1);
+                else
+                    saveImageData(mask.*tmpLag, opts.headers.map, opts.corrlagdir, 'lag_map.nii.gz', datatype);
+                    saveImageData(mask.*lag_map, opts.headers.map, opts.corrlagdir, 'uncorr_lag_map.nii.gz', datatype);
+                    saveImageData(mask.*r_map, opts.headers.map, opts.corrlagdir, 'r_map.nii.gz', datatype);
+                end
+                maps.XCORR.lag_opti = tmpLag;
+                maps.XCORR.uncorrlag_opti = lag_map;
+                maps.XCORR.r_opti = r_map;
                 
                 if opts.save_rts
-                    disp('saving correlation timeseries based on optimized regressor')
-                    saveImageData(corr_ts, headers.ts, opts.corrlagdir,  'r_ts.nii.gz', datatype)
-                    clear Trcorr_ts
+                    if opts.niiwrite
+                        disp('saving correlation timeseries based on optimized regressor')
+                        niftiwrite(corr_ts,[opts.corrlagdir, 'r_ts',],opts.info.ts,'Compressed',1);
+                        clear Trcorr_ts
+                    else
+                        disp('saving correlation timeseries based on optimized regressor')
+                        saveImageData(corr_ts, headers.ts, opts.corrlagdir,  'r_ts.nii.gz', datatype)
+                        clear Trcorr_ts
+                    end
                 end
                 if opts.robust
                     LAG(1,:,:,:) = mask.*mask.*tmpLag;
@@ -426,13 +441,29 @@ if opts.corr_model
                 end
                 clear tmpLag lag_map r_map
             case 2
-                saveImageData(mask.*tmpLag, opts.headers.map, opts.corrlagdir,  'lag_map_probe.nii.gz', datatype); maps.XCORR.lag_input = tmpLag;
-                saveImageData(mask.*lag_map, opts.headers.map,opts.corrlagdir, 'uncorr_lag_map_probe.nii.gz', datatype); maps.XCORR.uncorrlag_input = lag_map;
-                saveImageData(mask.*r_map, opts.headers.map, opts.corrlagdir, 'r_map_probe.nii.gz', datatype); maps.XCORR.r_input = r_map;
+                if opts.niiwrite
+                    niftiwrite(mask.*tmpLag,[opts.corrlagdir, 'lag_map_probe',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*lag_map,[opts.corrlagdir, 'uncorr_lag_map_probe',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*r_map,[opts.corrlagdir, 'r_map_probe',],opts.info.map,'Compressed',1);
+                else
+                    saveImageData(mask.*tmpLag, opts.headers.map, opts.corrlagdir,  'lag_map_probe.nii.gz', datatype);
+                    saveImageData(mask.*lag_map, opts.headers.map,opts.corrlagdir, 'uncorr_lag_map_probe.nii.gz', datatype);
+                    saveImageData(mask.*r_map, opts.headers.map, opts.corrlagdir, 'r_map_probe.nii.gz', datatype);
+                end
+                maps.XCORR.lag_input = tmpLag;
+                maps.XCORR.uncorrlag_input = lag_map;
+                maps.XCORR.r_input = r_map;
+                
                 if opts.save_rts
-                    disp('saving correlation timeseries based on input probe')
-                    saveImageData(Trcorr_ts, opts.headers.ts, opts.corrlagdir, 'r_ts_probe.nii.gz', datatype);
-                    clear Trcorr_ts
+                    if opts.niiwrite
+                        disp('saving correlation timeseries based on optimized regressor')
+                        niftiwrite(corr_ts,[opts.corrlagdir, 'r_ts_probe',],opts.info.ts,'Compressed',1);
+                        clear Trcorr_ts
+                    else
+                        disp('saving correlation timeseries based on input probe')
+                        saveImageData(Trcorr_ts, opts.headers.ts, opts.corrlagdir, 'r_ts_probe.nii.gz', datatype);
+                        clear Trcorr_ts
+                    end
                 end
                 if opts.robust
                     LAG(2,:,:,:) = mask.*mask.*tmpLag;
@@ -462,7 +493,12 @@ if opts.trace_corr && opts.robust
     end
     robustIR = reshape( robustIR,size(mask));
     %save image
-    saveImageData(mask.*robustIR, opts.headers.map, opts.corrlagdir,'robustLAG_r.nii.gz', datatype); maps.XCORR.robust_lag_r = robustIR;
+    if opts.niiwrite
+        niftiwrite(mask.*robustIR,[opts.corrlagdir, 'robustLAG_r',],opts.info.map,'Compressed',1);
+    else
+        saveImageData(mask.*robustIR, opts.headers.map, opts.corrlagdir,'robustLAG_r.nii.gz', datatype);
+    end
+    maps.XCORR.robust_lag_r = robustIR;
     clear LAG RL
 else
     clear LAG RL
@@ -500,7 +536,7 @@ if opts.cvr_maps
         %create base CVR map
         A = regr;
         C = [ones([length(A) 1]) A]; clear A
-        regr_coef = C\clean_voxel_ts'; 
+        regr_coef = C\clean_voxel_ts';
         
         bCVR(1,coordinates) = regr_coef(2,:); %extract slope
         bCVR(bCVR > 10) = 0; bCVR(bCVR < -10) = 0; %cleanup base CVR map
@@ -524,24 +560,45 @@ if opts.cvr_maps
         bTstat(1, coordinates) = bT; bTstat = reshape(bTstat, [xx yy zz]);
         switch pp
             case 1 %entdidal
-                %save base CVR map
-                saveImageData(mask.*bCVR, opts.headers.map, opts.corrCVRdir, 'bCVR_map.nii.gz', datatype); maps.XCORR.CVR.bCVR = bCVR;
-                %save base stats data
-                saveImageData(mask.*bR2, opts.headers.map, opts.corrCVRdir,'bR2_map.nii.gz', datatype); maps.XCORR.CVR.bR2 = bR2;
-                saveImageData(mask.*bSSE, opts.headers.map, opts.corrCVRdir,'bSSE_map.nii.gz', datatype); maps.XCORR.CVR.bSSE = bSSE;
-                saveImageData(mask.*bTstat, opts.headers.map, opts.corrCVRdir,'bTstat_map.nii.gz', datatype); maps.XCORR.CVR.bTstat = bSSE;
+                if opts.niiwrite
+                    niftiwrite(mask.*bCVR,[opts.corrCVRdir, 'bCVR_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*bR2,[opts.corrCVRdir, 'bR2_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*bSSE,[opts.corrCVRdir, 'bSSE2_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*bTstat,[opts.corrCVRdir, 'bTstat_map',],opts.info.map,'Compressed',1);
+                else
+                    saveImageData(mask.*bCVR, opts.headers.map, opts.corrCVRdir, 'bCVR_map.nii.gz', datatype);
+                    saveImageData(mask.*bR2, opts.headers.map, opts.corrCVRdir,'bR2_map.nii.gz', datatype);
+                    saveImageData(mask.*bSSE, opts.headers.map, opts.corrCVRdir,'bSSE_map.nii.gz', datatype);
+                    saveImageData(mask.*bTstat, opts.headers.map, opts.corrCVRdir,'bTstat_map.nii.gz', datatype);
+                end
+                maps.XCORR.CVR.bCVR = bCVR;
+                maps.XCORR.CVR.bR2 = bR2;
+                maps.XCORR.CVR.bSSE = bSSE;
+                maps.XCORR.CVR.bTstat = bSSE;
+                
                 disp('Base CVR, r2, Tstat and SSE maps were created using entidal regressor')
                 CVR(1,:,:,:) = mask.*bCVR;
                 TSTAT(1,:,:,:) = mask.*bTstat;
                 RC(1,:,:,:) = mask.*bR2;
                 clear bCVR bR2 bT bTstat bSSE SSE SST R2 X Y r regr_coef A C s
+                
             case 2 %effective probe
-                %save base CVR map
-                saveImageData(mask.*bCVR, opts.headers.map, opts.corrCVRdir, 'bCVR_eff_map.nii.gz', datatype); maps.XCORR.CVR.bCVR_eff = bCVR;
-                %save base stats data
-                saveImageData(mask.*bR2, opts.headers.map, opts.corrCVRdir,'bR2_eff_map.nii.gz', datatype); maps.XCORR.CVR.bR2_eff = bR2;
-                saveImageData(mask.*bSSE, opts.headers.map, opts.corrCVRdir,'bSSE_eff_map.nii.gz', datatype); maps.XCORR.CVR.bSSE_eff = bSSE;
-                saveImageData(mask.*bTstat, opts.headers.map, opts.corrCVRdir,'bTstat_eff_map.nii.gz', datatype); maps.XCORR.CVR.bTstat_eff = bSSE;
+                if opts.niiwrite
+                    niftiwrite(mask.*bCVR,[opts.corrCVRdir, 'bCVR_eff_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*bR2,[opts.corrCVRdir, 'bR2_eff_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*bSSE,[opts.corrCVRdir, 'bSSE2_eff_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*bTstat,[opts.corrCVRdir, 'bTstat_eff_map',],opts.info.map,'Compressed',1);
+                else
+                    saveImageData(mask.*bCVR, opts.headers.map, opts.corrCVRdir, 'bCVR_eff_map.nii.gz', datatype);
+                    saveImageData(mask.*bR2, opts.headers.map, opts.corrCVRdir,'bR2_eff_map.nii.gz', datatype);
+                    saveImageData(mask.*bSSE, opts.headers.map, opts.corrCVRdir,'bSSE_eff_map.nii.gz', datatype);
+                    saveImageData(mask.*bTstat, opts.headers.map, opts.corrCVRdir,'bTstat_eff_map.nii.gz', datatype);
+                end
+                maps.XCORR.CVR.bCVR_eff = bCVR;
+                maps.XCORR.CVR.bR2_eff = bR2;
+                maps.XCORR.CVR.bSSE_eff = bSSE;
+                maps.XCORR.CVR.bTstat_eff = bSSE;
+                
                 disp('Base CVR, r2, Tstat and SSE maps were created using effective entidal regressor')
                 CVR(2,:,:,:) = mask.*bCVR;
                 TSTAT(2,:,:,:) = mask.*bTstat;
@@ -602,17 +659,31 @@ if opts.cvr_maps
         
         switch pp
             case 1 %entdidal
-                %save lag-adjusted CVR map
-                saveImageData(mask.*cCVR, opts.headers.map, opts.corrCVRdir,'cCVR_map.nii.gz', datatype); maps.XCORR.CVR.cCVR = cCVR;
-                %save lag-adjusted stats data
-                saveImageData(mask.*cR2, opts.headers.map, opts.corrCVRdir,'cR2_map.nii.gz', datatype); maps.XCORR.CVR.cR2 = cR2;
-                saveImageData(mask.*cSSE, opts.headers.map, opts.corrCVRdir,'cSSE_map.nii.gz', datatype); maps.XCORR.CVR.cSSE = cSSE;
-                saveImageData(mask.*cTstat, opts.headers.map, opts.corrCVRdir,'cTstat_map.nii.gz', datatype); maps.XCORR.CVR.cTstat = cTstat;
+                if opts.niiwrite
+                    niftiwrite(mask.*cCVR,[opts.corrCVRdir, 'cCVR_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*cR2,[opts.corrCVRdir, 'cR2_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*cSSE,[opts.corrCVRdir, 'cSSE2_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*cTstat,[opts.corrCVRdir, 'cTstat_map',],opts.info.map,'Compressed',1);
+                else
+                    saveImageData(mask.*cCVR, opts.headers.map, opts.corrCVRdir,'cCVR_map.nii.gz', datatype);
+                    saveImageData(mask.*cR2, opts.headers.map, opts.corrCVRdir,'cR2_map.nii.gz', datatype);
+                    saveImageData(mask.*cSSE, opts.headers.map, opts.corrCVRdir,'cSSE_map.nii.gz', datatype);
+                    saveImageData(mask.*cTstat, opts.headers.map, opts.corrCVRdir,'cTstat_map.nii.gz', datatype);
+                end
+                maps.XCORR.CVR.cCVR = cCVR;
+                maps.XCORR.CVR.cR2 = cR2;
+                maps.XCORR.CVR.cSSE = cSSE;
+                maps.XCORR.CVR.cTstat = cTstat;
+                
                 %save lagregressor maps
                 lagregressor = zeros([xx*yy*zz dyn*opts.interp_factor]);
                 lagregressor(coordinates,:) = shifted_regr;
                 if opts.save_rts
-                    saveImageData(lagregressor, opts.headers.ts, opts.corrCVRdir, 'lagregressor_map.nii.gz', datatype);
+                    if opts.niiwrite
+                        niftiwrite(lagregressor,[opts.opts.corrCVRdir, 'lagregressor_map',],opts.info.ts,'Compressed',1);
+                    else
+                        saveImageData(lagregressor, opts.headers.ts, opts.corrCVRdir, 'lagregressor_map.nii.gz', datatype);
+                    end
                 end
                 if opts.robust
                     CVR(3,:,:,:) = mask.*cCVR;
@@ -621,17 +692,32 @@ if opts.cvr_maps
                 end
                 clear cCVR R2 cR2 cSSE lagregressor shifted_regr regr_coef SST SSE
             case 2 %effective probe
-                %save lag-adjusted CVR map
-                saveImageData(mask.*cCVR, opts.headers.map, opts.corrCVRdir,'cCVR_eff_map.nii.gz', datatype); maps.XCORR.CVR.cCVR_eff = cCVR;
-                %save lag-adjusted stats data
-                saveImageData(mask.*cR2, opts.headers.map, opts.corrCVRdir,'cR2_eff_map.nii.gz', datatype); maps.XCORR.CVR.cR2_eff = cR2;
-                saveImageData(mask.*cSSE, opts.headers.map, opts.corrCVRdir,'cSSE_eff_map.nii.gz', datatype); maps.XCORR.CVR.cSSE_eff = cSSE;
-                saveImageData(mask.*cTstat, opts.headers.map, opts.corrCVRdir,'cTstat_eff_map.nii.gz', datatype); maps.XCORR.CVR.cTstat_eff = cTstat;
+                if opts.niiwrite
+                    niftiwrite(mask.*cCVR,[opts.corrCVRdir, 'cCVR_eff_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*cR2,[opts.corrCVRdir, 'cR2_eff_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*cSSE,[opts.corrCVRdir, 'cSSE2_eff_map',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*cTstat,[opts.corrCVRdir, 'cTstat_eff_map',],opts.info.map,'Compressed',1);
+                else
+                    saveImageData(mask.*cCVR, opts.headers.map, opts.corrCVRdir,'cCVR_eff_map.nii.gz', datatype);
+                    saveImageData(mask.*cR2, opts.headers.map, opts.corrCVRdir,'cR2_eff_map.nii.gz', datatype);
+                    saveImageData(mask.*cSSE, opts.headers.map, opts.corrCVRdir,'cSSE_eff_map.nii.gz', datatype);
+                    saveImageData(mask.*cTstat, opts.headers.map, opts.corrCVRdir,'cTstat_eff_map.nii.gz', datatype);
+                end
+                maps.XCORR.CVR.cCVR_eff = cCVR;
+                maps.XCORR.CVR.cR2_eff = cR2;
+                maps.XCORR.CVR.cSSE_eff = cSSE;
+                maps.XCORR.CVR.cTstat_eff = cTstat;
+                
+                
                 %save lagregressor maps
                 lagregressor = zeros([xx*yy*zz dyn*opts.interp_factor]);
                 lagregressor(coordinates,:) = shifted_regr;
                 if opts.save_rts
-                    saveImageData(lagregressor, opts.headers.ts, opts.corrCVRdir, 'lagregressor_eff_map.nii.gz', datatype);
+                    if opts.niiwrite
+                        niftiwrite(lagregressor,[opts.opts.corrCVRdir, 'lagregressor_map_eff',],opts.info.ts,'Compressed',1);
+                    else
+                        saveImageData(lagregressor, opts.headers.ts, opts.corrCVRdir, 'lagregressor_eff_map.nii.gz', datatype);
+                    end
                 end
                 if opts.robust
                     CVR(4,:,:,:) = mask.*cCVR;
@@ -639,7 +725,6 @@ if opts.cvr_maps
                     RC(4,:,:,:) = mask.*cR2;
                 end
                 clear cCVR R2 cR2 cSSE lagregressor shifted_regr regr_coef SST SSE
-                
         end
         disp('Stimulus response data is saved')
     end
@@ -663,8 +748,22 @@ if opts.cvr_maps && opts.eff_probe && opts.trace_corr && opts.robust
     robustIT = reshape( robustIT,size(mask));
     robustIR = reshape( robustIR,size(mask));
     %save images
-    if opts.robustTstat; saveImageData(mask.*robustIT, opts.headers.map, opts.corrCVRdir,'robustCVR_TSTAT.nii.gz', datatype); maps.XCORR.CVR.robustCVR_TSTAT = robustIT; end
-    if opts.robustR; saveImageData(mask.*robustIR, opts.headers.map, opts.corrCVRdir,'robustCVR_R.nii.gz', datatype); maps.XCORR.CVR.robustCVR_R = robustIR; end
+    if opts.robustTstat
+        if opts.niiwrite
+            niftiwrite(mask.*robustIT,[opts.corrCVRdir, 'robustCVR_TSTAT',],opts.info.map,'Compressed',1);
+        else
+            saveImageData(mask.*robustIT, opts.headers.map, opts.corrCVRdir,'robustCVR_TSTAT.nii.gz', datatype);
+        end
+        maps.XCORR.CVR.robustCVR_TSTAT = robustIT;
+    end
+    if opts.robustR
+        if opts.niiwrite
+            niftiwrite(mask.*robustIR,[opts.corrCVRdir, 'robustCVR_R',],opts.info.map,'Compressed',1);
+        else
+            saveImageData(mask.*robustIR, opts.headers.map, opts.corrCVRdir,'robustCVR_R.nii.gz', datatype);
+        end
+        maps.XCORR.CVR.robustCVR_R = robustIR;
+    end
     clear TSTAT RC CVR robustIT robustIR
     disp('Calculating robust lag maps')
     
@@ -695,7 +794,7 @@ if opts.glm_model
                 regr = probe;
         end
         %removes linearly dependent components
-       
+        
         [norm_np,idx]=licols(np);
         %setup regression matrix
         for ii = 1:size(lags,2)
@@ -789,38 +888,70 @@ if opts.glm_model
         
         %plot regressors
         if opts.plot
-        figure;
-        subplot(4,1,1); plot(nanmean(wb_voxel_ts,1)); title('Original Data')
-        subplot(4,1,2); plot(nanmean(regr_TS,2)); title('Main EV Component')
-        subplot(4,1,3); plot(nanmean(wb_voxel_ts,1)'-nanmean(combi_TS,2)); title('Original data minus Nuissance Signal')
-        subplot(4,1,4); plot(nanmean(wb_voxel_ts,1)'-nanmean(combi_TS,2)-nanmean(regr_TS,2)); title('Residual Data + Error Term')
+            figure;
+            subplot(4,1,1); plot(nanmean(wb_voxel_ts,1)); title('Original Data')
+            subplot(4,1,2); plot(nanmean(regr_TS,2)); title('Main EV Component')
+            subplot(4,1,3); plot(nanmean(wb_voxel_ts,1)'-nanmean(combi_TS,2)); title('Original data minus Nuissance Signal')
+            subplot(4,1,4); plot(nanmean(wb_voxel_ts,1)'-nanmean(combi_TS,2)-nanmean(regr_TS,2)); title('Residual Data + Error Term')
         end
         
-        %save maps 
+        %save maps
         switch pp
             case 1
-                saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'optiReg_ES.nii.gz', datatype); maps.GLM.optiReg_ES = GLM_Estimate;
-                saveImageData(mask.*tmpLag, opts.headers.map, opts.glmlagdir, 'optiReg_lags.nii.gz', datatype); maps.GLM.optiReg_lags = tmpLag;
-                saveImageData(mask.*GLM_lags, opts.headers.map,opts.glmlagdir, 'uncor_optiReg_lags.nii.gz', datatype); maps.GLM.uncor_optiReg_lags = GLM_lags;
-                saveImageData(estimaTS, opts.headers.ts, opts.glmlagdir, 'optiReg_estimatrix.nii.gz', datatype);
-                saveImageData(mask.*cR2, opts.headers.map, opts.glmlagdir, 'optiReg_R2.nii.gz', datatype); maps.GLM.optiReg_R2 = cR2;
-                saveImageData(mask.*cSSE, opts.headers.map, opts.glmlagdir, 'optiReg_SSE.nii.gz', datatype); maps.GLM.optiReg_SSE = cSSE;
-                saveImageData(mask.*cTstat, opts.headers.map, opts.glmlagdir, 'optiReg_Tstat.nii.gz', datatype); maps.GLM.optiReg_Tstat = cTstat;
+                if opts.niiwrite
+                    niftiwrite(mask.*GLM_Estimate,[opts.glmlagdir, 'optiReg_ES',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*tmpLag,[opts.glmlagdir, 'optiReg_lags',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*GLM_lags,[opts.glmlagdir, 'uncor_optiReg_lags',],opts.info.map,'Compressed',1);
+                    niftiwrite(estimaTS,[opts.glmlagdir, 'optiReg_estimatrix',],opts.info.ts,'Compressed',1);
+                    niftiwrite(mask.*cR2,[opts.glmlagdir, 'optiReg_R2',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*cSSE,[opts.glmlagdir, 'optiReg_SSE',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*cTstat,[opts.glmlagdir, 'optiReg_Tstat',],opts.info.map,'Compressed',1);
+                else
+                    saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'optiReg_ES.nii.gz', datatype);
+                    saveImageData(mask.*tmpLag, opts.headers.map, opts.glmlagdir, 'optiReg_lags.nii.gz', datatype);
+                    saveImageData(mask.*GLM_lags, opts.headers.map,opts.glmlagdir, 'uncor_optiReg_lags.nii.gz', datatype);
+                    saveImageData(estimaTS, opts.headers.ts, opts.glmlagdir, 'optiReg_estimatrix.nii.gz', datatype);
+                    saveImageData(mask.*cR2, opts.headers.map, opts.glmlagdir, 'optiReg_R2.nii.gz', datatype);
+                    saveImageData(mask.*cSSE, opts.headers.map, opts.glmlagdir, 'optiReg_SSE.nii.gz', datatype);
+                    saveImageData(mask.*cTstat, opts.headers.map, opts.glmlagdir, 'optiReg_Tstat.nii.gz', datatype);
+                end
+                maps.GLM.optiReg_ES = GLM_Estimate;
+                maps.GLM.optiReg_lags = tmpLag;
+                maps.GLM.uncor_optiReg_lags = GLM_lags;
+                maps.GLM.optiReg_R2 = cR2;
+                maps.GLM.optiReg_SSE = cSSE;
+                maps.GLM.optiReg_Tstat = cTstat;
                 if opts.plot; saveas(gcf,[opts.glmlagdir,'regression_optiReg.fig']); end
-            case 2
-                %save maps using CO2 regressor
-                saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'inputReg_ES.nii.gz', datatype); maps.GLM.inputReg_ES = GLM_Estimate;
-                saveImageData(mask.*tmpLag, opts.headers.map, opts.glmlagdir, 'inputReg_lags.nii.gz', datatype); maps.GLM.inputReg_lags = tmpLag;
-                saveImageData(mask.*GLM_lags, opts.headers.map, opts.glmlagdir, 'uncor_inputReg_lags.nii.gz', datatype); maps.GLM.uncor_inputReg_lags = GLM_lags;
-                saveImageData(estimaTS, opts.headers.ts, opts.glmlagdir, 'inputReg_estimatrix.nii.gz', datatype);
-                saveImageData(mask.*cR2, opts.headers.map, opts.glmlagdir, 'inputReg_R2.nii.gz', datatype); maps.GLM.inputReg_R2 = cR2;
-                saveImageData(mask.*cSSE, opts.headers.map, opts.glmlagdir, 'inputReg_SSE.nii.gz', datatype); maps.GLM.inputReg_SSE = cSSE;
-                saveImageData(mask.*cTstat, opts.headers.map, opts.glmlagdir, 'inputReg_Tstat.nii.gz', datatype); maps.GLM.inputReg_Tstat = cTstat;
+                
+            case 2 %save maps using CO2 regressor
+                if opts.niiwrite
+                    niftiwrite(mask.*GLM_Estimate,[opts.glmlagdir, 'inputReg_ES',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*tmpLag,[opts.glmlagdir, 'inputReg_lags',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*GLM_lags,[opts.glmlagdir, 'uncor_inputReg_lags',],opts.info.map,'Compressed',1);
+                    niftiwrite(estimaTS,[opts.glmlagdir, 'inputReg_estimatrix',],opts.info.ts,'Compressed',1);
+                    niftiwrite(mask.*cR2,[opts.glmlagdir, 'inputReg_R2',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*cSSE,[opts.glmlagdir, 'inputReg_SSE',],opts.info.map,'Compressed',1);
+                    niftiwrite(mask.*cTstat,[opts.glmlagdir, 'inputReg_Tstat',],opts.info.map,'Compressed',1);
+                else
+                    saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'inputReg_ES.nii.gz', datatype);
+                    saveImageData(mask.*tmpLag, opts.headers.map, opts.glmlagdir, 'inputReg_lags.nii.gz', datatype);
+                    saveImageData(mask.*GLM_lags, opts.headers.map, opts.glmlagdir, 'uncor_inputReg_lags.nii.gz', datatype);
+                    saveImageData(estimaTS, opts.headers.ts, opts.glmlagdir, 'inputReg_estimatrix.nii.gz', datatype);
+                    saveImageData(mask.*cR2, opts.headers.map, opts.glmlagdir, 'inputReg_R2.nii.gz', datatype);
+                    saveImageData(mask.*cSSE, opts.headers.map, opts.glmlagdir, 'inputReg_SSE.nii.gz', datatype);
+                    saveImageData(mask.*cTstat, opts.headers.map, opts.glmlagdir, 'inputReg_Tstat.nii.gz', datatype);
+                end
+                maps.GLM.inputReg_ES = GLM_Estimate;
+                maps.GLM.inputReg_lags = tmpLag;
+                maps.GLM.uncor_inputReg_lags = GLM_lags;
+                maps.GLM.inputReg_R2 = cR2;
+                maps.GLM.inputReg_SSE = cSSE;
+                maps.GLM.inputReg_Tstat = cTstat;
+                
                 if opts.plot; saveas(gcf,[opts.glmlagdir,'regression_inputReg.fig']); end
         end
         
         %%%%% generate lag-corrected CVR maps %%%%
-        
         
         disp('Generating lag-adjusted CVR maps based on GLM analysis')
         cCVR = zeros([1 xx*yy*zz]);
@@ -852,11 +983,11 @@ if opts.glm_model
         cCVR = reshape(cCVR, [xx yy zz]);
         %save lag-adjusted CVR map
         if pp == 1
-            saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'optiReg_cCVR.nii.gz', datatype); maps.GLM.CVR.optiReg_cCVR = cCVR;
+            saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'optiReg_cCVR.nii.gz', datatype);
         else
-            saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'inputReg_cCVR.nii.gz', datatype); maps.GLM.CVR.inputReg_cCVR = cCVR;
+            saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'inputReg_cCVR.nii.gz', datatype);
         end
-        
+        maps.GLM.CVR.optiReg_cCVR = cCVR;
         %calculate statistics
         SSE = zeros([1 size(wb_voxel_ts,1)]); SST = zeros([1 size(wb_voxel_ts,1)]); cT = zeros([1 size(wb_voxel_ts,1)]);
         parfor ii=1:size(wb_voxel_ts,1)
@@ -875,15 +1006,33 @@ if opts.glm_model
         cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);
         %save lag-adjusted stats data
         if pp == 1
-            saveImageData(mask.*cR2, opts.headers.map, opts.glmCVRdir, 'optiReg_cR2.nii.gz', datatype); maps.GLM.CVR.optiReg_cR2 = cR2;
-            saveImageData(mask.*cSSE, opts.headers.map, opts.glmCVRdir, 'optiReg_cSSE.nii.gz', datatype); maps.GLM.CVR.optiReg_cSSE = cSSE;
-            saveImageData(mask.*cTstat, opts.headers.map, opts.glmCVRdir,'optiReg_cTstat.nii.gz', datatype); maps.GLM.CVR.optiReg_cTstat = cTstat;
+            if opts.niiwrite
+                niftiwrite(mask.*cR2,[opts.glmCVRdir, 'optiReg_cR2',],opts.info.map,'Compressed',1);
+                niftiwrite(mask.*cSSE,[opts.glmCVRdir, 'optiReg_cSSE',],opts.info.map,'Compressed',1);
+                niftiwrite(mask.*cTstat,[opts.glmCVRdir, 'optiReg_cTstat',],opts.info.map,'Compressed',1);
+            else
+                saveImageData(mask.*cR2, opts.headers.map, opts.glmCVRdir, 'optiReg_cR2.nii.gz', datatype);
+                saveImageData(mask.*cSSE, opts.headers.map, opts.glmCVRdir, 'optiReg_cSSE.nii.gz', datatype);
+                saveImageData(mask.*cTstat, opts.headers.map, opts.glmCVRdir,'optiReg_cTstat.nii.gz', datatype);
+            end
+            maps.GLM.CVR.optiReg_cR2 = cR2;
+            maps.GLM.CVR.optiReg_cSSE = cSSE;
+            maps.GLM.CVR.optiReg_cTstat = cTstat;
+            
         else
-            saveImageData(mask.*cR2, opts.headers.map, opts.glmCVRdir, 'inputReg_cR2.nii.gz', datatype); maps.GLM.CVR.inputReg_cR2 = cR2;
-            saveImageData(mask.*cSSE, opts.headers.map, opts.glmCVRdir, 'inputReg_cSSE.nii.gz', datatype); maps.GLM.CVR.inputReg_cSSE = cSSE;
-            saveImageData(mask.*cTstat, opts.headers.map, opts.glmCVRdir,'inputReg_cTstat.nii.gz', datatype); maps.GLM.CVR.inputReg_cTstat = cTstat;
+            if opts.niiwrite
+                niftiwrite(mask.*cR2,[opts.glmCVRdir, 'inputReg_cR2',],opts.info.map,'Compressed',1);
+                niftiwrite(mask.*cSSE,[opts.glmCVRdir, 'inputReg_cSSE',],opts.info.map,'Compressed',1);
+                niftiwrite(mask.*cTstat,[opts.glmCVRdir, 'inputReg_cTstat',],opts.info.map,'Compressed',1);
+            else
+                saveImageData(mask.*cR2, opts.headers.map, opts.glmCVRdir, 'inputReg_cR2.nii.gz', datatype);
+                saveImageData(mask.*cSSE, opts.headers.map, opts.glmCVRdir, 'inputReg_cSSE.nii.gz', datatype);
+                saveImageData(mask.*cTstat, opts.headers.map, opts.glmCVRdir,'inputReg_cTstat.nii.gz', datatype);
+            end
         end
-        
+        maps.GLM.CVR.inputReg_cR2 = cR2;
+        maps.GLM.CVR.inputReg_cSSE = cSSE;
+        maps.GLM.CVR.inputReg_cTstat = cTstat;
     end
     disp(['finished running GLM analysis in: ',int2str((cputime-q)/60),' minutes'])
     disp('saving maps in .mat file' )

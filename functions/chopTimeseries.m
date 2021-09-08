@@ -82,14 +82,18 @@ if opts.verbose
     disp('Updated header file to reflect new timeseries length'); 
     disp('Updated opts.xdata and opts.dyn to reflect new timeseries length'); 
 end
+
 if isfield(opts,'headers.ts'); opts.headers.ts.dime.dim(2:5) = size(rdata); end
 if isfield(opts,'dyn'); opts.dyn = []; [opts.xdim,opts.ydim,opts.zdim,opts.dyn] = size(rdata); end
 if isfield(opts,'xdata'); opts.xdata = [opts.TR:opts.TR:opts.TR*opts.dyn]; end
 
-
-%save shortened timeseries
+%save shortened timeseries (this needs to be updated for native saving)
 if opts.save_rdata
-saveImageData(rdata, opts.headers.ts, opts.resultsdir, 'rBOLD.nii.gz', 8);
+    if opts.niiwrite
+    niftiwrite(rdata,[opts.glmlagdir, 'rBOLD',],'Compressed',1); %need to add info for compatibility
+    else
+    saveImageData(rdata, opts.headers.ts, opts.resultsdir, 'rBOLD.nii.gz', 64);
+    end
 end
 end
 

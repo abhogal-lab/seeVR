@@ -1,17 +1,17 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
 % <glmCVRidx: generates internally normalized CVR maps (i.e. without using respiratory data >
-% 
+%
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % This program is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
@@ -48,7 +48,7 @@ global opts;
 if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.08]; end  %default frequency band
 if isfield(opts,'normalizeCVRidx'); else; opts.normalizeCVRidx = 1; end  %default is to normalized data to reference signal
 if isfield(opts,'smoothmap'); else; opts.fpass = 0; end  %default is to not smooth output maps
-
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data is loaded this can be set to 1 to use native load/save functions
 if ispc
     opts.CVRidxdir = [opts.resultsdir,'CVRidx\']; mkdir(opts.CVRidxdir);
 else
@@ -58,12 +58,11 @@ end
 data = double(data);
 [xx yy zz N] = size(data);
 
-opts.voxelsize = opts.headers.map.dime.pixdim(2:4);
 
 %get voxels
 [voxels coordinates] = grabTimeseries(data, mask);
 [ref_voxels ref_coordinates] = grabTimeseries(data, refmask);
-dim = opts.headers.map.dime.pixdim(2:4);
+
 Fs = 1/opts.TR;
 t = 0:1/Fs:1-1/Fs;
 N = size(voxels,2);
@@ -138,9 +137,17 @@ if opts.smoothmap
     CVRidx_map = smthData(CVRidx_map,mask,opts);
 end
 if opts.normalizeCVRidx
-    saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64);
+    if opts.niiwrite
+        niftiwrite(CVRidx_map,[opts.CVRidxdir,'normCVRidx_map'],opts.info.map,'Compressed',1);
+    else
+        saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64);
+    end
 else
-    saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
+    if opts.niiwrite
+        niftiwrite(CVRidx_map,[opts.CVRidxdir,'CVRidx_map'],opts.info.map,'Compressed',1);
+    else
+        saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
+    end
 end
 CVRidx_map(CVRidx_map == 0) = NaN;
 end

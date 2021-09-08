@@ -34,7 +34,6 @@ warning('off')
 global opts
 
 if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end 
-if isfield(opts,'voxelsize'); else; opts.voxelsize = opts.headers.ts.dime.pixdim(2:4); end
 if isfield(opts,'filtWidth'); else; opts.filtWidth = 5; end %originally 7
 if isfield(opts,'FWHM'); else; opts.FWHM = 4; end
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
@@ -42,11 +41,6 @@ if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select comm
 sigma=opts.FWHM/2.355;
 inplanevoxelsize=opts.voxelsize(1);
 data_smooth=zeros(size(data));
-
-if ndims(inplanevoxelsize) == 2
-    disp('check that the opts.voxel size parameter is correct; performing 2D smoothing')
-    opts.spatialdim = 2;
-end
 
 filtSigma = sigma/inplanevoxelsize;
 imageFilter=fspecial('gaussian',opts.filtWidth,filtSigma);

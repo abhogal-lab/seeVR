@@ -32,16 +32,16 @@
 % threshold have been removed
 function [mmask] = remLV(data,mask,opts)
 
-
 warning('off')
 global opts
 
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %turn on/off select command output
 
 if ispc
-if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end 
+    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end
 else
-if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'/']; end  
+    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'/']; end
 end
 
 [voxel_ts, coordinates] = grabTimeseries(data, mask);
@@ -56,10 +56,23 @@ SDinv = 1/SDm;
 tNSR = 1/tSNR;
 
 %save image
-saveImageData(SDm,opts.headers.map,opts.resultsdir,'tSD.nii.gz',64);
-saveImageData(tSNR,opts.headers.map,opts.resultsdir,'tSNR.nii.gz',64);
-saveImageData(SDinv,opts.headers.map,opts.resultsdir,'SDinv.nii.gz',64);
-saveImageData(tNSR,opts.headers.map,opts.resultsdir,'tNSR.nii.gz',64);
+
+
+%test to read nifti
+% V = niftiread('mWBmask_0.14477.nii.gz');
+% tinfo = niftiinfo('mWBmask_0.14477.nii.gz');
+% % niftiwrite(V, 'outbrain.nii', info);
+if opts.niiwrite
+    niftiwrite(SDm,[opts.resultsdir,'tSD'],opts.info.map,'Compressed',1);
+    niftiwrite(tSNR,[opts.resultsdir,'tSNR'],opts.info.map,'Compressed',1);
+    niftiwrite(SDinv,[opts.resultsdir,'SDinv'],opts.info.map,'Compressed',1);
+    niftiwrite(tNSR,[opts.resultsdir,'tNSR'],opts.info.map,'Compressed',1);
+else
+    saveImageData(SDm,opts.headers.map,opts.resultsdir,'tSD.nii.gz',64);
+    saveImageData(tSNR,opts.headers.map,opts.resultsdir,'tSNR.nii.gz',64);
+    saveImageData(SDinv,opts.headers.map,opts.resultsdir,'SDinv.nii.gz',64);
+    saveImageData(tNSR,opts.headers.map,opts.resultsdir,'tNSR.nii.gz',64);
+end
 
 if opts.verbose
     disp('saving tSD map');
@@ -84,7 +97,12 @@ end
 mmask(isinf(tNSR)) = 0; mmask(tNSR > opts.LVthresh) = 0; %This step should remove vessels and garbage data
 mmask = double(mmask);
 %saves new brain mask excluding voxels
-saveImageData(mmask,opts.headers.mask,opts.resultsdir,['mWBmask_',num2str(opts.LVthresh),'.nii.gz'],64);
-
+if opts.niiwrite
+    name = [opts.resultsdir,'mWBmask_',num2str(opts.LVthresh)];
+    name(name == '.') = '_';
+    niftiwrite(mmask,name,opts.info.mask,'Compressed',1);
+else
+    saveImageData(mmask,opts.headers.mask,opts.resultsdir,['mWBmask_',num2str(opts.LVthresh),'.nii.gz'],64);
+end
 end
 
