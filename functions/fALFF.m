@@ -44,9 +44,9 @@ function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, 
 
 global opts
 if ispc
-opts.ALFFdir = [opts.resultsdir,'ALFF/']; mkdir(opts.ALFFdir);
+opts.ALFFdir = [opts.resultsdir,'ALFF\']; mkdir(opts.ALFFdir);
 else
-opts.ALFFdir = [opts.resultsdir,'ALFF\']; mkdir(opts.ALFFdir);  
+opts.ALFFdir = [opts.resultsdir,'ALFF/']; mkdir(opts.ALFFdir);  
 end
 
 [xx yy zz N] = size(data);
@@ -88,12 +88,13 @@ ALFF_map = reshape(ALFF_map,size(mask)); zALFF_map = reshape(zALFF_map,size(mask
 ALFF_map = smthData( ALFF_map, double(mask), opts); zALFF_map = smthData(zALFF_map, double(mask), opts);
 limits = string(opts.fpass);
 %save ALFF
-name = join(['ALFF_map_',limits(1),'_',limits(2),'.nii.gz']);
-name(name == ' ') = [];
+delimeter = {'_','_','_'};
+name = join(['ALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
+
 saveImageData(ALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 %save ALFF z-map
-name = join(['zALFF_map_',limits(1),'_',limits(2),'.nii.gz']);
-name(name == ' ') = [];
+name = join(['zALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
+
 saveImageData(zALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 
 %generate ALFF map and z-transformed ALFF map
@@ -103,11 +104,11 @@ zfALFF_map(coordinates,1) = (fALFF_map(coordinates,1) - mean(fALFF_map(coordinat
 fALFF_map = reshape(fALFF_map,size(mask)); zfALFF_map = reshape(zfALFF_map,size(mask));
 fALFF_map = smthData( fALFF_map, double(mask), opts); zfALFF_map = smthData(zfALFF_map, double(mask), opts);
 %save fALFF
-name = join(['fALFF_map_',limits(1),'_',limits(2),'.nii.gz']);
-name(name == ' ') = [];
+name = join(['fALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
+
 saveImageData(fALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 %save fALFF z-map
-name = join(['zfALFF_map_',limits(1),'_',limits(2),'.nii.gz']);
-name(name == ' ') = [];
+name = join(['zfALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
+
 saveImageData(zfALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end
