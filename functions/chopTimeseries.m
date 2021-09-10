@@ -90,7 +90,7 @@ if isfield(opts,'xdata'); opts.xdata = [opts.TR:opts.TR:opts.TR*opts.dyn]; end
 %save shortened timeseries (this needs to be updated for native saving)
 if opts.save_rdata
     if opts.niiwrite
-    niftiwrite(rdata,[opts.glmlagdir, 'rBOLD',],'Compressed',1); %need to add info for compatibility
+    niftiwrite(rdata,[opts.glmlagdir, 'rBOLD',]); %need to add info for compatibility
     else
     saveImageData(rdata, opts.headers.ts, opts.resultsdir, 'rBOLD.nii.gz', 64);
     end

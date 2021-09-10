@@ -138,13 +138,13 @@ if opts.smoothmap
 end
 if opts.normalizeCVRidx
     if opts.niiwrite
-        niftiwrite(CVRidx_map,[opts.CVRidxdir,'normCVRidx_map'],opts.info.map,'Compressed',1);
+        niftiwrite(CVRidx_map,[opts.CVRidxdir,'normCVRidx_map'],opts.info.map);
     else
         saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64);
     end
 else
     if opts.niiwrite
-        niftiwrite(CVRidx_map,[opts.CVRidxdir,'CVRidx_map'],opts.info.map,'Compressed',1);
+        niftiwrite(CVRidx_map,[opts.CVRidxdir,'CVRidx_map'],opts.info.map);
     else
         saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
     end

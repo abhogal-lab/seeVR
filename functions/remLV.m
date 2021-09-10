@@ -63,10 +63,10 @@ tNSR = 1/tSNR;
 % tinfo = niftiinfo('mWBmask_0.14477.nii.gz');
 % % niftiwrite(V, 'outbrain.nii', info);
 if opts.niiwrite
-    niftiwrite(SDm,[opts.resultsdir,'tSD'],opts.info.map,'Compressed',1);
-    niftiwrite(tSNR,[opts.resultsdir,'tSNR'],opts.info.map,'Compressed',1);
-    niftiwrite(SDinv,[opts.resultsdir,'SDinv'],opts.info.map,'Compressed',1);
-    niftiwrite(tNSR,[opts.resultsdir,'tNSR'],opts.info.map,'Compressed',1);
+    niftiwrite(SDm,[opts.resultsdir,'tSD'],opts.info.map);
+    niftiwrite(tSNR,[opts.resultsdir,'tSNR'],opts.info.map);
+    niftiwrite(SDinv,[opts.resultsdir,'SDinv'],opts.info.map);
+    niftiwrite(tNSR,[opts.resultsdir,'tNSR'],opts.info.map);
 else
     saveImageData(SDm,opts.headers.map,opts.resultsdir,'tSD.nii.gz',64);
     saveImageData(tSNR,opts.headers.map,opts.resultsdir,'tSNR.nii.gz',64);
@@ -100,7 +100,7 @@ mmask = double(mmask);
 if opts.niiwrite
     name = [opts.resultsdir,'mWBmask_',num2str(opts.LVthresh)];
     name(name == '.') = '_';
-    niftiwrite(mmask,name,opts.info.mask,'Compressed',1);
+    niftiwrite(mmask,name,opts.info.mask);
 else
     saveImageData(mmask,opts.headers.mask,opts.resultsdir,['mWBmask_',num2str(opts.LVthresh),'.nii.gz'],64);
 end

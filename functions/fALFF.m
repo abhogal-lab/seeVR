@@ -1,23 +1,23 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
 % <fALFF: calculates (fractional) amplitude of low frequency fluctuations ((f)ALFF) >
-% 
+%
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % This program is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
 % *************************************************************************
 % Timeseries data is used to generate ALFF and fALFF maps based on specified
-% frequency bands. For details see: 
+% frequency bands. For details see:
 % An improved approach to detection of amplitude of low-frequency fluctuation (ALFF) for resting-state fMRI: Fractional ALFF
 %doi: 10.1016/j.jneumeth.2008.04.012
 %
@@ -39,14 +39,14 @@
 %
 % zfALFF_map: z-transformed fALFF map defined by the standard deviation of
 % fALFF values defined by the input mask
-function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)                  
+function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)
 
 
 global opts
 if ispc
-opts.ALFFdir = [opts.resultsdir,'ALFF\']; mkdir(opts.ALFFdir);
+    opts.ALFFdir = [opts.resultsdir,'ALFF\']; mkdir(opts.ALFFdir);
 else
-opts.ALFFdir = [opts.resultsdir,'ALFF/']; mkdir(opts.ALFFdir);  
+    opts.ALFFdir = [opts.resultsdir,'ALFF/']; mkdir(opts.ALFFdir);
 end
 
 [xx yy zz N] = size(data);
@@ -90,13 +90,18 @@ limits = string(opts.fpass);
 %save ALFF
 delimeter = {'_','_','_'};
 name = join(['ALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
-
-saveImageData(ALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+if opts.niiwrite
+    niftiwrite(ALFF_map,[opts.ALFFdir,name],opts.info.map);
+else
+    saveImageData(ALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+end
 %save ALFF z-map
 name = join(['zALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
-
-saveImageData(zALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
-
+if opts.niiwrite
+    niftiwrite(zALFF_map,[opts.ALFFdir,name],opts.info.map);
+else
+    saveImageData(zALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+end
 %generate ALFF map and z-transformed ALFF map
 fALFF_map = zeros(size(mask)); fALFF_map = fALFF_map(:); zfALFF_map = fALFF_map;
 fALFF_map(coordinates,1) =  vALFF./fvALFF;
@@ -105,10 +110,16 @@ fALFF_map = reshape(fALFF_map,size(mask)); zfALFF_map = reshape(zfALFF_map,size(
 fALFF_map = smthData( fALFF_map, double(mask), opts); zfALFF_map = smthData(zfALFF_map, double(mask), opts);
 %save fALFF
 name = join(['fALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
-
-saveImageData(fALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+if opts.niiwrite
+    niftiwrite(fALFF_map,[opts.ALFFdir,name],opts.info.map);
+else
+    saveImageData(fALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+end
 %save fALFF z-map
 name = join(['zfALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
-
-saveImageData(zfALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+if opts.niiwrite
+    niftiwrite(zfALFF_map,[opts.ALFFdir,name],opts.info.map);
+else
+    saveImageData(zfALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+end
 end
