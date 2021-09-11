@@ -34,7 +34,7 @@ function [denData] = denoiseData(data,mask,opts)
 if license('test', 'wavelet_toolbox')
     if isfield(opts,'wdlevel'); else; opts.wdlevel = 3; end
     if isfield(opts,'family'); else; opts.family = 'db4'; end
-    [ denData ~ ]  = wDenoise(data, mask, opts);
+    [ denData, ~ ]  = wavDenoise(data, mask, opts);
     if isfield(opts, 'figdir')
         saveas(gcf,[opts.figdir,'wavDenoise_data.fig']);
     else
