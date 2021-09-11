@@ -18,7 +18,7 @@
 % *************************************************************************
 % This is a wrapper function which uses the wavelet toolbox to de-noise
 % input signals. For more information see the MATLAB wdenoise function.
-function [ wdenData ssimval ]  = wDenoise(data, mask, opts)
+function [ wdenData ssimval ]  = wavDenoise(data, mask, opts)
 
 
 global opts;
