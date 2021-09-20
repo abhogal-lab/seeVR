@@ -123,11 +123,16 @@ else
     end
 end
 
+
 if isfield(opts,'save_cleaned'); else; opts.save_cleaned = 0; end
 if opts.save_cleaned
+if opts.niiwrite
+if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end       
+niftiwrite(cleanData,[opts.resultsdir, 'cleanBOLD'],opts.info.rts);
+else 
     saveImageData(cleanData, opts.headers.ts, opts.resultsdir, 'cleanBOLD.nii.gz', 64);
 end
-
+end
 
 end
 

@@ -1,6 +1,6 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <glmCVRidx: generates internally normalized CVR maps (i.e. without using respiratory data >
+% <glmCVRidx: generates internally normalized CVR maps (i.e. without using respiratory data) >
 %
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 % refmask: binary mask that defines the reference signals of interest
 %
 % opts: options structure containing required variables for this specific
-% function; i.e. opts.fpass opts.normalizeCVRidx, opts.headers.map, opts.resultsdir
+% function; i.e. opts.fpass opts.headers.map, opts.info.map, opts,niiwrite, opts.resultsdir
 %
 % CVRidx_map: map of beta values (normalized to reference betas if
 % opts.normalizeCVRidx = 1)
@@ -46,7 +46,6 @@ warning('off');
 global opts;
 
 if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.08]; end  %default frequency band
-if isfield(opts,'normalizeCVRidx'); else; opts.normalizeCVRidx = 1; end  %default is to normalized data to reference signal
 if isfield(opts,'smoothmap'); else; opts.fpass = 0; end  %default is to not smooth output maps
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data is loaded this can be set to 1 to use native load/save functions
 if ispc
@@ -126,29 +125,30 @@ bpData(coordinates, :) = BP_V;
 bpData = reshape(bpData,size(data));
 
 CVRidx_map = zeros([1 numel(mask)]);
-if opts.normalizeCVRidx
-    CVRidx_map(1, coordinates) = CVRidx/avg; %normalized to reference response
-else
-    CVRidx_map(1, coordinates) = CVRidx;
-end
+
+nCVRidx_map(1, coordinates) = CVRidx/avg; %normalized to reference response
+
+CVRidx_map(1, coordinates) = CVRidx;
+
 CVRidx_map = reshape(CVRidx_map, size(mask));
+nCVRidx_map = reshape(nCVRidx_map, size(mask));
 
 if opts.smoothmap
     CVRidx_map = smthData(CVRidx_map,mask,opts);
 end
-if opts.normalizeCVRidx
-    if opts.niiwrite
-        niftiwrite(CVRidx_map,[opts.CVRidxdir,'normCVRidx_map'],opts.info.map);
-    else
-        saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64);
-    end
+
+if opts.niiwrite
+    niftiwrite(nCVRidx_map,[opts.CVRidxdir,'normCVRidx_map'],opts.info.map);
 else
-    if opts.niiwrite
-        niftiwrite(CVRidx_map,[opts.CVRidxdir,'CVRidx_map'],opts.info.map);
-    else
-        saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
-    end
+    saveImageData(nCVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64);
 end
+
+if opts.niiwrite
+    niftiwrite(CVRidx_map,[opts.CVRidxdir,'CVRidx_map'],opts.info.map);
+else
+    saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
+end
+nCVRidx_map(nCVRidx_map == 0) = NaN;
 CVRidx_map(CVRidx_map == 0) = NaN;
 end
 

@@ -21,7 +21,12 @@ function [corrvec_CO2,corrvec_O2] = loadRAMRgen4(opts)
 % removal.
 warning('off')
 global opts;
-cd(opts.seqpath)
+
+if isfield(opts,'seqpath'); 
+    cd(opts.seqpath)
+else
+    error('please specify location of RespirAct files in opts.seqpath')   
+end
 
 if isfield(opts,'extra'); else; opts.extra = 30; end                    %defines number of extra samples taken before and after the start and end of the events
 if isfield(opts,'remOUT'); else; opts.remOUT = 0; end                   %remove outliers from breathing traces
