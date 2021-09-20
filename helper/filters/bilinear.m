@@ -72,7 +72,7 @@
 
 % Author: Paul Kienzle <pkienzle@users.sf.net>
 
-function [Zz, Zp, Zg] = bilinear(Sz, Sp, Sg, T)
+function [Zz, Zp, Zg] = bilinearSVR(Sz, Sp, Sg, T)
 
 if nargin==3
   T = Sg;

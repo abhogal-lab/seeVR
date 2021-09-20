@@ -100,11 +100,11 @@ zero = [];
 gain = C^n;
 
 % splane frequency transform
-[zero, pole, gain] = sftrans(zero, pole, gain, W, stop);
+[zero, pole, gain] = sftransSVR(zero, pole, gain, W, stop);
 
 % Use bilinear transform to convert poles to the z plane
 if digital
-  [zero, pole, gain] = bilinear(zero, pole, gain, T);
+  [zero, pole, gain] = bilinearSVR(zero, pole, gain, T);
 end
 
 % convert to the correct output form
