@@ -125,9 +125,9 @@ bpData(coordinates, :) = BP_V;
 bpData = reshape(bpData,size(data));
 
 CVRidx_map = zeros([1 numel(mask)]);
+nCVRidx_map = zeros([1 numel(mask)]);
 
 nCVRidx_map(1, coordinates) = CVRidx/avg; %normalized to reference response
-
 CVRidx_map(1, coordinates) = CVRidx;
 
 CVRidx_map = reshape(CVRidx_map, size(mask));
@@ -135,6 +135,7 @@ nCVRidx_map = reshape(nCVRidx_map, size(mask));
 
 if opts.smoothmap
     CVRidx_map = smthData(CVRidx_map,mask,opts);
+    nCVRidx_map = smthData(nCVRidx_map,mask,opts);
 end
 
 if opts.niiwrite
