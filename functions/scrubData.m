@@ -1,17 +1,17 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
 % <scrubData: GLM based nuisance signal regression >
-% 
+%
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % This program is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -37,6 +37,9 @@ function [cleanData] = scrubData(data, mask, nuisance, probe, opts)
 
 warning('off');
 global opts;
+
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end 
+if isfield(opts,'save_cleaned'); else; opts.save_cleaned = 0; end
 
 if isempty(probe)
     probe = zeros(length(nuisance));
@@ -123,15 +126,14 @@ else
     end
 end
 
-
-if isfield(opts,'save_cleaned'); else; opts.save_cleaned = 0; end
 if opts.save_cleaned
-if opts.niiwrite
-if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end       
-niftiwrite(cleanData,[opts.resultsdir, 'cleanBOLD'],opts.info.rts);
-else 
-    saveImageData(cleanData, opts.headers.ts, opts.resultsdir, 'cleanBOLD.nii.gz', 64);
-end
+    if opts.niiwrite
+        if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end
+        cd(opts.resultsdir);
+        niftiwrite(cleanData,'cleanBOLD',opts.info.rts);
+    else
+        saveImageData(cleanData, opts.headers.ts, opts.resultsdir, 'cleanBOLD.nii.gz', 64);
+    end
 end
 
 end

@@ -58,6 +58,9 @@ end
 delta(delta > 15) = 0; delta(delta < -15) = 0; %remove large BOLD
 delta(isnan(delta)) = 0;
 disp('Saving CVR map')
+if opts.niiwrite
+    cd(opts.resultsdir)
+    
 saveImageData(delta,opts.headers.map,opts.resultsdir,savefile, 64);
 end
 

@@ -70,6 +70,8 @@ mean_ts = meanTimeseries(data,refmask);
 freq = 0:Fs/length(mean_ts):Fs/2;
 Lowf = opts.fpass(1); Highf = opts.fpass(2); %Hz
 
+%check whether signal processing toolbox is available
+if license('test','signal_toolbox') == 1
 % if opts.filter_order is specified
 if isfield(opts,'filter_order')
     [b,a] = butter(opts.filter_order,2*[Lowf, Highf]/Fs);
@@ -89,15 +91,6 @@ else
     opts.filter_order = I;
 end
 
-figure; hold on
-plot(rescale(mean_ts));
-plot(rescale(BP_ref+mean(mean_ts)));
-title('reference regressor before and after bandpass');
-saveas(gcf,[opts.figdir,'reference_regressor.fig']);
-xlabel('image volumes')
-ylabel('a.u.')
-legend('mean reference time-series', 'BP reference mean-timeseries')
-
 %bandpass signals of interest contained within mask
 BP_V = zeros(size(voxels));
 parfor ii=1:size(BP_V,1)
@@ -109,6 +102,29 @@ BP_rV = zeros(size(ref_voxels));
 parfor ii=1:size(BP_rV,1)
     BP_rV(ii,:) = filtfilt(b,a,ref_voxels(ii,:));
 end
+
+else
+isplot = 0;
+BP_ref = bpfilt(mean_ts, Lowf, Highf, isplot);
+BP_ref = BP_ref';
+%bandpass signals of interest contained within mask
+BP_V = zeros(size(voxels));
+BP_V = bpfilt(voxels,Lowf, Highf, isplot);
+
+%bandpass reference signals contained within refmask
+BP_rV = zeros(size(ref_voxels));
+BP_rV= bpfilt(ref_voxels, Lowf, Highf, isplot);
+
+end
+
+figure; hold on
+plot(rescale(mean_ts));
+plot(rescale(BP_ref+mean(mean_ts)));
+title('reference regressor before and after bandpass');
+saveas(gcf,[opts.figdir,'reference_regressor.fig']);
+xlabel('image volumes')
+ylabel('a.u.')
+legend('mean reference time-series', 'BP reference mean-timeseries')
 
 %regress whole brain & reference signals against band passed reference
 BP_ref = rescale(BP_ref); %reference regressor rescaled
@@ -139,13 +155,15 @@ if opts.smoothmap
 end
 
 if opts.niiwrite
-    niftiwrite(nCVRidx_map,[opts.CVRidxdir,'normCVRidx_map'],opts.info.map);
+    cd(opts.CVRidxdir);
+    niftiwrite(nCVRidx_map,'normCVRidx_map',opts.info.map);
 else
     saveImageData(nCVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64);
 end
 
 if opts.niiwrite
-    niftiwrite(CVRidx_map,[opts.CVRidxdir,'CVRidx_map'],opts.info.map);
+    cd(opts.CVRidxdir);
+    niftiwrite(CVRidx_map,'CVRidx_map',opts.info.map);
 else
     saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
 end

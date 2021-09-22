@@ -132,21 +132,24 @@ HRF_map(1, coordinates) = HRF_vec; HRF_map = reshape(HRF_map, [x y z]);
 if ~opts.expHRF
     if length(opts.onset) > 1; onset_map(1, coordinates) = onset_vec; onset_map = reshape(onset_map, [x y z]);
         if opts.niiwrite
-            niftiwrite(onset_map,[opts.hrfdir, 'onset_map'],opts.info.map);
+            cd(opts.hrfdir);
+            niftiwrite(onset_map,'onset_map',opts.info.map);
         else
             saveImageData(onset_map,opts.headers.map,opts.hrfdir,'onset_map.nii.gz',64);
         end
     end
     if length(opts.disp) > 1; disp_map(1, coordinates) = disp_vec; disp_map = reshape(disp_map, [x y z]);
         if opts.niiwrite
-            niftiwrite(disp_map,[opts.hrfdir, 'dispersion_map'],opts.info.map);
+            cd(opts.hrfdir);
+            niftiwrite(disp_map,'dispersion_map',opts.info.map);
         else
             saveImageData(disp_map,opts.headers.map,opts.hrfdir,'dispersion_map.nii.gz',64);
         end
     end
     if length(opts.under) > 1; under_map(1, coordinates) = under_vec; under_map = reshape(under_map, [x y z]);
         if opts.niiwrite
-            niftiwrite(under_map,[opts.hrfdir, 'undershoot_map'],opts.info.map);
+            cd(opts.hrfdir);
+            niftiwrite(under_map,'undershoot_map',opts.info.map);
         else
             saveImageData(under_map,opts.headers.map,opts.hrfdir,'undershoot_map.nii.gz',64);
         end
@@ -157,8 +160,9 @@ end
 
 if opts.expHRF
     if opts.niiwrite
-        niftiwrite(HRF_map,[opts.hrfdir, 'expHRF_map'],opts.info.map);
-        niftiwrite(r2_map,[opts.hrfdir, 'expHRF_r2_map'],opts.info.map);
+        cd(opts.hrfdir);
+        niftiwrite(HRF_map,'expHRF_map',opts.info.map);
+        niftiwrite(r2_map,'expHRF_r2_map',opts.info.map);
     else
         saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'expHRF_map.nii.gz',64);
         saveImageData(r2_map,opts.headers.map,opts.hrfdir,'expHRF_r2_map.nii.gz',64);
@@ -166,24 +170,27 @@ if opts.expHRF
 else
     if length(opts.disp) > length(opts.onset)
         if opts.niiwrite
-            niftiwrite(HRF_map,[opts.hrfdir, 'dispHRF_map'],opts.info.map);
-            niftiwrite(r2_map,[opts.hrfdir, 'dispHRF_r2_map'],opts.info.map);
+            cd(opts.hrfdir);
+            niftiwrite(HRF_map,'dispHRF_map',opts.info.map);
+            niftiwrite(r2_map,'dispHRF_r2_map',opts.info.map);
         else
             saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'dispHRF_map.nii.gz',64);
             saveImageData(r2_map,opts.headers.map,opts.hrfdir,'dispHRF_r2_map.nii.gz',64);
         end
     elseif length(opts.disp) < length(opts.onset)
         if opts.niiwrite
-            niftiwrite(HRF_map,[opts.hrfdir, 'onsetHRF_map'],opts.info.map);
-            niftiwrite(r2_map,[opts.hrfdir, 'onsetHRF_r2_map'],opts.info.map);
+            cd(opts.hrfdir);
+            niftiwrite(HRF_map,'onsetHRF_map',opts.info.map);
+            niftiwrite(r2_map,'onsetHRF_r2_map',opts.info.map);
         else
             saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'onsetHRF_map.nii.gz',64);
             saveImageData(r2_map,opts.headers.map,opts.hrfdir,'onsetHRF_r2_map.nii.gz',64);
         end
     else
         if opts.niiwrite
-            niftiwrite(HRF_map,[opts.hrfdir, 'HRF_map'],opts.info.map);
-            niftiwrite(r2_map,[opts.hrfdir, 'HRF_r2_map'],opts.info.map);
+            cd(opts.hrfdir);
+            niftiwrite(HRF_map,'HRF_map',opts.info.map);
+            niftiwrite(r2_map,'HRF_r2_map',opts.info.map);
         else
             saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'HRF_map.nii.gz',64);
             saveImageData(r2_map,opts.headers.map,opts.hrfdir,'HRF_r2_map.nii.gz',64);

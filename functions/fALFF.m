@@ -43,6 +43,7 @@ function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, 
 
 
 global opts
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                  %depending on how data is loaded this can be set to 1 to use native load/save functions
 if ispc
     opts.ALFFdir = [opts.resultsdir,'ALFF\']; mkdir(opts.ALFFdir);
 else
@@ -98,7 +99,8 @@ end
 %save ALFF z-map
 name = join(['zALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(zALFF_map,[opts.ALFFdir,name],opts.info.map);
+    cd(opts.ALFFdir)
+    niftiwrite(zALFF_map,name,opts.info.map);
 else
     saveImageData(zALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end
@@ -111,14 +113,14 @@ fALFF_map = smthData( fALFF_map, double(mask), opts); zfALFF_map = smthData(zfAL
 %save fALFF
 name = join(['fALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(fALFF_map,[opts.ALFFdir,name],opts.info.map);
+    niftiwrite(fALFF_map,name,opts.info.map);
 else
     saveImageData(fALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end
 %save fALFF z-map
 name = join(['zfALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(zfALFF_map,[opts.ALFFdir,name],opts.info.map);
+    niftiwrite(zfALFF_map,name,opts.info.map);
 else
     saveImageData(zfALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end

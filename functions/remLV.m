@@ -36,7 +36,7 @@ warning('off')
 global opts
 
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
-if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %turn on/off select command output
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end 
 
 if ispc
     if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end
@@ -63,10 +63,11 @@ tNSR = 1/tSNR;
 % tinfo = niftiinfo('mWBmask_0.14477.nii.gz');
 % % niftiwrite(V, 'outbrain.nii', info);
 if opts.niiwrite
-    niftiwrite(SDm,[opts.resultsdir,'tSD'],opts.info.map);
-    niftiwrite(tSNR,[opts.resultsdir,'tSNR'],opts.info.map);
-    niftiwrite(SDinv,[opts.resultsdir,'SDinv'],opts.info.map);
-    niftiwrite(tNSR,[opts.resultsdir,'tNSR'],opts.info.map);
+    cd(opts.resultsdir);
+    niftiwrite(SDm,'tSD',opts.info.map);
+    niftiwrite(tSNR,'tSNR',opts.info.map);
+    niftiwrite(SDinv,'SDinv',opts.info.map);
+    niftiwrite(tNSR,'tNSR',opts.info.map);
 else
     saveImageData(SDm,opts.headers.map,opts.resultsdir,'tSD.nii.gz',64);
     saveImageData(tSNR,opts.headers.map,opts.resultsdir,'tSNR.nii.gz',64);
