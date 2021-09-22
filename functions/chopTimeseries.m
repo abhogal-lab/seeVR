@@ -40,7 +40,6 @@ global opts;
 if isfield(opts,'save_rdata'); else; opts.save_rdata = 0; end %saves the shortened timeseries
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
 if isfield(opts,'dyn'); else; opts.dyn = size(data,ndims(data)); end %setup option if its not there
-if isfield(opts,'xdata'); else; opts.xdata = [opts.TR:opts.TR:opts.TR*opts.dyn]; end %setup option if its not there yet
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end 
 
 
@@ -81,7 +80,7 @@ switch nargin
 end
 if opts.verbose
     disp('Updated header file to reflect new timeseries length'); 
-    disp('Updated opts.xdata and opts.dyn to reflect new timeseries length'); 
+    disp('Updated opts.dyn to reflect new timeseries length'); 
 end
 
 %update info structure
