@@ -64,17 +64,17 @@ xdata = opts.TR:opts.TR:length(probe)*opts.TR;
 figure; 
 subplot(cols,1,1); plot(xdata, probe); 
 title('reference signal'); xlabel('time(s)'); 
-xlim([0 opts.xdata(end)]);
+xlim([0 xdata(end)]);
 set(gcf, 'Units', 'pixels', 'Position', [200, 500, 600, 800]);
 subplot(cols,1,2); plot(xdata, nuisance); 
 title('motion parameters & derivatives'); xlabel('time(s)'); 
-xlim([0 opts.xdata(end)]);
+xlim([0 xdata(end)]);
 subplot(cols,1,3); plot(xdata, innuisance); 
 title('nuisance < r-threshold'); xlabel('time(s)');
-xlim([0 opts.xdata(end)]);
+xlim([0 xdata(end)]);
 if ~isempty(outnuisance)
 subplot(cols,1,4); plot(xdata, outnuisance); 
 title('nuisance > r-threshold'); xlabel('time(s)');
-xlim([0 opts.xdata(end)]);
+xlim([0 xdata(end)]);
 end
 end

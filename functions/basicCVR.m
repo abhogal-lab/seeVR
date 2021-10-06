@@ -32,8 +32,7 @@
 % opts.headers.map, opts.resultsdir
 %
 % delta: a map of calculated signal changes from baseline
-function [delta] = basicCVR(data, mask, base_idx, stim_idx, savefile, opts)
-
+function [delta] = basicCVR(data, mask, base_idx, stim_idx, opts)
 
 warning('off')
 global opts
@@ -60,7 +59,9 @@ delta(isnan(delta)) = 0;
 disp('Saving CVR map')
 if opts.niiwrite
     cd(opts.resultsdir)
-    
-saveImageData(delta,opts.headers.map,opts.resultsdir,savefile, 64);
+    niftiwrite(delta,'basicCVR',opts.info.map);
+else
+saveImageData(delta,opts.headers.map,opts.resultsdir,'basicCVR.nii.gz', 64);
+end
 end
 

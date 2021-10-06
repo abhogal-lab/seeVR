@@ -1,17 +1,17 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
 % <chopTimeseres: shortens timeseries data to within a specified epoch >
-% 
+%
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % This program is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
@@ -40,7 +40,7 @@ global opts;
 if isfield(opts,'save_rdata'); else; opts.save_rdata = 0; end %saves the shortened timeseries
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
 if isfield(opts,'dyn'); else; opts.dyn = size(data,ndims(data)); end %setup option if its not there
-if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end 
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end
 
 
 switch nargin
@@ -71,7 +71,7 @@ switch nargin
                 end
                 rdata = data(:,:,:,idx(1):idx(2));
             case 3
-                 if idx(2) > size(data,3)
+                if idx(2) > size(data,3)
                     idx(2) = size(data,3);
                 end
                 rdata = data(:,:,idx(1):idx(2));
@@ -79,24 +79,25 @@ switch nargin
         if opts.verbose; disp('Using user-supplied indices to select epoch'); end
 end
 if opts.verbose
-    disp('Updated header file to reflect new timeseries length'); 
-    disp('Updated opts.dyn to reflect new timeseries length'); 
+    disp('Updated header file to reflect new timeseries length');
+    disp('Updated opts.dyn to reflect new timeseries length');
 end
 
 %update info structure
 if opts.niiwrite
-opts.info.rts = opts.info.ts;
-opts.info.rts.raw.dim(5) = size(rdata,4);
-opts.info.rts.ImageSize(4) = size(rdata,4);
-if opts.save_rdata   
-      niftiwrite(rdata,[opts.resultsdir, 'rBOLD'],opts.info.rts);
-else 
-if isfield(opts,'headers.ts');  end
-if isfield(opts,'dyn'); opts.dyn = []; [opts.xdim,opts.ydim,opts.zdim,opts.dyn] = size(rdata); end
-opts.headers.rts = opts.headers.ts;
-opts.headers.rts.dime.dim(2:5) = size(rdata);
-saveImageData(rdata, opts.headers.rts, opts.resultsdir, 'rBOLD.nii.gz', 64);
-end
+    opts.info.rts = opts.info.ts;
+    opts.info.rts.raw.dim(5) = size(rdata,4);
+    opts.info.rts.ImageSize(4) = size(rdata,4);
+    if opts.save_rdata
+        cd(opts.resultsdir)
+        niftiwrite(rdata,'rBOLD',opts.info.rts);
+    else
+        if isfield(opts,'headers.ts');  end
+        if isfield(opts,'dyn'); opts.dyn = []; [opts.xdim,opts.ydim,opts.zdim,opts.dyn] = size(rdata); end
+        opts.headers.rts = opts.headers.ts;
+        opts.headers.rts.dime.dim(2:5) = size(rdata);
+        saveImageData(rdata, opts.headers.rts, opts.resultsdir, 'rBOLD.nii.gz', 64);
+    end
 end
 
 end
