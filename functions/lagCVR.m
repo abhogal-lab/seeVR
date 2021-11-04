@@ -109,7 +109,7 @@ if isfield(opts, 'robustTstat'); else; opts.robustTstat = 1; end
 if isfield(opts, 'robustR'); else; opts.robustR = 0; end
 
 cd(opts.resultsdir);
-datatype = 64;
+datatype = 16;
 [xx, yy, zz, dyn] = size(BOLD_ts);
 orig_regr = probe;
 

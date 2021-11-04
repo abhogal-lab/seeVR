@@ -21,7 +21,7 @@ image = niftiread(image_path);
             opts.info.mask.BitsPerPixel = 64;
             opts.info.mask.raw.datatype = 64;
             opts.info.mask.raw.bitpix = 64;
-        
+            opts.info.mask.MultiplicativeScaling = 1
         image(isinf(image)) = 0;
 image = double(image);
 opts.niiwrite = 1; 

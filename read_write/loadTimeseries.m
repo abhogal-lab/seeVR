@@ -56,6 +56,7 @@ image = niftiread(image_path);
             opts.info.mask.raw.datatype = 64;
             opts.info.mask.raw.bitpix = 64;
             opts.voxelsize = info.raw.pixdim(2:4);
+            opts.info.mask.MultiplicativeScaling = 1;
         end
  
 

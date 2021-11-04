@@ -41,7 +41,7 @@ if isfield(opts,'motioncorr'); else; opts.motioncorr = 0.3; end
 
 test1 = nuisance(1,:); test2 = nuisance(:,1);
 if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
-if iscolumn(probe)==0; probe = probe'; end
+if iscolumn(probe) == 0; probe = probe'; end
 
 %remove nuisance correlating with probe
 autoCorr = abs(corr(probe,nuisance)); 

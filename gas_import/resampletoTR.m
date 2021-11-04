@@ -24,6 +24,6 @@ start_time = ntime(1,1);
 end_time = ntime(end,1);
 
 %resample the data
-resamp_time = linspace(start_time,end_time,floor(end_time/TR));
+resamp_time = linspace(0,end_time,floor(end_time/TR)+1);
 resamp_data = interp1(ntime,data,resamp_time); 
 end

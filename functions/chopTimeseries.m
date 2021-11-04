@@ -88,16 +88,21 @@ if opts.niiwrite
     opts.info.rts = opts.info.ts;
     opts.info.rts.raw.dim(5) = size(rdata,4);
     opts.info.rts.ImageSize(4) = size(rdata,4);
+    
     if opts.save_rdata
         cd(opts.resultsdir)
         niftiwrite(rdata,'rBOLD',opts.info.rts);
-    else
-        if isfield(opts,'headers.ts');  end
-        if isfield(opts,'dyn'); opts.dyn = []; [opts.xdim,opts.ydim,opts.zdim,opts.dyn] = size(rdata); end
-        opts.headers.rts = opts.headers.ts;
-        opts.headers.rts.dime.dim(2:5) = size(rdata);
+    end
+else
+    
+    if isfield(opts,'headers.ts');  end
+    if isfield(opts,'dyn'); opts.dyn = []; [opts.xdim,opts.ydim,opts.zdim,opts.dyn] = size(rdata); end
+    opts.headers.rts = opts.headers.ts;
+    opts.headers.rts.dime.dim(2:5) = size(rdata);
+    if opts.save_rdata
         saveImageData(rdata, opts.headers.rts, opts.resultsdir, 'rBOLD.nii.gz', 64);
     end
+
 end
 
 end

@@ -27,7 +27,7 @@ if isfield(opts,'prewhite'); else; opts.prewhite = 0; end                  %pre-
 if isfield(opts,'interp_factor'); else; opts.interp_factor = 1; end        %interpolate timeseries
 if isfield(opts,'expHRF'); else; opts.expHRF = 0; end                      %convolve with exponential HRF (default = 0; use double gamma)
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                  %depending on how data is loaded this can be set to 1 to use native load/save functions
-
+if isfield(opts,'include_linear'); else; opts.include_linear = 0; end      %add a liner term to the HRF fit - this can possible account for strange behavior due to the convolution
 
 if ispc
     if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end
@@ -77,6 +77,7 @@ hrf_map = zeros([1 x*y*z]); hrf_estimate_map = zeros([1 x*y*z]);
 
 if opts.expHRF
     if opts.verbose; disp('generating HRF maps based on exponential'); opts.plot = 1; end
+    opts.onset = 1; opts.under = 1;
     [~,HRF_probe] = convEXP(probe, opts); %Generate a exponential HRF
     HRFidx = [];
 else
@@ -96,18 +97,25 @@ disp_map = zeros([1 x*y*z]);
 under_map = zeros([1 x*y*z]);
 
 disp('Fitting HRF functions')
-
+L = rescale(LegendreN(1,1:1:size(voxel_ts,2)));
 parfor ii=1:size(voxel_ts,1)
     A = voxel_ts(ii,:);
     % with linear term
+    if opts.include_linear
+    C = [ones([length(A) 1]) L' A'];
+    else    
     C = [ones([length(A) 1])  A'];
+    end
     regr_coef = C\HRF_probe';
     
     %original observations
     X = HRF_probe;
     %fitted values
+    if opts.include_linear
+    Y = regr_coef(3,:).*repmat(A,[ size(X,1) 1])' + regr_coef(2,:).*L' + regr_coef(1,:);   
+    else
     Y = regr_coef(2,:).*repmat(A,[ size(X,1) 1])' + regr_coef(1,:);
-    
+    end
     SSE = zeros([1 size(X,1)]); SST = zeros([1 size(X,1)]);
     for jj=1:size(X,1)
         SSE(1,jj) = (norm(X(jj,:) - Y(:,jj)'))^2;
