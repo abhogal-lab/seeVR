@@ -6,21 +6,25 @@
 # seeVR
 A toolbox for analyzing cerebro-vascular other related hemodynamic data:
 
-SeeVR is an open-source toolbox MATLAB distributed under the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later option. Most of the optimization has been done using Matlab 2020+. SeeVR makes use of the parallel computing toolbox (workaround = replace parfor with for loops), the statistics toolbox and the wavelet toolbox. Wherever possible alternative implementations are avilable when these toolboxes are not available. If you run into any errors or bugs, have any feedback or would like to see new things implemented please dont hesitate to contact me at a.bhogal@umcutrecht.nl or via the contact for at https://www.seevr.nl/contact-collaboration/.
+SeeVR is an open-source toolbox MATLAB distributed under the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later option. Most of the optimization has been done using Matlab 2020+. SeeVR makes use of the parallel computing toolbox (workaround = replace parfor with for loops), the statistics toolbox and the wavelet toolbox. Wherever possible alternative implementations are avilable when these toolboxes are not available. If you run into any errors or bugs, have any feedback or would like to see new things implemented please don't hesitate to contact me at a.bhogal@umcutrecht.nl or via the contact form at https://www.seevr.nl/contact-collaboration/.
 
 If you use any CVR functionality for your work (or any derivatives based on the seeVR toolbox) please cite the following paper:
 
 Insights into cerebral tissue-specific response to respiratory challenges at 7T: evidence for combined blood flow and CO2-mediated effects
 AA Champagne, AA Bhogal - Frontiers in physiology, 2021, https://doi.org/10.3389/fphys.2021.601369
 
+and/or
+
+Alex A. Bhogal. (2021). abhogal-lab/seeVR: v1.01 (v1.01). Zenodo. https://doi.org/10.5281/zenodo.5283595
+
 Functionality:
 
 * basic functions for data handling (grabTimeseries, normTimeseries, chopTimeseries, demeanData, trAlign + WIP functions for loading of respiratory data for RespirAct only)
 * nuissance regression and de-noising (filtRegressor, scrubData, genGS, remLV, smthData, denoiseData)
-* convolution (fitHRF, convHRF, convEXP) 
+* convolution and fitting of HRF convolved functions (fitHRF, convHRF, convEXP) 
 * spectral/hemodynamic analysis (basicCVR, glmCVRidx, fALFF, freqSpec, lagCVR)
 
-For more details download the user manual from www.seeVR.nl or have a look at the example data and tutorials at https://www.seevr.nl/tutorials/. Some documentation still needs to be updated so check the updates section of the site regularly to see what I've fixed.
+For more details download the user manual from www.seeVR.nl or have a look at the example data and tutorials at https://www.seevr.nl/tutorials/. Some documentation still needs to be updated so check the updates section of the site regularly to see what I've fixed - by now the manual is probably out of date. 
 
 The toolbox does include some dependencies, each provided with their own specific licences. These include:
 
