@@ -916,15 +916,16 @@ if opts.glm_model
             case 1
                 if opts.niiwrite
                     cd(opts.glmlagdir);
-                    niftiwrite(mask.*GLM_Estimate,'optiReg_ES',opts.info.map);
+                    niftiwrite(mask.*GLM_Estimate,'optiReg_beta',opts.info.map);
                     niftiwrite(mask.*tmpLag,'optiReg_lags',opts.info.map);
                     niftiwrite(mask.*GLM_lags,'uncor_optiReg_lags',opts.info.map);
-                    niftiwrite(estimaTS,'optiReg_estimatrix',opts.info.rts);
+                    opts.info.ests = opts.info.rts; opts.info.ests.raw.dim(2:5) = size(estimaTS); opts.info.ests.ImageSize = size(estimaTS);
+                    niftiwrite(estimaTS,'optiReg_estimatrix',opts.info.ests);
                     niftiwrite(mask.*cR2,'optiReg_R2',opts.info.map);
                     niftiwrite(mask.*cSSE,'optiReg_SSE',opts.info.map);
                     niftiwrite(mask.*cTstat,'optiReg_Tstat',opts.info.map);
                 else
-                    saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'optiReg_ES.nii.gz', datatype);
+                    saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'optiReg_beta.nii.gz', datatype);
                     saveImageData(mask.*tmpLag, opts.headers.map, opts.glmlagdir, 'optiReg_lags.nii.gz', datatype);
                     saveImageData(mask.*GLM_lags, opts.headers.map,opts.glmlagdir, 'uncor_optiReg_lags.nii.gz', datatype);
                     saveImageData(estimaTS, opts.headers.ts, opts.glmlagdir, 'optiReg_estimatrix.nii.gz', datatype);
@@ -943,15 +944,16 @@ if opts.glm_model
             case 2 %save maps using CO2 regressor
                 if opts.niiwrite
                     cd(opts.glmlagdir);
-                    niftiwrite(mask.*GLM_Estimate,'inputReg_ES',opts.info.map);
+                    niftiwrite(mask.*GLM_Estimate,'inputReg_beta',opts.info.map);
                     niftiwrite(mask.*tmpLag,'inputReg_lags',opts.info.map);
                     niftiwrite(mask.*GLM_lags,'uncor_inputReg_lags',opts.info.map);
-                    niftiwrite(estimaTS,'inputReg_estimatrix',opts.info.rts);
+                    opts.info.ests = opts.info.rts; opts.info.ests.raw.dim(2:5) = size(estimaTS); opts.info.ests.ImageSize = size(estimaTS);
+                    niftiwrite(estimaTS,'inputReg_estimatrix',opts.info.ests);
                     niftiwrite(mask.*cR2,'inputReg_R2',opts.info.map);
                     niftiwrite(mask.*cSSE,'inputReg_SSE',opts.info.map);
                     niftiwrite(mask.*cTstat,'inputReg_Tstat',opts.info.map);
                 else
-                    saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'inputReg_ES.nii.gz', datatype);
+                    saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'inputReg_beta.nii.gz', datatype);
                     saveImageData(mask.*tmpLag, opts.headers.map, opts.glmlagdir, 'inputReg_lags.nii.gz', datatype);
                     saveImageData(mask.*GLM_lags, opts.headers.map, opts.glmlagdir, 'uncor_inputReg_lags.nii.gz', datatype);
                     saveImageData(estimaTS, opts.headers.ts, opts.glmlagdir, 'inputReg_estimatrix.nii.gz', datatype);

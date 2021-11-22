@@ -11,11 +11,16 @@ input = data(ii,:)';
 input(breakPT(1):breakPT(2)) = [];
 
 
-ft = fittype( 'poly1' );
-options = fitoptions( ft );
+%ft = fittype( 'poly1' );
+%options = fitoptions( ft );
 
-[fitresult, ~] = fit( xData, input, ft, options );
-detrended(ii,:) = data(ii,:) - feval(fitresult,xdata)';
+%[fitresult, ~] = fit( xData, input, ft, options );
+
+
+%detrended(ii,:) = data(ii,:) - feval(fitresult,xdata)';
+P = polyfit(xData,input,1)
+yfit = P(1)*xdata+P(2);
+detrended(ii,:) = data(ii,:) - yfit;
 end
 if opts.verbose
 figure;
