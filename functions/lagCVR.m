@@ -810,8 +810,8 @@ if opts.glm_model
                 regr = probe;
         end
         %removes linearly dependent components        
-        norm_np = np;
-        %[norm_np,idx]=licols(np);
+        %norm_np = np;
+        [norm_np,idx]=licols(np);
         %setup regression matrix
         for ii = 1:size(lags,2)
             corr_regr = circshift(regr,lags(ii));
