@@ -134,7 +134,7 @@ switch check
         limits = [0 size(probe,1)];
         subplot(5,1,1); plot(meanTimeseries(data,mask), 'k'); title('original data'); xlim(limits);
         subplot(5,1,2); hold on; for ii=1:size(probe,2); plot(probe(:,ii), 'Color', probemap(ii,:)); end; title('data probes'); xlim(limits);
-        subplot(5,1,3); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii)), 'Color', nuisancemap(ii,:)); end; title('rescaled nuisance regressors'); xlim(limits);
+        subplot(5,1,3); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii),-1,1), 'Color', nuisancemap(ii,:)); end; title('rescaled nuisance regressors'); xlim(limits);
         subplot(5,1,4); plot(meanTimeseries(cleanData,mask), 'k'); title('explained data'); xlim(limits);
         subplot(5,1,5); plot(meanTimeseries(resData-offBOLD,mask), 'k'); title('residual data'); xlim(limits);
     case 2
@@ -150,7 +150,7 @@ switch check
         nuisancemap = viridis(size(nuisance,2)); nuisancemap = flip(nuisancemap,1);
         limits = [0 size(nuisance,1)];
         subplot(4,1,1); plot(meanTimeseries(data,mask), 'k'); title('original data'); xlim(limits);
-        subplot(4,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii)), 'Color', nuisancemap(ii,:)); end; title('rescaled nuisance regressors'); xlim(limits);
+        subplot(4,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii),-1,1), 'Color', nuisancemap(ii,:)); end; title('rescaled nuisance regressors'); xlim(limits);
         subplot(4,1,3); plot(meanTimeseries(cleanData,mask), 'k'); title('explained data'); xlim(limits);
         subplot(4,1,4); plot(meanTimeseries(resData-offBOLD,mask), 'k'); title('residual data'); xlim(limits);
 end

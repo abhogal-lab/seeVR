@@ -47,9 +47,9 @@ if isfield(opts,'disp'); else; opts.disp = [1:.5:30]; end %dispersion parameter 
 if isfield(opts,'under'); else; opts.under = 1; end %parameter that defines undershoot
 if isfield(opts,'pad'); else; opts.pad = 1; end %pad before fft
 if isfield(opts,'padfront'); else; opts.padfront = 1; end %pad before fft
-if isfield(opts,'detrendHRF'); else; opts.detrendHRF = 0; end %pad before fft
 
 input_probe = rescale(probe);
+
 if opts.pad
     pad = 2^nextpow2(length(probe));
 else
@@ -67,12 +67,8 @@ else
 end
 mm=0;
 xdata = (1:1:length(probe));
-%can also do in terms of TR, but then opts.disp should also be normalized
-%by TR. 
-%xdata = (opts.TR:opts.TR:opts.TR*length(probe));
 clear HRF
 HRFidx(1,:,:,:) = [1 1 1];
-
 
 for ii = opts.onset %onset
     for jj =  opts.disp %dispersion
@@ -114,12 +110,6 @@ if opts.padfront && opts.pad
     HRF_probe(:,1:pad) = [];
 else
     HRF_probe(:,1:pad) = []; HRF_probe(:,end-pad+1:end) = [];  %remove padding
-end
-
-%remove artificial trend
-if opts.detrendHRF
-    %use first and last 10% of data pts (improve this later)
-    HRF_probe = detrendHRF(HRF_probe, opts.basePTS);
 end
 for ii=1:size(HRF_probe,1); HRF_probe(ii,:) = rescale(HRF_probe(ii,:)); end
 if opts.verbose

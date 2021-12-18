@@ -40,8 +40,6 @@ else
     opts.hrfdir = [opts.resultsdir,'HRF/']; if exist(opts.hrfdir) == 7; else; mkdir(opts.hrfdir); end
 end
 
-t = cputime;
-
 [x, y, z, dyn] = size(data);
 
 
@@ -95,11 +93,13 @@ under_vec = zeros([1 length(coordinates)]);
 onset_map = zeros([1 x*y*z]);
 disp_map = zeros([1 x*y*z]);
 under_map = zeros([1 x*y*z]);
+beta_vec = zeros([1 length(coordinates)]);
+beta_map = zeros([1 x*y*z]);
 
 disp('Fitting HRF functions')
-L = rescale(LegendreN(1,1:1:size(voxel_ts,2)));
+L = rescale(legendreP(1,1:1:size(voxel_ts,2)));
 parfor ii=1:size(voxel_ts,1)
-    A = voxel_ts(ii,:);
+    A = rescale(voxel_ts(ii,:),-1,1);
     % with linear term
     if opts.include_linear
     C = [ones([length(A) 1]) L' A'];
@@ -123,9 +123,15 @@ parfor ii=1:size(voxel_ts,1)
     end
     
     R2 = 1 - SSE./SST;
-    [M, I] = max(R2);
+    [M, I] = max(abs(R2));
     r2_vec(1,ii) = M;
     HRF_vec(1,ii) = I;
+    if opts.include_linear
+    beta_vec(1,ii) = regr_coef(3,I);
+    else
+    beta_vec(1,ii) = regr_coef(2,I);
+    end
+    
     if opts.expHRF == 0
         onset_vec(1,ii) = HRFidx(I,1);
         disp_vec(1,ii) = HRFidx(I,2);
@@ -133,7 +139,7 @@ parfor ii=1:size(voxel_ts,1)
     end
 end
 
-
+beta_map(1, coordinates) = beta_vec; beta_map = reshape(beta_map, [x y z]);
 r2_map(1, coordinates) = r2_vec; r2_map = reshape(r2_map, [x y z]);
 HRF_map(1, coordinates) = HRF_vec; HRF_map = reshape(HRF_map, [x y z]);
 
@@ -171,9 +177,12 @@ if opts.expHRF
         cd(opts.hrfdir);
         niftiwrite(HRF_map,'expHRF_map',opts.info.map);
         niftiwrite(r2_map,'expHRF_r2_map',opts.info.map);
+        niftiwrite(beta_map,'expHRF_beta_map',opts.info.map);
+
     else
         saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'expHRF_map.nii.gz',64);
         saveImageData(r2_map,opts.headers.map,opts.hrfdir,'expHRF_r2_map.nii.gz',64);
+        saveImageData(beta_map,opts.headers.map,opts.hrfdir,'expHRF_beta_map.nii.gz',64);
     end
 else
     if length(opts.disp) > length(opts.onset)

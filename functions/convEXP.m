@@ -65,6 +65,19 @@ else
     HRF_probe(:,1:pad) = []; HRF_probe(:,end-pad+1:end) = [];  %remove padding
 end
 for ii=1:size(HRF_probe,1); HRF_probe(ii,:) = rescale(HRF_probe(ii,:)); end
+% remove linearly independent components
+[Xsub,idx]=licols(HRF_probe');
+XHRFidx = HRFidx(idx,:);
+HRF_probe = Xsub';
+HRFidx = XHRFidx;
+
+%remove artificial trend
+if opts.detrendHRF
+    %use first and last 10% of data pts (improve this later)
+    HRF_probe = detrendHRF(HRF_probe, [50 size(HRF_probe,2)-20]);
+end
+
+for ii=1:size(HRF_probe,1); HRF_probe(ii,:) = rescale(HRF_probe(ii,:)); end
 if opts.verbose
     figure;
     %customMap = viridis(size(HRF,1)); customMap = flip(customMap,1);

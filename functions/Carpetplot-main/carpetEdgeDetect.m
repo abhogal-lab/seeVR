@@ -79,7 +79,7 @@ function [] = carpetEdgeDetect(im1, TR, num_lines, edge, contrast_threshold, neu
 %neur_thresh = 0.15;
 
 %% Smooth image
-
+xdata = TR:TR:TR*size(im1,2);
 scale_factor = 1; %Used to scale computation of edge angles if desired
 height = size(im1,1);
 
@@ -276,7 +276,7 @@ times = ones(size(slopes)) * size(im1,1) ./ slopes;
 
 %% Main Fig 1: Create figure with all edges and transit times for this subject
 
-%figure('Position', [50 50 600 400])
+figure('Position', [50 50 600 400])
 h1 = subplot(2,1,1);
 imagesc(old_im1);
 caxis([-1 1]);
@@ -322,7 +322,11 @@ figure('Position', [50 50 800 500])
 
 h1 = subplot(2,1,1);
 h1.Position = h1.Position + [0 0.15 0 -0.15];
-plot(orig_avg, 'k');
+plot(xdata, orig_avg, 'k');
+hold on;
+%plot(plot_mat(:,2), plot_mat(:,1), '*', 'MarkerFaceColor', 'k', 'MarkerSize', 3);
+xlim([0 xdata(end)]);
+
 hold on;
 yline(neur_thresh_val, 'r--');
 ylabel('Avg. BOLD signal', 'Fontweight', 'bold');

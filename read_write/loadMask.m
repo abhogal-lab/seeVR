@@ -5,7 +5,7 @@
 function [image info] = loadMask(pathname, filename)
 
 warning('off')
-global opts
+global opts;
 if isfield(opts,'verbose'); else opts.verbose = 0; end
 if ~ispc
     if filename(end) == char(10); filename(end) = []; end
@@ -21,7 +21,7 @@ image = niftiread(image_path);
             opts.info.mask.BitsPerPixel = 64;
             opts.info.mask.raw.datatype = 64;
             opts.info.mask.raw.bitpix = 64;
-            opts.info.mask.MultiplicativeScaling = 1
+            opts.info.mask.MultiplicativeScaling = 1;
         image(isinf(image)) = 0;
 image = double(image);
 opts.niiwrite = 1; 

@@ -5,7 +5,7 @@
 function [image info] = loadTimeseries(pathname, filename)
 
 warning('off')
-global opts
+global opts;
 if isfield(opts,'verbose'); else opts.verbose = 0; end
 if ~ispc
     if filename(end) == char(10); filename(end) = []; end
@@ -36,12 +36,12 @@ image = niftiread(image_path);
             end
             opts.info.ts = info;
             opts.info.ts.Datatype = 'double';
-            opts.info.ts.BitsPerPixel = 64
+            opts.info.ts.BitsPerPixel = 64;
             opts.info.ts.raw.datatype = 64;
             opts.info.ts.raw.bitpix = 64;
             opts.info.map = info;
             opts.info.map.Datatype = 'double';
-            opts.info.map.BitsPerPixel = 64
+            opts.info.map.BitsPerPixel = 64;
             opts.info.map.raw.datatype = 64;
             opts.info.map.raw.bitpix = 64;
             opts.info.map.raw.dim(1) = 3;
