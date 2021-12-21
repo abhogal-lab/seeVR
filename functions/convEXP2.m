@@ -1,6 +1,6 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <convHRF: convolved an input signal with a double-gamma hemodynamic response function (HRF) >
+% <convHRF2: convolved an input signal with a double-gamma hemodynamic response function (HRF) >
 %
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ for ii = 1:length(opts.onset) %onset
     h_onset = h - h2;
     h_onset = h_onset./trapz(h_onset);
     HRFon(nn,:) = h_onset;
-    nn
+
 end
 
 
@@ -133,6 +133,12 @@ if opts.padfront && opts.pad
 else
     HRF_probe(:,1:pad) = []; HRF_probe(:,end-pad+1:end) = [];  %remove padding
 end
+
+% remove linearly independent components
+[Xsub,idx]=licols(HRF_probe', 1e-10);
+XHRFidx = HRFidx(idx,:);
+HRF_probe = Xsub';
+HRFidx = XHRFidx;
 
 %remove artificial trend
 if opts.detrendHRF

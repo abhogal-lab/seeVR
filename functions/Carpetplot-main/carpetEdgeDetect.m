@@ -1,11 +1,13 @@
-function [] = carpetEdgeDetect(im1, TR, num_lines, edge, contrast_threshold, neur_thresh)
+function [] = carpetEdgeDetect(im1,opts)
+
+global opts
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Carpet Plot Edge Detection
 % Created By: Brad Fitzgerald - Purdue University, fitzge45@purdue.edu
 % Last Edited On: 12 Nov 2020
 
-% Created for publication with corresponding manuscript, "Using carpet 
+% Created for publication with corresponding manuscript, "Using carpet
 % plots to analyze transit times of low frequency oscillations in resting
 % state fMRI" - submitted to Scientific Reports
 
@@ -17,19 +19,19 @@ function [] = carpetEdgeDetect(im1, TR, num_lines, edge, contrast_threshold, neu
 % designed to analyze carpet plots which have previously had the voxels
 % (rows) specifically ordered based on arrival time of the low frequency
 % oscillation pattern in each voxel - this helps to form more clearly
-% defined "edges" in the carpet plot. This was the intended use of the 
-%script, though edge detection could technically be performed without this 
+% defined "edges" in the carpet plot. This was the intended use of the
+%script, though edge detection could technically be performed without this
 %ordering (but results may be poor). The script also was built for carpet
 %plots where the data has been demeaned and scaled down according to
-%standard deviation. 
+%standard deviation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Output Figures:
 
-% Main Figure 1: a plot which shows the detected edges overlayed on the 
+% Main Figure 1: a plot which shows the detected edges overlayed on the
 % carpet plot with computed edge widths (transit time) plotted below
 
-% Main Figure 2: a plotwhich shows the detected edges separated based on 
+% Main Figure 2: a plotwhich shows the detected edges separated based on
 % whether the edges correspond to the top 15% (or some redefined threshold)
 % of the voxel-averaged time series.
 
@@ -77,16 +79,22 @@ function [] = carpetEdgeDetect(im1, TR, num_lines, edge, contrast_threshold, neu
 
 %Set neuronal signal threshold
 %neur_thresh = 0.15;
+%set defaults
+
+if isfield(opts,'num_lines'); else; opts.num_lines = 25; end
+if isfield(opts,'edge'); else; opts.edge = -1; end
+if isfield(opts,'contrast_threshold'); else; opts.contrast_threshold = .2; end
+if isfield(opts,'neur_thresh'); else; opts.neur_thresh = 0.15; end
 
 %% Smooth image
-xdata = TR:TR:TR*size(im1,2);
+xdata = opts.TR:opts.TR:opts.TR*size(im1,2);
 scale_factor = 1; %Used to scale computation of edge angles if desired
 height = size(im1,1);
 
 orig_avg = mean(im1);
 
 sort_avg = sort(orig_avg, 'descend');
-neur_thresh_val = sort_avg(floor(size(sort_avg,2)*neur_thresh));
+neur_thresh_val = sort_avg(floor(size(sort_avg,2)*opts.neur_thresh));
 
 %Create filter h for image blurring - meant to smooth out image for
 %clearer edges
@@ -98,7 +106,7 @@ h = conv2(h,h);
 %Filter data for several repititions
 smoothed_data = filter2(h, im1);
 for i=1:5
-smoothed_data = filter2(h, smoothed_data);
+    smoothed_data = filter2(h, smoothed_data);
 end
 old_im1 = im1;
 im1 = smoothed_data;
@@ -119,7 +127,7 @@ smoothed_avg = avg;
 %Apply derivative filter
 h = 1/2*[1 0 -1];
 filtsize = floor(size(h,2) / 2);
-derivatived_avg = edge * filter2(h, smoothed_avg);
+derivatived_avg = opts.edge * filter2(h, smoothed_avg);
 %Adjust the ends of the derivatived data since the front and back will be
 %skewed
 for i=1:filtsize
@@ -132,12 +140,12 @@ end
 % title('Derivatived Data')
 
 %% Find Peaks
-max_ind = zeros(1,num_lines);
+max_ind = zeros(1,opts.num_lines);
 temp = derivatived_avg;
 
 %Here we find the n=num_lines highest peaks of the derivative data,
 %representing locations where we want to draw a line
-for i=1:num_lines
+for i=1:opts.num_lines
     is_line_on_back_edge = 1;
     is_line_on_front_edge = 1;
     while is_line_on_back_edge == 1 || is_line_on_front_edge == 1
@@ -165,12 +173,12 @@ for i=1:num_lines
     end
     if nnz(temp<=0) == length(temp)
         disp('Not enough locations for a line!');
-        num_lines = i
-        break;   
+        opts.num_lines = i
+        break;
     end
 end
 
-neur_assignment = zeros(1, num_lines);
+neur_assignment = zeros(1, opts.num_lines);
 
 max_ind = sort(max_ind(max_ind>0), 'ascend');
 %Plot derivative over data to illustrate where the algorithm is deciding to
@@ -185,21 +193,21 @@ max_ind = sort(max_ind(max_ind>0), 'ascend');
 
 %% Draw Lines
 %Initialize space to store line data
-linfit = zeros(num_lines, 2);
-linfitline = zeros(num_lines, height-1+1);
+linfit = zeros(opts.num_lines, 2);
+linfitline = zeros(opts.num_lines, height-1+1);
 
 %Apply derivative filter to all data
 h = 1/8*[1 0 -1; 2 0 -2; 1 0 -1];
 filtsize = floor(size(h,2) / 2);
-derivatived_data = edge * filter2(h, im1);
+derivatived_data = opts.edge * filter2(h, im1);
 for b=1:filtsize
     derivatived_data(:,filtsize-(b-1)) = derivatived_data(:,filtsize-(b-2));
     derivatived_data(:,size(derivatived_data,2)-filtsize+(b)) = derivatived_data(:,size(derivatived_data,2)-filtsize+(b-1));
 end
 
 temp = derivatived_avg;
-avg_contrast = zeros(1, num_lines);
-for i=1:num_lines
+avg_contrast = zeros(1, opts.num_lines);
+for i=1:opts.num_lines
     location = max_ind(i);
     fin(i)=0;
     %For now we are considering the range around the peak where the
@@ -242,9 +250,9 @@ for i=1:num_lines
     data = derivatived_data(1:height, st(i):fin(i));
     %We can display the considered data if we want, but it's commented out
     %as seen below
-%     figure
-%     imshow(data);
-%     colormap(gray);    
+    %     figure
+    %     imshow(data);
+    %     colormap(gray);
     
     %Find horizontal point where derivative is maximized for each row
     max_ind2 = zeros(1, size(data, 1));
@@ -257,15 +265,15 @@ for i=1:num_lines
     
     %Calculate the best fit line for our derivative peak locations
     datayax = 1:size(max_ind2,2);
-%     figure
+    %     figure
     %plot(flip(max_ind2), datayax);
-%     scatter(flip(max_ind2), datayax);
-%     hold on;
+    %     scatter(flip(max_ind2), datayax);
+    %     hold on;
     linfit(i,:) = polyfit(datayax, max_ind2, 1);
     linfitline(i,:) = linfit(i,1)*datayax + linfit(i,2);
-%     plot(flip(linfitline), datayax);
-%     hold off;
-%     title('Finding Best Fit Line')
+    %     plot(flip(linfitline), datayax);
+    %     hold off;
+    %     title('Finding Best Fit Line')
     
 end
 
@@ -283,14 +291,14 @@ caxis([-1 1]);
 colormap(gray);
 hold on;
 plot_mat = [];
-for i=1:num_lines
-    if avg_contrast(i) > contrast_threshold
+for i=1:opts.num_lines
+    if avg_contrast(i) > opts.contrast_threshold
         if slopes(i) < 0
             plot((linfitline(i,:)-mean(linfitline(i,:))+max_ind(i)), datayax+1, 'g', 'LineWidth', 2);
         else
             plot((linfitline(i,:)-mean(linfitline(i,:))+max_ind(i)), datayax+1, 'r', 'LineWidth', 2);
         end
-        plot_mat = [plot_mat; [times(i)*TR max_ind(i)*TR]];
+        plot_mat = [plot_mat; [times(i)*opts.TR max_ind(i)*opts.TR]];
     end
 end
 yticklabels([]);
@@ -315,7 +323,15 @@ grid on;
 yline(0, '--');
 xlabel('Time (s)', 'fontweight', 'bold', 'FontSize', 12);
 ylabel('Transit time (s)', 'fontweight', 'bold', 'FontSize', 12);
-
+if isfield(opts, 'figdir')
+    saveas(gcf,[opts.figdir,'transit_times.fig']);
+else
+    if ispc
+        saveas(gcf,[pwd,'\','transit_times.fig']);
+    else
+        saveas(gcf,[pwd,'/','transit_times.fig']);
+    end
+end
 %% Main Fig 2: Create figure with neuro assigned edges and average BOLD signal
 
 figure('Position', [50 50 800 500])
@@ -331,10 +347,10 @@ hold on;
 yline(neur_thresh_val, 'r--');
 ylabel('Avg. BOLD signal', 'Fontweight', 'bold');
 xticklabels([]);
-title(strcat('Carpetplot edges at top', {' '}, string(neur_thresh*100), '% of average BOLD time series'));
+title(strcat('Carpetplot edges at top', {' '}, string(opts.neur_thresh*100), '% of average BOLD time series'));
 
 L = plot(nan, nan, 'r--');
-hLegend = legend(L, {strcat(string((1-neur_thresh)*100), '% Threshold')});
+hLegend = legend(L, {strcat(string((1-opts.neur_thresh)*100), '% Threshold')});
 hLegend.Location = 'southeast';
 
 hold off;
@@ -347,7 +363,7 @@ colormap(gray);
 caxis([-1 1]);
 hold on;
 
-for i=1:num_lines
+for i=1:opts.num_lines
     if avg_contrast(i) > 0.2 && neur_assignment(i) == 1
         plot((linfitline(i,:)-mean(linfitline(i,:))+max_ind(i)), datayax+1, 'b', 'LineWidth', 2);
     elseif avg_contrast(i) > 0.2 && neur_assignment(i) == 2
@@ -355,7 +371,7 @@ for i=1:num_lines
     else
         neur_assignment(i) = 0;
     end
-
+    
 end
 hold off;
 
@@ -367,6 +383,15 @@ ylabel('Voxels', 'fontweight', 'bold');
 hold on;
 L2(1) = plot(nan, nan, 'b-');
 L2(2) = plot(nan, nan, 'r-');
-hLegend2 = legend(L2, {strcat('Lower', {' '}, string(100 - neur_thresh*100), '%'), strcat('Top', {' '}, string(neur_thresh*100), '%')});
+hLegend2 = legend(L2, {strcat('Lower', {' '}, string(100 - opts.neur_thresh*100), '%'), strcat('Top', {' '}, string(opts.neur_thresh*100), '%')});
 hLegend2.Location = 'southeast';
 hold off;
+if isfield(opts, 'figdir')
+    saveas(gcf,[opts.figdir,'carpet_lines.fig']);
+else
+    if ispc
+        saveas(gcf,[pwd,'\','carpet_lines.fig']);
+    else
+        saveas(gcf,[pwd,'/','carpet_lines.fig']);
+    end
+end

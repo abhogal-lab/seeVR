@@ -1,6 +1,6 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <convHRF: convolved an input signal with a double-gamma hemodynamic response function (HRF) >
+% <convHRF2: convolved an input signal with a double-gamma hemodynamic response function (HRF) >
 %
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -47,6 +47,7 @@ if isfield(opts,'under'); else; opts.under = 1; end %parameter that defines unde
 if isfield(opts,'pad'); else; opts.pad = 1; end %pad before fft
 if isfield(opts,'padfront'); else; opts.padfront = 1; end %pad before fft
 if isfield(opts,'detrendHRF'); else; opts.detrendHRF = 0; end %pad before fft
+if isfield(opts,'removeLD'); else; opts.removeLD = 0; end %pad before fft
 
 input_probe = rescale(probe);
 if opts.pad
@@ -79,8 +80,9 @@ for ii = 1:length(opts.onset) %onset
     h_final = zeros(length(t),1);
     alpha_1 = opts.onset(ii);
     beta_1 = 1;
-    alpha_2 = alpha_1;
-    beta_2 = 1;
+    %alpha_2 = alpha_1;
+    alpha_2 = 1;
+    beta_2 = 0.5;
     h = ((t.^(alpha_1 - 1)).*(((beta_1).^(-alpha_1)).*(exp((1./(-beta_1)).*t))))./(gamma(alpha_1));
     h2 = ((t.^(alpha_2 - 1)).*(((beta_2).^(-alpha_2)).*(exp((1./(-beta_2)).*t))))./(opts.rratio.*gamma(alpha_2));
     h_onset = h - h2;
@@ -97,7 +99,7 @@ for jj =  opts.disp %dispersion
     alpha_1 = 1;
     beta_1 = jj;
     alpha_2 = alpha_1;
-    beta_2 = 1;
+    beta_2 = opts.under;
     
     h = ((t.^(alpha_1 - 1)).*(((beta_1).^(-alpha_1)).*(exp((1./(-beta_1)).*t))))./(gamma(alpha_1));
     h2 = ((t.^(alpha_2 - 1)).*(((beta_2).^(-alpha_2)).*(exp((1./(-beta_2)).*t))))./(opts.rratio.*gamma(alpha_2));
@@ -148,12 +150,19 @@ else
     HRF_probe(:,1:pad) = []; HRF_probe(:,end-pad+1:end) = [];  %remove padding
 end
 
+% remove linearly independent components
+if opts.removeLD
+[Xsub,idx]=licols(HRF_probe', 1e-18);
+XHRFidx = HRFidx(idx,:);
+HRF_probe = Xsub';
+HRFidx = XHRFidx;
+end
 %remove artificial trend
 if opts.detrendHRF
     %use first and last 10% of data pts (improve this later)
     HRF_probe = detrendHRF(HRF_probe, [50 size(HRF_probe,2)-20]);
 end
-for ii=1:size(HRF_probe,1); HRF_probe(ii,:) = rescale(HRF_probe(ii,:)); end
+for ii=1:size(HRF_probe,1); HRF_probe(ii,:) = rescale(HRF_probe(ii,:),-1, 1); end
 if opts.verbose
     figure;
     

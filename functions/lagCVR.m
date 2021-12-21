@@ -835,8 +835,7 @@ if opts.glm_model
           end
           
         %reconstruct signals to calculate R2
-        Y = zeros(size(regr_matrix));
-        X = zeros(size(regr_matrix));
+       
         R2 = zeros([1 size(regr_matrix,1)]);
         maxindex = zeros([1 size(wb_voxel_ts,1)]);
         beta = zeros([1 size(wb_voxel_ts,1)]);
@@ -865,8 +864,7 @@ if opts.glm_model
         end
         
          %reconstruct signals to calculate R2
-        Y = zeros(size(regr_matrix));
-        X = zeros(size(regr_matrix));
+  
         R2 = zeros([1 size(regr_matrix,1)]);
         maxindex = zeros([1 size(wb_voxel_ts,1)]);
         beta = zeros([1 size(wb_voxel_ts,1)]);
