@@ -46,7 +46,6 @@ if isfield(opts,'disp'); else; opts.disp = [1:.5:30]; end %dispersion parameter 
 if isfield(opts,'under'); else; opts.under = 1; end %parameter that defines undershoot
 if isfield(opts,'pad'); else; opts.pad = 1; end %pad before fft
 if isfield(opts,'padfront'); else; opts.padfront = 1; end %pad before fft
-if isfield(opts,'detrendHRF'); else; opts.detrendHRF = 0; end %pad before fft
 if isfield(opts,'removeLD'); else; opts.removeLD = 0; end %pad before fft
 
 input_probe = rescale(probe);
@@ -93,13 +92,14 @@ end
 %generate dispersion HRFs
 mm=0;HRFdsp = [];
 for jj =  opts.disp %dispersion
+    for kk =  opts.under %under
     mm = mm+1;
     t = (0:1:length(xdata)-1);
     h_final = zeros(length(t),1);
     alpha_1 = 1;
     beta_1 = jj;
     alpha_2 = alpha_1;
-    beta_2 = opts.under;
+    beta_2 = kk;
     
     h = ((t.^(alpha_1 - 1)).*(((beta_1).^(-alpha_1)).*(exp((1./(-beta_1)).*t))))./(gamma(alpha_1));
     h2 = ((t.^(alpha_2 - 1)).*(((beta_2).^(-alpha_2)).*(exp((1./(-beta_2)).*t))))./(opts.rratio.*gamma(alpha_2));
@@ -108,6 +108,7 @@ for jj =  opts.disp %dispersion
     h_final = h_final./trapz(h_final);
     
     HRFdsp(mm,:) = h_final;
+    end
 end
 
 %first convolve onset HRF with probe then continue with dispersion
@@ -157,11 +158,7 @@ XHRFidx = HRFidx(idx,:);
 HRF_probe = Xsub';
 HRFidx = XHRFidx;
 end
-%remove artificial trend
-if opts.detrendHRF
-    %use first and last 10% of data pts (improve this later)
-    HRF_probe = detrendHRF(HRF_probe, [50 size(HRF_probe,2)-20]);
-end
+
 for ii=1:size(HRF_probe,1); HRF_probe(ii,:) = rescale(HRF_probe(ii,:),-1, 1); end
 if opts.verbose
     figure;

@@ -1,4 +1,4 @@
-function [] = carpetEdgeDetect(im1,opts)
+function [] = carpetEdgeDetect(data,sort_map, mask, opts)
 
 global opts
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -11,12 +11,14 @@ global opts
 % plots to analyze transit times of low frequency oscillations in resting
 % state fMRI" - submitted to Scientific Reports
 
+% Updated for integration with seeVR toolbox (www.seeVR.nl)
+% Modified by: Alex Bhogal - UMC Utrecht, a.bhogal@umcutrecht.nl
 
 % This script is designed to analyze some input matrix which represents a
 % carpet plot of fMRI data (where voxels are ordered along the y-axis and
 % time-series volumes are ordered along the x-axis) and detect edges formed
 % by low frequency oscillations in the fMRI BOLD signal. The script was
-% designed to analyze carpet plots which have previously had the voxels
+% designed to anFalyze carpet plots which have previously had the voxels
 % (rows) specifically ordered based on arrival time of the low frequency
 % oscillation pattern in each voxel - this helps to form more clearly
 % defined "edges" in the carpet plot. This was the intended use of the
@@ -81,10 +83,36 @@ global opts
 %neur_thresh = 0.15;
 %set defaults
 
-if isfield(opts,'num_lines'); else; opts.num_lines = 25; end
-if isfield(opts,'edge'); else; opts.edge = -1; end
-if isfield(opts,'contrast_threshold'); else; opts.contrast_threshold = .2; end
-if isfield(opts,'neur_thresh'); else; opts.neur_thresh = 0.15; end
+if isfield(opts.carpet,'num_lines'); else; opts.carpet.num_lines = 25; end
+if isfield(opts.carpet,'edge'); else; opts.carpet.edge = -1; end
+if isfield(opts.carpet,'contrast_threshold'); else; opts.carpet.contrast_threshold = .2; end
+if isfield(opts.carpet,'neur_thresh'); else; opts.carpet.neur_thresh = 0.15; end
+if isfield(opts.carpet,'rescale'); else; opts.carpet.rescale = 1; end
+
+%% sort input data
+
+sort_map = sort_map(:);
+data = demeanData(data,mask);
+[voxels,coords] = grabTimeseries(data , mask);
+if opts.carpet.rescale
+    parfor ii=1:size(voxels,1)
+        voxels(ii,:) = rescale(voxels(ii,:));
+    end
+end
+%sorted index at all non-zero coordinates
+[B,I] = sort(sort_map(coords));
+im1 = voxels(I,:);
+
+figure;
+subplot(1,2,1);
+imagesc(imgaussfilt(voxels)); colormap(gray); title('unsorted')
+subplot(1,2,2);
+imagesc(imgaussfilt(im1)); colormap(gray); title('sorted')
+
+
+
+
+
 
 %% Smooth image
 xdata = opts.TR:opts.TR:opts.TR*size(im1,2);
@@ -94,7 +122,7 @@ height = size(im1,1);
 orig_avg = mean(im1);
 
 sort_avg = sort(orig_avg, 'descend');
-neur_thresh_val = sort_avg(floor(size(sort_avg,2)*opts.neur_thresh));
+neur_thresh_val = sort_avg(floor(size(sort_avg,2)*opts.carpet.neur_thresh));
 
 %Create filter h for image blurring - meant to smooth out image for
 %clearer edges
@@ -127,7 +155,7 @@ smoothed_avg = avg;
 %Apply derivative filter
 h = 1/2*[1 0 -1];
 filtsize = floor(size(h,2) / 2);
-derivatived_avg = opts.edge * filter2(h, smoothed_avg);
+derivatived_avg = opts.carpet.edge * filter2(h, smoothed_avg);
 %Adjust the ends of the derivatived data since the front and back will be
 %skewed
 for i=1:filtsize
@@ -140,12 +168,12 @@ end
 % title('Derivatived Data')
 
 %% Find Peaks
-max_ind = zeros(1,opts.num_lines);
+max_ind = zeros(1,opts.carpet.num_lines);
 temp = derivatived_avg;
 
 %Here we find the n=num_lines highest peaks of the derivative data,
 %representing locations where we want to draw a line
-for i=1:opts.num_lines
+for i=1:opts.carpet.num_lines
     is_line_on_back_edge = 1;
     is_line_on_front_edge = 1;
     while is_line_on_back_edge == 1 || is_line_on_front_edge == 1
@@ -173,12 +201,12 @@ for i=1:opts.num_lines
     end
     if nnz(temp<=0) == length(temp)
         disp('Not enough locations for a line!');
-        opts.num_lines = i
+        opts.carpet.num_lines = i
         break;
     end
 end
 
-neur_assignment = zeros(1, opts.num_lines);
+neur_assignment = zeros(1, opts.carpet.num_lines);
 
 max_ind = sort(max_ind(max_ind>0), 'ascend');
 %Plot derivative over data to illustrate where the algorithm is deciding to
@@ -193,21 +221,21 @@ max_ind = sort(max_ind(max_ind>0), 'ascend');
 
 %% Draw Lines
 %Initialize space to store line data
-linfit = zeros(opts.num_lines, 2);
-linfitline = zeros(opts.num_lines, height-1+1);
+linfit = zeros(opts.carpet.num_lines, 2);
+linfitline = zeros(opts.carpet.num_lines, height-1+1);
 
 %Apply derivative filter to all data
 h = 1/8*[1 0 -1; 2 0 -2; 1 0 -1];
 filtsize = floor(size(h,2) / 2);
-derivatived_data = opts.edge * filter2(h, im1);
+derivatived_data = opts.carpet.edge * filter2(h, im1);
 for b=1:filtsize
     derivatived_data(:,filtsize-(b-1)) = derivatived_data(:,filtsize-(b-2));
     derivatived_data(:,size(derivatived_data,2)-filtsize+(b)) = derivatived_data(:,size(derivatived_data,2)-filtsize+(b-1));
 end
 
 temp = derivatived_avg;
-avg_contrast = zeros(1, opts.num_lines);
-for i=1:opts.num_lines
+avg_contrast = zeros(1, opts.carpet.num_lines);
+for i=1:opts.carpet.num_lines
     location = max_ind(i);
     fin(i)=0;
     %For now we are considering the range around the peak where the
@@ -291,8 +319,8 @@ caxis([-1 1]);
 colormap(gray);
 hold on;
 plot_mat = [];
-for i=1:opts.num_lines
-    if avg_contrast(i) > opts.contrast_threshold
+for i=1:opts.carpet.num_lines
+    if avg_contrast(i) > opts.carpet.contrast_threshold
         if slopes(i) < 0
             plot((linfitline(i,:)-mean(linfitline(i,:))+max_ind(i)), datayax+1, 'g', 'LineWidth', 2);
         else
@@ -324,12 +352,24 @@ yline(0, '--');
 xlabel('Time (s)', 'fontweight', 'bold', 'FontSize', 12);
 ylabel('Transit time (s)', 'fontweight', 'bold', 'FontSize', 12);
 if isfield(opts, 'figdir')
-    saveas(gcf,[opts.figdir,'transit_times.fig']);
+    if opts.carpet.edge > 0
+        saveas(gcf,[opts.figdir,'transit_times_falling.fig']);
+    else
+        saveas(gcf,[opts.figdir,'transit_times_rising.fig']);
+    end
 else
     if ispc
-        saveas(gcf,[pwd,'\','transit_times.fig']);
+        if opts.carpet.edge > 0
+            saveas(gcf,[pwd,'\','transit_times_falling.fig']);
+        else
+            saveas(gcf,[pwd,'\','transit_times_rising.fig']);
+        end
     else
-        saveas(gcf,[pwd,'/','transit_times.fig']);
+        if opts.carpet.edge > 0
+            saveas(gcf,[pwd,'/','transit_times_falling.fig']);
+        else
+            saveas(gcf,[pwd,'/','transit_times_rising.fig']);
+        end
     end
 end
 %% Main Fig 2: Create figure with neuro assigned edges and average BOLD signal
@@ -347,10 +387,10 @@ hold on;
 yline(neur_thresh_val, 'r--');
 ylabel('Avg. BOLD signal', 'Fontweight', 'bold');
 xticklabels([]);
-title(strcat('Carpetplot edges at top', {' '}, string(opts.neur_thresh*100), '% of average BOLD time series'));
+title(strcat('Carpetplot edges at top', {' '}, string(opts.carpet.neur_thresh*100), '% of average BOLD time series'));
 
 L = plot(nan, nan, 'r--');
-hLegend = legend(L, {strcat(string((1-opts.neur_thresh)*100), '% Threshold')});
+hLegend = legend(L, {strcat(string((1-opts.carpet.neur_thresh)*100), '% Threshold')});
 hLegend.Location = 'southeast';
 
 hold off;
@@ -363,7 +403,7 @@ colormap(gray);
 caxis([-1 1]);
 hold on;
 
-for i=1:opts.num_lines
+for i=1:opts.carpet.num_lines
     if avg_contrast(i) > 0.2 && neur_assignment(i) == 1
         plot((linfitline(i,:)-mean(linfitline(i,:))+max_ind(i)), datayax+1, 'b', 'LineWidth', 2);
     elseif avg_contrast(i) > 0.2 && neur_assignment(i) == 2
@@ -383,15 +423,27 @@ ylabel('Voxels', 'fontweight', 'bold');
 hold on;
 L2(1) = plot(nan, nan, 'b-');
 L2(2) = plot(nan, nan, 'r-');
-hLegend2 = legend(L2, {strcat('Lower', {' '}, string(100 - opts.neur_thresh*100), '%'), strcat('Top', {' '}, string(opts.neur_thresh*100), '%')});
+hLegend2 = legend(L2, {strcat('Lower', {' '}, string(100 - opts.carpet.neur_thresh*100), '%'), strcat('Top', {' '}, string(opts.carpet.neur_thresh*100), '%')});
 hLegend2.Location = 'southeast';
 hold off;
 if isfield(opts, 'figdir')
-    saveas(gcf,[opts.figdir,'carpet_lines.fig']);
+    if opts.carpet.edge > 0
+        saveas(gcf,[opts.figdir,'carpet_lines_falling.fig']);
+    else
+        saveas(gcf,[opts.figdir,'carpet_lines_rising.fig']);
+    end
 else
     if ispc
-        saveas(gcf,[pwd,'\','carpet_lines.fig']);
+        if opts.carpet.edge > 0
+            saveas(gcf,[pwd,'\','carpet_lines_falling.fig']);
+        else
+            saveas(gcf,[pwd,'\','carpet_lines_rising.fig']);
+        end
     else
-        saveas(gcf,[pwd,'/','carpet_lines.fig']);
+        if opts.carpet.edge > 0
+            saveas(gcf,[pwd,'/','carpet_lines_falling.fig']);
+        else
+            saveas(gcf,[pwd,'/','carpet_lines_rising.fig']);
+        end
     end
 end

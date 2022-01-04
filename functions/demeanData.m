@@ -35,7 +35,7 @@ if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select comm
 switch ndims(data)
     
     case 2
-        if opts.verbose; disp('de-meaning timeseries vector'); end
+        %if opts.verbose; disp('de-meaning timeseries vector'); end
         m_ts = mean(data);
         dmData = data-m_ts;
     case 3
@@ -49,7 +49,7 @@ switch ndims(data)
         dmData(coordinates,:) = voxel_ts;
         dmData = reshape(dmData,size(data));
     case 4
-        if opts.verbose; disp('de-meaning 3D timeseries data'); end
+        %if opts.verbose; disp('de-meaning 3D timeseries data'); end
         [x,y,z,dyn] = size(data);
         [voxel_ts,coordinates] = grabTimeseries(data,mask);
         m_ts = nanmean(voxel_ts,2);

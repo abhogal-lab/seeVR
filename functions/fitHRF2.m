@@ -84,9 +84,6 @@ end
 
 r2_map = zeros([1 x*y*z]);
 HRF_map = zeros([1 x*y*z]);
-onset_vec = zeros([1 length(coordinates)]);
-disp_vec = zeros([1 length(coordinates)]);
-under_vec = zeros([1 length(coordinates)]);
 onset_map = zeros([1 x*y*z]);
 disp_map = zeros([1 x*y*z]);
 under_map = zeros([1 x*y*z]);
@@ -94,9 +91,9 @@ beta_vec = zeros([1 length(coordinates)]);
 beta_map = zeros([1 x*y*z]);
 
 disp('Fitting HRF functions')
-L = rescale(legendreP(1,1:1:size(voxel_ts,2)),-1,1);
 
 if opts.include_linear
+    L = rescale(legendreP(1,1:1:size(voxel_ts,2)),-1,1);
     regr_coef = zeros([size(HRF_probe,1) 3 length(coordinates)]);
     parfor ii=1:size(HRF_probe,1)
         A = HRF_probe(ii,:);
@@ -228,5 +225,10 @@ end
 
 maps.HRF = HRF_map;
 maps.r2 = r2_map;
+maps.onset = onset_map;
+maps.disp = disp_map;
+maps.under = under_map;
+maps.beta = beta_map;
 
+save([opts.resultsdir,'HRF_maps.mat'], 'maps');
 end
