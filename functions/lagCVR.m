@@ -84,7 +84,7 @@ if opts.load_probe == 0 && opts.refine_regressor == 0 && opts.trace_corr == 0
     opts.cvr_maps = 0;
 end
 
-%setup save directories (for unix change slashes - need to generalize this)
+%setup save directories 
 if ispc
     if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end
     if opts.corr_model; opts.corrlagdir = [opts.resultsdir,'corrLAG\']; mkdir(opts.corrlagdir); end
@@ -104,7 +104,7 @@ else
         opts.glmCVRdir = [opts.glmlagdir,'CVR/']; mkdir(opts.glmCVRdir);
     end
 end
-%optinal image outputs
+%optional image outputs
 if isfield(opts, 'robustTstat'); else; opts.robustTstat = 1; end
 if isfield(opts, 'robustR'); else; opts.robustR = 0; end
 
