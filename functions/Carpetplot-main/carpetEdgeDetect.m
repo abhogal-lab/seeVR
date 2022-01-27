@@ -315,7 +315,7 @@ for i=1:opts.carpet.num_lines
     
     %Calculate the best fit line for our derivative peak locations
     datayax = 1:size(max_ind2,2);
-
+    
     switch opts.carpet.fittype
         case 'linear'
             linfit(i,:) = polyfit(datayax, max_ind2, 1);
@@ -404,6 +404,9 @@ for ii=1:mm
     transit_map = zeros([1 numel(mask)]);
     transit_map(coords(flip(I))) = opts.TR*flip(transit_line(ii,:));
     transit_map = reshape(transit_map,size(mask));
+    if any(transit_line(ii,:)<0)
+        transit_map(transit_map ~= 0) =  transit_map(transit_map ~= 0) + abs(min(transit_line(ii,:)));
+    end
     if opts.niiwrite
         cd(opts.carpetdir)
         niftiwrite(transit_map,['transitMap_',int2str(ii)],opts.info.map);
@@ -417,6 +420,9 @@ mean_transit = mean(transit_line,1);
 transit_map = zeros([1 numel(mask)]);
 transit_map(coords(flip(I))) = opts.TR*flip(mean_transit);
 transit_map = reshape(transit_map,size(mask));
+if any(transit_line(ii,:)<0)
+    transit_map(transit_map ~= 0) =  transit_map(transit_map ~= 0) + abs(min(transit_line(ii,:)));
+end
 if opts.niiwrite
     cd(opts.carpetdir)
     niftiwrite(transit_map,'meanTransitMap',opts.info.map);
