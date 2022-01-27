@@ -1,3 +1,22 @@
+% Modifications to original code are Copyright (C) Alex A. Bhogal, 2022, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl. Please see the original license file provided by
+% Tong et. al that is included with this code.
+%
+% <carpetEdgeDetect: performs shag carpet plot analysis and outputs transit maps >
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
+%
 function [] = carpetEdgeDetect(data,sort_map, mask, opts)
 
 global opts
@@ -88,7 +107,19 @@ if isfield(opts.carpet,'edge'); else; opts.carpet.edge = -1; end
 if isfield(opts.carpet,'contrast_threshold'); else; opts.carpet.contrast_threshold = .2; end
 if isfield(opts.carpet,'neur_thresh'); else; opts.carpet.neur_thresh = 0.15; end
 if isfield(opts.carpet,'rescale'); else; opts.carpet.rescale = 1; end
+if isfield(opts.carpet,'knots'); else; opts.carpet.knots = 3; end
+if isfield(opts.carpet,'fittype'); else; opts.carpet.fittype = 'spline'; end %can be 'spline' or 'linear'
 
+%setup savedir
+if ispc
+    opts.carpetdir = [opts.resultsdir,'carpet\']; mkdir(opts.carpetdir);
+else
+    opts.carpetdir = [opts.resultsdir,'carpet/']; mkdir(opts.carpetdir);
+end
+
+% delete any existing transit maps
+cd(opts.carpetdir);
+delete *transit*
 %% sort input data
 
 sort_map = sort_map(:);
@@ -100,7 +131,7 @@ if opts.carpet.rescale
     end
 end
 %sorted index at all non-zero coordinates
-[B,I] = sort(sort_map(coords));
+[~,I] = sort(sort_map(coords), 'descend');
 im1 = voxels(I,:);
 
 figure;
@@ -108,11 +139,18 @@ subplot(1,2,1);
 imagesc(imgaussfilt(voxels)); colormap(gray); title('unsorted')
 subplot(1,2,2);
 imagesc(imgaussfilt(im1)); colormap(gray); title('sorted')
+saveas(gcf,[opts.carpetdir,'sorting.fig']);
 
-
-
-
-
+%generate a coordinate mask
+carpet_mask = zeros([1 numel(mask)]);
+carpet_mask(coords) = 1;
+carpet_mask = reshape(carpet_mask,size(mask));
+if opts.niiwrite
+    cd(opts.carpetdir)
+    niftiwrite(carpet_mask,'carpetMask',opts.info.mask);
+else
+    saveImageData(carpet_mask, opts.headers.mask, opts.carpetdir, 'carpetMask.nii.gz', 64);
+end
 
 %% Smooth image
 xdata = opts.TR:opts.TR:opts.TR*size(im1,2);
@@ -143,12 +181,6 @@ im1 = smoothed_data;
 
 %Find and plot average time series
 avg = mean(im1(:,:));
-% figure
-% plot(avg);
-% xlabel('fMRI volume');
-% ylabel('Average across voxels');
-% title('Average time series');
-
 smoothed_avg = avg;
 
 %% Derivative
@@ -162,10 +194,6 @@ for i=1:filtsize
     derivatived_avg(filtsize-(i-1)) = derivatived_avg(filtsize-(i-2));
     derivatived_avg(size(derivatived_avg,2)-filtsize+(i)) = derivatived_avg(size(derivatived_avg,2)-filtsize+(i-1));
 end
-
-% figure
-% plot(derivatived_avg)
-% title('Derivatived Data')
 
 %% Find Peaks
 max_ind = zeros(1,opts.carpet.num_lines);
@@ -201,7 +229,7 @@ for i=1:opts.carpet.num_lines
     end
     if nnz(temp<=0) == length(temp)
         disp('Not enough locations for a line!');
-        opts.carpet.num_lines = i
+        opts.carpet.num_lines = i;
         break;
     end
 end
@@ -216,7 +244,7 @@ max_ind = sort(max_ind(max_ind>0), 'ascend');
 % hold on;
 % colormap(gray);
 % caxis([-1 1]);
-% plot(derivatived_avg*20000, 'r', 'LineWidth', 2);
+% plot(derivatived_avg*8*size(im1,1), 'r', 'LineWidth', 2);
 % hold off;
 
 %% Draw Lines
@@ -263,7 +291,6 @@ for i=1:opts.carpet.num_lines
         neur_assignment(i) = 1;
     end
     
-    
     fin(i) = fin(i)+ 2;
     st(i) = st(i) - 2;
     
@@ -276,11 +303,6 @@ for i=1:opts.carpet.num_lines
         fin(i) = size(im1,2);
     end
     data = derivatived_data(1:height, st(i):fin(i));
-    %We can display the considered data if we want, but it's commented out
-    %as seen below
-    %     figure
-    %     imshow(data);
-    %     colormap(gray);
     
     %Find horizontal point where derivative is maximized for each row
     max_ind2 = zeros(1, size(data, 1));
@@ -293,22 +315,28 @@ for i=1:opts.carpet.num_lines
     
     %Calculate the best fit line for our derivative peak locations
     datayax = 1:size(max_ind2,2);
-    %     figure
-    %plot(flip(max_ind2), datayax);
-    %     scatter(flip(max_ind2), datayax);
-    %     hold on;
-    linfit(i,:) = polyfit(datayax, max_ind2, 1);
-    linfitline(i,:) = linfit(i,1)*datayax + linfit(i,2);
-    %     plot(flip(linfitline), datayax);
-    %     hold off;
-    %     title('Finding Best Fit Line')
+
+    switch opts.carpet.fittype
+        case 'linear'
+            linfit(i,:) = polyfit(datayax, max_ind2, 1);
+            linfitline(i,:) = linfit(i,1)*datayax + linfit(i,2);
+        case 'spline' %default
+            slm = slmengine(datayax, max_ind2, 'knots', opts.carpet.knots);
+            linfitline(i,:) = slmeval(datayax, slm);
+    end
     
 end
 
 %Calculate slopes and angles
-slopes = -1./linfit(:,1);
-angles = atan(slopes * scale_factor)*180/pi;
-times = ones(size(slopes)) * size(im1,1) ./ slopes;
+switch opts.carpet.fittype
+    case 'linear'
+        slopes = -1./linfit(:,1);
+        angles = atan(slopes * scale_factor)*180/pi;
+        times = ones(size(slopes)) * size(im1,1) ./ slopes;
+    case 'spline' %default
+        slopes = linfitline(:,1) - linfitline(:,end)
+        times = slopes;
+end
 
 %% Main Fig 1: Create figure with all edges and transit times for this subject
 
@@ -319,12 +347,20 @@ caxis([-1 1]);
 colormap(gray);
 hold on;
 plot_mat = [];
+mm = 0;
 for i=1:opts.carpet.num_lines
     if avg_contrast(i) > opts.carpet.contrast_threshold
+        mm=mm+1;
         if slopes(i) < 0
-            plot((linfitline(i,:)-mean(linfitline(i,:))+max_ind(i)), datayax+1, 'g', 'LineWidth', 2);
+            data_line(i,:) = (linfitline(i,:)-mean(linfitline(i,:))+max_ind(i));
+            transit_line(mm,:) = data_line(i,:) - data_line(i,1);
+            transit_line(mm,1) = transit_line(mm,2)/2;
+            plot(data_line(i,:), datayax+1, 'g', 'LineWidth', 2);
         else
-            plot((linfitline(i,:)-mean(linfitline(i,:))+max_ind(i)), datayax+1, 'r', 'LineWidth', 2);
+            data_line(i,:) = (linfitline(i,:)-mean(linfitline(i,:))+max_ind(i));
+            transit_line(mm,:) = data_line(i,:) - data_line(i,end);
+            transit_line(mm,1) = transit_line(mm,2)/2;
+            plot(data_line(i,:), datayax+1, 'r', 'LineWidth', 2);
         end
         plot_mat = [plot_mat; [times(i)*opts.TR max_ind(i)*opts.TR]];
     end
@@ -332,11 +368,8 @@ end
 yticklabels([]);
 xticklabels([]);
 ylabel('Voxels', 'fontweight', 'bold', 'FontSize', 12);
-%title(strcat('Subject', {' '}, string(sub)), 'FontSize', 14);
 
 hold off;
-
-
 
 h1 = subplot(2,1,2);
 h1.Position = h1.Position + [0 0.185 0 -0.075];
@@ -351,26 +384,44 @@ grid on;
 yline(0, '--');
 xlabel('Time (s)', 'fontweight', 'bold', 'FontSize', 12);
 ylabel('Transit time (s)', 'fontweight', 'bold', 'FontSize', 12);
-if isfield(opts, 'figdir')
-    if opts.carpet.edge > 0
-        saveas(gcf,[opts.figdir,'transit_times_falling.fig']);
-    else
-        saveas(gcf,[opts.figdir,'transit_times_rising.fig']);
-    end
+
+if opts.carpet.edge > 0
+    saveas(gcf,[opts.carpetdir,'times_falling.fig']);
 else
-    if ispc
-        if opts.carpet.edge > 0
-            saveas(gcf,[pwd,'\','transit_times_falling.fig']);
-        else
-            saveas(gcf,[pwd,'\','transit_times_rising.fig']);
-        end
+    saveas(gcf,[opts.carpetdir,'times_rising.fig']);
+end
+
+%generate transit maps
+
+if opts.niiwrite
+    cd(opts.carpetdir)
+    niftiwrite(carpet_mask,'carpetMask',opts.info.mask);
+else
+    saveImageData(carpet_mask, opts.headers.mask, opts.carpetdir, 'carpetMask.nii.gz', 64);
+end
+
+for ii=1:mm
+    transit_map = zeros([1 numel(mask)]);
+    transit_map(coords(flip(I))) = opts.TR*flip(transit_line(ii,:));
+    transit_map = reshape(transit_map,size(mask));
+    if opts.niiwrite
+        cd(opts.carpetdir)
+        niftiwrite(transit_map,['transitMap_',int2str(ii)],opts.info.map);
     else
-        if opts.carpet.edge > 0
-            saveas(gcf,[pwd,'/','transit_times_falling.fig']);
-        else
-            saveas(gcf,[pwd,'/','transit_times_rising.fig']);
-        end
+        saveImageData(transit_map, opts.headers.map, opts.carpetdir, ['transitMap_',int2str(ii),'.nii.gz'], 64);
     end
+end
+
+%generate average transit map
+mean_transit = mean(transit_line,1);
+transit_map = zeros([1 numel(mask)]);
+transit_map(coords(flip(I))) = opts.TR*flip(mean_transit);
+transit_map = reshape(transit_map,size(mask));
+if opts.niiwrite
+    cd(opts.carpetdir)
+    niftiwrite(transit_map,'meanTransitMap',opts.info.map);
+else
+    saveImageData(transit_map, opts.headers.map, opts.carpetdir, 'meanTransitMap.nii.gz', 64);
 end
 %% Main Fig 2: Create figure with neuro assigned edges and average BOLD signal
 
@@ -405,9 +456,9 @@ hold on;
 
 for i=1:opts.carpet.num_lines
     if avg_contrast(i) > 0.2 && neur_assignment(i) == 1
-        plot((linfitline(i,:)-mean(linfitline(i,:))+max_ind(i)), datayax+1, 'b', 'LineWidth', 2);
+        plot(data_line(i,:), datayax+1, 'b', 'LineWidth', 2);
     elseif avg_contrast(i) > 0.2 && neur_assignment(i) == 2
-        plot((linfitline(i,:)-mean(linfitline(i,:))+max_ind(i)), datayax+1, 'r', 'LineWidth', 2);
+        plot(data_line(i,:), datayax+1, 'r', 'LineWidth', 2);
     else
         neur_assignment(i) = 0;
     end
@@ -426,24 +477,11 @@ L2(2) = plot(nan, nan, 'r-');
 hLegend2 = legend(L2, {strcat('Lower', {' '}, string(100 - opts.carpet.neur_thresh*100), '%'), strcat('Top', {' '}, string(opts.carpet.neur_thresh*100), '%')});
 hLegend2.Location = 'southeast';
 hold off;
-if isfield(opts, 'figdir')
-    if opts.carpet.edge > 0
-        saveas(gcf,[opts.figdir,'carpet_lines_falling.fig']);
-    else
-        saveas(gcf,[opts.figdir,'carpet_lines_rising.fig']);
-    end
+
+if opts.carpet.edge > 0
+    saveas(gcf,[opts.carpetdir,'lines_falling.fig']);
 else
-    if ispc
-        if opts.carpet.edge > 0
-            saveas(gcf,[pwd,'\','carpet_lines_falling.fig']);
-        else
-            saveas(gcf,[pwd,'\','carpet_lines_rising.fig']);
-        end
-    else
-        if opts.carpet.edge > 0
-            saveas(gcf,[pwd,'/','carpet_lines_falling.fig']);
-        else
-            saveas(gcf,[pwd,'/','carpet_lines_rising.fig']);
-        end
-    end
+    saveas(gcf,[opts.carpetdir,'lines_rising.fig']);
 end
+
+

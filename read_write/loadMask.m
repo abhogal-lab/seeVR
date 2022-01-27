@@ -15,16 +15,16 @@ image_path = [pathname,filename];
 info = niftiinfo(image_path);
 image = niftiread(image_path);
 
-            %generate mask info
-            opts.info.mask = info;
-            opts.info.mask.Datatype = 'double';
-            opts.info.mask.BitsPerPixel = 64;
-            opts.info.mask.raw.datatype = 64;
-            opts.info.mask.raw.bitpix = 64;
-            opts.info.mask.MultiplicativeScaling = 1;
-        image(isinf(image)) = 0;
+%generate mask info
+opts.info.mask = info;
+opts.info.mask.Datatype = 'double';
+opts.info.mask.BitsPerPixel = 64;
+opts.info.mask.raw.datatype = 64;
+opts.info.mask.raw.bitpix = 64;
+opts.info.mask.MultiplicativeScaling = 1;
+image(isinf(image)) = 0;
 image = double(image);
-opts.niiwrite = 1; 
+opts.niiwrite = 1;
 
 end
 

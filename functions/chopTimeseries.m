@@ -102,7 +102,7 @@ else
     if opts.save_rdata
         saveImageData(rdata, opts.headers.rts, opts.resultsdir, 'rBOLD.nii.gz', 64);
     end
-
+    
 end
 
 end

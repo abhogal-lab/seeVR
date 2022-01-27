@@ -82,9 +82,7 @@ switch check
         np = nuisance;
 end
 
-
 [voxel_ts, coordinates] = grabTimeseries(data, mask);
-
 
 D = [ones([length(np) 1]) np];
 np_coef = []; nintcp = []; nuis = []; nuis_TS = []; ncombi_TS=[];

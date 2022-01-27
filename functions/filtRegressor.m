@@ -54,6 +54,10 @@ leave = index; leave = find(index == 0);
 innuisance = nuisance; outnuisance = nuisance;
 
 innuisance(:,keep) = [];
+if isempty(innuisance)
+    disp('Motion threshold is set too low. Increase opts.motioncorr and try again')
+    return
+end
 outnuisance(:,leave) = [];
 
 % Plot
