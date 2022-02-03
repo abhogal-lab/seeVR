@@ -43,7 +43,6 @@ inplanevoxelsize=opts.voxelsize(1);
 data_smooth=zeros(size(data));
 
 filtSigma = sigma/inplanevoxelsize;
-imageFilter=fspecial('gaussian',opts.filtWidth,filtSigma);
 
 ndim = ndims(data);
 %create a dilation mask
@@ -63,7 +62,7 @@ switch ndim
         
         switch opts.spatialdim
             case 2
-                
+                imageFilter=fspecial('gaussian',opts.filtWidth,filtSigma);
                 for s=1:size(data, 3)
                     if ~isempty(isnan(data))
                         
@@ -94,6 +93,7 @@ switch ndim
         
         switch opts.spatialdim
             case 2
+                imageFilter=fspecial('gaussian',opts.filtWidth,filtSigma);
                 
                 for t=1:size(data,4)
                     for s=1:size(data, 3)
