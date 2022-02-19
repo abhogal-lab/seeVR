@@ -154,12 +154,21 @@ if opts.smoothmap
     nCVRidx_map = smthData(nCVRidx_map,mask,opts);
 end
 
+nCVRidx_map(nCVRidx_map > 30) = 0;
+nCVRidx_map(nCVRidx_map < -30) = 0;
+CVRidx_map(CVRidx_map > 30) = 0;
+CVRidx_map(CVRidx_map < -30) = 0;
+
 if opts.niiwrite
     cd(opts.CVRidxdir);
     niftiwrite(nCVRidx_map,'normCVRidx_map',opts.info.map);
 else
     saveImageData(nCVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64);
 end
+
+%remove strange values
+nCVRidx_map(nCVRidx_map > 30) = 0;
+nCVRidx_map(nCVRidx_map < -30) = 0;
 
 if opts.niiwrite
     cd(opts.CVRidxdir);

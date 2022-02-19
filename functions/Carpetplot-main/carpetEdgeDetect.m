@@ -17,7 +17,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
-function [] = carpetEdgeDetect(data,sort_map, mask, opts)
+function [maps] = carpetEdgeDetect(data,sort_map, mask, opts)
 
 global opts
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -151,6 +151,7 @@ if opts.niiwrite
 else
     saveImageData(carpet_mask, opts.headers.mask, opts.carpetdir, 'carpetMask.nii.gz', 64);
 end
+maps.carpetMask = carpet_mask;
 
 %% Smooth image
 xdata = opts.TR:opts.TR:opts.TR*size(im1,2);
@@ -413,6 +414,8 @@ for ii=1:mm
     else
         saveImageData(transit_map, opts.headers.map, opts.carpetdir, ['transitMap_',int2str(ii),'.nii.gz'], 64);
     end
+    mapNr = ['transitMap_',int2str(ii)];
+    eval(['maps.',mapNr,' = transit_map']);
 end
 
 %generate average transit map
@@ -429,6 +432,7 @@ if opts.niiwrite
 else
     saveImageData(transit_map, opts.headers.map, opts.carpetdir, 'meanTransitMap.nii.gz', 64);
 end
+maps.meanTransit = transit_map;
 %% Main Fig 2: Create figure with neuro assigned edges and average BOLD signal
 
 figure('Position', [50 50 800 500])

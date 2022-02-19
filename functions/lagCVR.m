@@ -1044,14 +1044,14 @@ if opts.glm_model
         if pp == 1
             if opts.niiwrite
             cd(opts.glmCVRdir)
-            niftiwrite(mask.*cCVR,'optiReg_cCVR.nii.gz',opts.info.map);
+            niftiwrite(mask.*cCVR,'optiReg_cCVR',opts.info.map);
             else
             saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'optiReg_cCVR.nii.gz', datatype);
             end
         else
             if opts.niiwrite
             cd(opts.glmCVRdir)
-            niftiwrite(mask.*cCVR,'inputReg_cCVR.nii.gz',opts.info.map);
+            niftiwrite(mask.*cCVR,'inputReg_cCVR',opts.info.map);
             else
             saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'inputReg_cCVR.nii.gz', datatype);
             end

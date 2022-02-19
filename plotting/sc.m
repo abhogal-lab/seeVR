@@ -145,6 +145,14 @@
 % 					'gray_ryg' - first channel is plotted as RedYellowGreen brewer colormap, second
 %                   channel as gray, and third channel as alpha between the
 %                   two.
+%                   'gray_op' - first channel is plotted as OpPu brewer colormap, second
+%                   channel as gray, and third channel as alpha between the
+%                   two (purple --> orange).
+%                   'gray_special' - This is a double map where the first
+%                   component is blue to yellow nad the second yellow to
+%                   red. By manualy modyfying the length of each below you can
+%                   weight contributions.
+%                
 %
 % Also renamed the rescale.m function to rescale2.m located in the /private/ folder.
 % This function sometimes cused issues with Matlabs own rescale function. Associated
@@ -628,13 +636,28 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         I = J .* A + G .* (1 - A);
         limits = [];
         %% Gray_PuOr
-    case 'gray_po'
+    case 'gray_op'
         % Plot first channel as 'jet', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
-            error('gray_po requires a 3 channel image');
+            error('gray_byr requires a 3 channel image');
         end
-        map = colormap(brewermap(256,'PuOr'));
+        map = colormap(flip(brewermap(256,'PuOr')));
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
+        %% Gray_Special
+    case 'gray_special'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_special requires a 3 channel image');
+        end
+        map1 = colormap(flip(brewermap(32,'YlGnBu')));
+        map2 = colormap(brewermap(192,'YlOrRd'));
+        map = [map1' map2']';
         J = real2rgb(I(:,:,1), map, limits);
         G = real2rgb(I(:,:,2), 'gray');
         A = real2rgb(I(:,:,3), 'gray');
@@ -653,7 +676,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         A = real2rgb(I(:,:,3), 'gray');
         I = J .* A + G .* (1 - A);
         limits = [];
-         %% Gray_ACCENT
+        %% Gray_ACCENT
     case 'gray_acc'
         % Plot first channel as 'jet', second channel as 'gray', and third
         % channel as alpha between the two.
@@ -665,7 +688,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         G = real2rgb(I(:,:,2), 'gray');
         A = real2rgb(I(:,:,3), 'gray');
         I = J .* A + G .* (1 - A);
-        limits = [];   
+        limits = [];
         %% Compress
     case 'compress'
         % Compress to RGB, maximizing variance
