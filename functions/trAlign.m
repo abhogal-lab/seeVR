@@ -173,6 +173,7 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 
 %save traces
 assignin('base', 'probe1',  handles.probe1)
+
 if handles.varCheck > 3
 assignin('base', 'probe2',  handles.probe2)
 nrplots = 3;

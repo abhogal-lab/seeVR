@@ -494,4 +494,7 @@ else
     saveas(gcf,[opts.carpetdir,'lines_rising.fig']);
 end
 
-
+%save maps
+ disp('saving maps in .mat file' )
+ carpet_maps = maps;
+ save([opts.carpetdir,'carpet_Maps.mat'], 'carpet_maps');

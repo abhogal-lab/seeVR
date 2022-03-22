@@ -640,7 +640,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         % Plot first channel as 'jet', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
-            error('gray_byr requires a 3 channel image');
+            error('gray_op requires a 3 channel image');
         end
         map = colormap(flip(brewermap(256,'PuOr')));
         J = real2rgb(I(:,:,1), map, limits);
@@ -664,7 +664,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         I = J .* A + G .* (1 - A);
         limits = [];
         %% Gray_OrPu
-    case 'gray_op'
+    case 'gray_po'
         % Plot first channel as 'jet', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
