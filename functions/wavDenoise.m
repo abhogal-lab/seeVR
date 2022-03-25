@@ -20,7 +20,6 @@
 % input signals. For more information see the MATLAB wdenoise function.
 function [ wdenData ssimval ]  = wavDenoise(data, mask, opts)
 
-
 global opts;
 t = cputime;
 %discrete wavelet transform ideal for denoising

@@ -29,7 +29,8 @@
 % function)
 %
 % denData: a denoised/smoothed version of the input data
-function [denData] = denoiseData(data,mask,opts)
+function [denData] = denoiseData(data,mask,opts)   
+
 global opts;
 if license('test', 'wavelet_toolbox')
     if isfield(opts,'wdlevel'); else; opts.wdlevel = 3; end

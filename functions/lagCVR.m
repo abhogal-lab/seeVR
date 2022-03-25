@@ -54,7 +54,7 @@ if isfield(opts,'uni'); else; opts.uni = 0; end                           %if th
 if isfield(opts,'norm_regr'); else; opts.norm_regr = 0; end               %normalize the regressor for correlation analysis between 0-1
 if isfield(opts,'robust'); else; opts.robust = 0; end                     %calculate robust lag and CVR
 if opts.niiwrite
-    if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end  
+    if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end
 end
 
 %important parameters for results
@@ -84,7 +84,7 @@ if opts.load_probe == 0 && opts.refine_regressor == 0 && opts.trace_corr == 0
     opts.cvr_maps = 0;
 end
 
-%setup save directories 
+%setup save directories
 if ispc
     if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end
     if opts.corr_model; opts.corrlagdir = [opts.resultsdir,'corrLAG\']; mkdir(opts.corrlagdir); end
@@ -181,7 +181,7 @@ if opts.refine_regressor
             corr_probe = corr_probe' ;
             
             %remove low and high lags ignoring unreasonable and long lag times
-            idx = find(lags<=opts.adjlowlag | lags>=opts.adjhighlag);
+            idx = find(lags<=opts.adjlowerthresh | lags>=opts.adjupperthresh);
             lags(idx)=[];
             corr_probe(idx,:)=[];      clear idx
             
@@ -215,12 +215,19 @@ if opts.refine_regressor
             ts_lag_filt(remove)=[];
             
             % re-aligning all timeseries based on lag for PCA
-            xfit = 1:opts.interp_factor*dyn;
-            
-            new_shifted_ts = zeros([length(ts_lag_filt), opts.interp_factor*dyn]);
-            parfor hh = 1:length(ts_lag_filt)
-                new_shifted_ts(hh,:) = interp1(xfit,gm_voxel_ts_nonan_filt(:,hh),xfit+ts_lag_filt(hh),'Linear',gm_voxel_ts_nonan(hh,1));
+            tic
+            new_shifted_ts = zeros(length(ts_lag_filt), length(probe));
+            for hh = 1:length(ts_lag_filt)
+                new_shifted_ts(hh,:) = circshift(gm_voxel_ts_nonan_filt(:,hh),ts_lag_filt(hh));
+                if ts_lag_filt(hh) > 0
+                    new_shifted_ts(hh,1:ts_lag_filt(hh)) = gm_voxel_ts_nonan_filt(1,1);
+                elseif ts_lag_filt(hh) < 0
+                    new_shifted_ts(hh,end-ts_lag_filt(hh):end) = gm_voxel_ts_nonan_filt(1,end);
+                else
+                new_shifted_ts(hh,:) = gm_voxel_ts_nonan_filt(:,hh);
+                end
             end
+            toc
             
             disp('finished correlation, estimating new probe')
             
@@ -809,7 +816,7 @@ if opts.glm_model
                 disp('performing GLM based lag analysis using INPUT regressor')
                 regr = probe;
         end
-        %removes linearly dependent components        
+        %removes linearly dependent components
         %norm_np = np;
         [norm_np,idx]=licols(np);
         %setup regression matrix
@@ -826,76 +833,76 @@ if opts.glm_model
         end
         %perform regression at all lag times
         
-        if isempty(np) || nnz(np) == 0 
-        regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
-          parfor ii=1:size(regr_matrix,1)
-            A = regr_matrix(ii,:);
-            C = [ones([length(A(1,~isnan(A))) 1]) A(1,~isnan(A))'];
-            regr_coef(ii,:,:)= C\wb_voxel_ts(:,~isnan(A))';
-          end
-          
-        %reconstruct signals to calculate R2
-       
-        R2 = zeros([1 size(regr_matrix,1)]);
-        maxindex = zeros([1 size(wb_voxel_ts,1)]);
-        beta = zeros([1 size(wb_voxel_ts,1)]);
-        rsquared = zeros([1 size(wb_voxel_ts,1)]);
-        for ii = 1:size(wb_voxel_ts,1)
-            tcoef = regr_coef(:,:,ii);
-            X =  wb_voxel_ts(ii,:);
-            for jj=1:size(regr_matrix,1)
-                tY = tcoef(jj,2).*regr_matrix(jj,:) + tcoef(jj,1);             
-                tmp = corrcoef(tY,X);
-                R2(jj) = tmp(1,2)^2;
+        if isempty(np) || nnz(np) == 0
+            regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
+            parfor ii=1:size(regr_matrix,1)
+                A = regr_matrix(ii,:);
+                C = [ones([length(A(1,~isnan(A))) 1]) A(1,~isnan(A))'];
+                regr_coef(ii,:,:)= C\wb_voxel_ts(:,~isnan(A))';
             end
-          [M, I] = max(R2');
-          maxindex(1,ii) = I;
-          rsquared(1,ii) = M;
-          beta(1,ii) = regr_coef(I,2,ii);       
-        end 
-                   
-        else
-        regr_coef = zeros([size(lags,2) (size(norm_np,2)+2) length(coordinates)]);
-        %run GLM
-        parfor ii=1:size(regr_matrix,1)
-            A = regr_matrix(ii,:);
-            C = [ones([length(A(1,~isnan(A))) 1]) norm_np(~isnan(A),:) A(1,~isnan(A))'];
-            regr_coef(ii,:,:)= C\wb_voxel_ts(:,~isnan(A))';
-        end
-        
-         %reconstruct signals to calculate R2
-  
-        R2 = zeros([1 size(regr_matrix,1)]);
-        maxindex = zeros([1 size(wb_voxel_ts,1)]);
-        beta = zeros([1 size(wb_voxel_ts,1)]);
-        rsquared = zeros([1 size(wb_voxel_ts,1)]);
-        for ii = 1:size(wb_voxel_ts,1)
-            tcoef = regr_coef(:,:,ii);
-            X =  wb_voxel_ts(ii,:);
-            for jj=1:size(regr_matrix,1)
-                nuis = zeros([size(norm_np,1) 1]);
-                for kk=1:size(norm_np,2)
-                tnuis = norm_np(:,kk)*squeeze(tcoef(jj,kk+1));
-                nuis = nuis + tnuis;
+            
+            %reconstruct signals to calculate R2
+            
+            R2 = zeros([1 size(regr_matrix,1)]);
+            maxindex = zeros([1 size(wb_voxel_ts,1)]);
+            beta = zeros([1 size(wb_voxel_ts,1)]);
+            rsquared = zeros([1 size(wb_voxel_ts,1)]);
+            for ii = 1:size(wb_voxel_ts,1)
+                tcoef = regr_coef(:,:,ii);
+                X =  wb_voxel_ts(ii,:);
+                for jj=1:size(regr_matrix,1)
+                    tY = tcoef(jj,2).*regr_matrix(jj,:) + tcoef(jj,1);
+                    tmp = corrcoef(tY,X);
+                    R2(jj) = tmp(1,2)^2;
                 end
-                tY =  tcoef(jj,end).*regr_matrix(jj,:)+ nuis' + tcoef(jj,1);             
-                tmp = corrcoef(tY,X);
-                R2(jj) = tmp(1,2)^2;
+                [M, I] = max(R2');
+                maxindex(1,ii) = I;
+                rsquared(1,ii) = M;
+                beta(1,ii) = regr_coef(I,2,ii);
             end
-          [M, I] = max(R2');
-          maxindex(1,ii) = I;
-          rsquared(1,ii) = M;
-          beta(1,ii) = regr_coef(I,2,ii);        
+            
+        else
+            regr_coef = zeros([size(lags,2) (size(norm_np,2)+2) length(coordinates)]);
+            %run GLM
+            parfor ii=1:size(regr_matrix,1)
+                A = regr_matrix(ii,:);
+                C = [ones([length(A(1,~isnan(A))) 1]) norm_np(~isnan(A),:) A(1,~isnan(A))'];
+                regr_coef(ii,:,:)= C\wb_voxel_ts(:,~isnan(A))';
+            end
+            
+            %reconstruct signals to calculate R2
+            
+            R2 = zeros([1 size(regr_matrix,1)]);
+            maxindex = zeros([1 size(wb_voxel_ts,1)]);
+            beta = zeros([1 size(wb_voxel_ts,1)]);
+            rsquared = zeros([1 size(wb_voxel_ts,1)]);
+            for ii = 1:size(wb_voxel_ts,1)
+                tcoef = regr_coef(:,:,ii);
+                X =  wb_voxel_ts(ii,:);
+                for jj=1:size(regr_matrix,1)
+                    nuis = zeros([size(norm_np,1) 1]);
+                    for kk=1:size(norm_np,2)
+                        tnuis = norm_np(:,kk)*squeeze(tcoef(jj,kk+1));
+                        nuis = nuis + tnuis;
+                    end
+                    tY =  tcoef(jj,end).*regr_matrix(jj,:)+ nuis' + tcoef(jj,1);
+                    tmp = corrcoef(tY,X);
+                    R2(jj) = tmp(1,2)^2;
+                end
+                [M, I] = max(R2');
+                maxindex(1,ii) = I;
+                rsquared(1,ii) = M;
+                beta(1,ii) = regr_coef(I,2,ii);
+            end
+            
         end
         
-        end
-             
         lagmatrix = lags(maxindex);
         GLM_Estimate = zeros([xx*yy*zz,1]); GLM_Estimate(coordinates,:) = beta;
         GLM_lags = zeros([xx*yy*zz,1]); GLM_lags(coordinates,:) = lagmatrix;
         GLM_lags = reshape(GLM_lags,[xx yy zz]);
         GLM_Estimate = reshape(GLM_Estimate,[xx yy zz]);
-               
+        
         tmp = opts.TR*(lagmatrix/opts.interp_factor);
         tmpLag = zeros([xx*yy*zz,1]);  tmpLag(coordinates,:) = tmp + abs(min(tmp(:))); clear tmp
         tmpLag = reshape(tmpLag,[xx yy zz]);
@@ -925,36 +932,36 @@ if opts.glm_model
         %input = output / coefficients
         %coef = C\X --> C = X*coef
         
-%         nuis = zeros([size(norm_np,2) length(coordinates)]);
-%         intcp = zeros([1 length(coordinates)]);
-%         beta = zeros([1 length(coordinates)]);
-%         
-%         parfor ii=1:length(coordinates)
-%             nuis(:,ii) = squeeze(regr_coef(maxindex(ii),2:end-1,ii));
-%             intcp(1,ii) = squeeze(regr_coef(maxindex(ii),1,ii));
-%             beta(1,ii) = squeeze(regr_coef(maxindex(ii),end,ii));
-%         end
-%         
-%         nuis_TS = zeros([size(norm_np') length(coordinates)]);
-%         
-%         parfor ii=1:size(norm_np,2)
-%             nuis_TS(ii,:,:) =  np(:,ii)*nuis(ii,:);
-%         end
-%         combi_TS = squeeze(sum(nuis_TS,1));
-%         %all of the regressors used (i.e. last regressor)
-%         regr_TS = nan(size(wb_voxel_ts'));
-%         parfor ii=1:length(coordinates)
-%             regr_TS(:,ii) =  squeeze(regr_matrix(maxindex(ii),:))*beta(1,ii);
-%         end
-%         
-%         %plot regressors
-%         if opts.verbose
-%             figure;
-%             subplot(4,1,1); plot(nanmean(wb_voxel_ts,1)); title('Original Data')
-%             subplot(4,1,2); plot(nanmean(regr_TS,2)); title('Main EV Component')
-%             subplot(4,1,3); plot(nanmean(wb_voxel_ts,1)'-nanmean(combi_TS,2)); title('Original data minus Nuissance Signal')
-%             subplot(4,1,4); plot(nanmean(wb_voxel_ts,1)'-nanmean(combi_TS,2)-nanmean(regr_TS,2)); title('Residual Data + Error Term')
-%         end
+        %         nuis = zeros([size(norm_np,2) length(coordinates)]);
+        %         intcp = zeros([1 length(coordinates)]);
+        %         beta = zeros([1 length(coordinates)]);
+        %
+        %         parfor ii=1:length(coordinates)
+        %             nuis(:,ii) = squeeze(regr_coef(maxindex(ii),2:end-1,ii));
+        %             intcp(1,ii) = squeeze(regr_coef(maxindex(ii),1,ii));
+        %             beta(1,ii) = squeeze(regr_coef(maxindex(ii),end,ii));
+        %         end
+        %
+        %         nuis_TS = zeros([size(norm_np') length(coordinates)]);
+        %
+        %         parfor ii=1:size(norm_np,2)
+        %             nuis_TS(ii,:,:) =  np(:,ii)*nuis(ii,:);
+        %         end
+        %         combi_TS = squeeze(sum(nuis_TS,1));
+        %         %all of the regressors used (i.e. last regressor)
+        %         regr_TS = nan(size(wb_voxel_ts'));
+        %         parfor ii=1:length(coordinates)
+        %             regr_TS(:,ii) =  squeeze(regr_matrix(maxindex(ii),:))*beta(1,ii);
+        %         end
+        %
+        %         %plot regressors
+        %         if opts.verbose
+        %             figure;
+        %             subplot(4,1,1); plot(nanmean(wb_voxel_ts,1)); title('Original Data')
+        %             subplot(4,1,2); plot(nanmean(regr_TS,2)); title('Main EV Component')
+        %             subplot(4,1,3); plot(nanmean(wb_voxel_ts,1)'-nanmean(combi_TS,2)); title('Original data minus Nuissance Signal')
+        %             subplot(4,1,4); plot(nanmean(wb_voxel_ts,1)'-nanmean(combi_TS,2)-nanmean(regr_TS,2)); title('Residual Data + Error Term')
+        %         end
         
         %save maps
         switch pp
@@ -1043,17 +1050,17 @@ if opts.glm_model
         %save lag-adjusted CVR map
         if pp == 1
             if opts.niiwrite
-            cd(opts.glmCVRdir)
-            niftiwrite(mask.*cCVR,'optiReg_cCVR',opts.info.map);
+                cd(opts.glmCVRdir)
+                niftiwrite(mask.*cCVR,'optiReg_cCVR',opts.info.map);
             else
-            saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'optiReg_cCVR.nii.gz', datatype);
+                saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'optiReg_cCVR.nii.gz', datatype);
             end
         else
             if opts.niiwrite
-            cd(opts.glmCVRdir)
-            niftiwrite(mask.*cCVR,'inputReg_cCVR',opts.info.map);
+                cd(opts.glmCVRdir)
+                niftiwrite(mask.*cCVR,'inputReg_cCVR',opts.info.map);
             else
-            saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'inputReg_cCVR.nii.gz', datatype);
+                saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'inputReg_cCVR.nii.gz', datatype);
             end
         end
         maps.GLM.CVR.optiReg_cCVR = cCVR;
@@ -1109,6 +1116,6 @@ if opts.glm_model
     disp('saving maps in .mat file' )
     maps.newprobe = newprobe;
     save([opts.resultsdir,'lagCVR_maps.mat'], 'maps');
- %   close all
+    %   close all
 end
 
