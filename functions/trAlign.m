@@ -172,6 +172,8 @@ end
 function pushbutton1_Callback(hObject, eventdata, handles)
 
 %save traces
+assignin('base', 'offset',  handles.offset)
+
 assignin('base', 'probe1',  handles.probe1)
 
 if handles.varCheck > 3

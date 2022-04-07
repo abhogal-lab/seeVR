@@ -60,8 +60,8 @@ end
 %important parameters for results
 if isfield(opts,'corr_thresh'); else; opts.corr_thresh = 0.7; end         %threshold by which to accept correlated voxels during the refinement of the BOLD regressor
 %refinement
-if isfield(opts,'lowerlagthresh'); else; opts.lowerlagthresh = -3; end    %lower threshold for refinement (generaly -3 to 0)
-if isfield(opts,'upperlagthresh'); else; opts.upperlagthresh = 3; end     %upper threshold for refinement (generaly 0 to +3)
+if isfield(opts,'lowerlagthresh'); else; opts.lowerlagthresh = -2; end    %lower threshold for refinement (generaly -2 to 0)
+if isfield(opts,'upperlagthresh'); else; opts.upperlagthresh = 2; end     %upper threshold for refinement (generaly 0 to +2)
 
 %account for interpolation factor
 opts.adjlowerthresh = opts.lowerlagthresh*opts.interp_factor;
@@ -83,7 +83,11 @@ if opts.load_probe == 0 && opts.refine_regressor == 0 && opts.trace_corr == 0
     opts.corr_model = 0;
     opts.cvr_maps = 0;
 end
-
+if opts.trace_corr == 0 && opts.robust == 1
+    disp('For robust analysis, set opts.trace_corr = 1')
+    disp('...continuing without creating robust maps')
+    opts.robust = 0; 
+end
 %setup save directories
 if ispc
     if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end

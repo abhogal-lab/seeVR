@@ -18,7 +18,7 @@
 % *************************************************************************
 % This is a wrapper function which uses the wavelet toolbox to de-noise
 % input signals. For more information see the MATLAB wdenoise function.
-function [ wdenData ssimval ]  = wavDenoise(data, mask, opts)
+function [wdenData]  = wavDenoise(data, mask, opts)
 
 global opts;
 t = cputime;
@@ -49,12 +49,6 @@ fd = fd';
 wdenData (coordinates, :)  = fd;
 wdenData  = reshape(wdenData ,[ x y z dyn]);
 
-% compute the structural similarity index to evaluate denoising
-% disp('computing structural similarity index')
-% for ii=1:dyn
-% ssimval(ii,:) = ssim(wdenBOLD(:,:,:,ii),data(:,:,:,ii));
-% end
-ssimval = [];
-if opts.verbose; disp(['finished discreet wavelet denoising in: ',int2str(cputime-t),' seconds']); end
+disp(['finished discreet wavelet denoising in: ',int2str(cputime-t),' seconds']);
 
 end

@@ -4,7 +4,7 @@
 %
 % <carpetEdgeDetect: performs shag carpet plot analysis and outputs transit maps >
 %
-% This program is free software: you can redistribute it and/or modify
+% This modified program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
@@ -238,15 +238,6 @@ end
 neur_assignment = zeros(1, opts.carpet.num_lines);
 
 max_ind = sort(max_ind(max_ind>0), 'ascend');
-%Plot derivative over data to illustrate where the algorithm is deciding to
-%draw lines
-% figure
-% imagesc(im1);
-% hold on;
-% colormap(gray);
-% caxis([-1 1]);
-% plot(derivatived_avg*8*size(im1,1), 'r', 'LineWidth', 2);
-% hold off;
 
 %% Draw Lines
 %Initialize space to store line data
@@ -375,10 +366,7 @@ hold off;
 h1 = subplot(2,1,2);
 h1.Position = h1.Position + [0 0.185 0 -0.075];
 plot(plot_mat(:,2), plot_mat(:,1), '-ok', 'MarkerFaceColor', 'k', 'MarkerSize', 3);
-%xlim([1 360]);
-%xticks([50 100 150 200 250 300 350]);
-%ylim([-4 10]);
-%yticks([-4 0 4 8]);
+
 ax = gca;
 ax.FontSize = 12;
 grid on;
@@ -478,8 +466,6 @@ hold off;
 
 yticklabels([]);
 xlabel('Time (s)', 'fontweight', 'bold');
-%xticks([50:50:500]);
-%xticklabels({'36', '72', '108', '144', '180', '216', '252', '288', '324', '360'});
 ylabel('Voxels', 'fontweight', 'bold');
 hold on;
 L2(1) = plot(nan, nan, 'b-');

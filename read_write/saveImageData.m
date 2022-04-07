@@ -22,8 +22,11 @@ function [] = saveImageData(data, header, pathname, filename, datatype)
 %  1536 Long double, float128  (Unsupported, bitpix=128) % DT_FLOAT128, NIFTI_TYPE_FLOAT128
 %  1792 Complex128, 2 float64  (Use float64, bitpix=128) % DT_COMPLEX128, NIFTI_TYPE_COMPLEX128
 %  2048 Complex256, 2 float128 (Unsupported, bitpix=256) % DT_COMPLEX128, NIFTI_TYPE_COMPLEX128
-
-nii = make_nii(double(data),header.dime.dim(1,2:4), datatype);
+if isfield(header,'dime')
+nii = make_nii((data),header.dime.dim(1,2:4), datatype);
+else
+nii = make_nii((data),header.dim(1,1:3), datatype);
+end
 nii.hdr = header;
 nii.hdr.dime.datatype = datatype;
 nii.untouch = 1;

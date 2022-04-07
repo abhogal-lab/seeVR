@@ -13,7 +13,7 @@ end
 
 image_path = [pathname,filename];
 data = load_untouch_nii(image_path);
-image = double(data.img);
+image = (data.img);
 info.datatype = data.hdr.dime.datatype;
 info.xdim = data.hdr.dime.dim(2);
 info.ydim = data.hdr.dime.dim(3);
