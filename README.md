@@ -10,12 +10,11 @@ SeeVR is an open-source toolbox MATLAB distributed under the GNU General Public 
 
 If you use any CVR functionality for your work (or any derivatives based on the seeVR toolbox) please cite the following paper:
 
-Insights into cerebral tissue-specific response to respiratory challenges at 7T: evidence for combined blood flow and CO2-mediated effects
-AA Champagne, AA Bhogal - Frontiers in physiology, 2021, https://doi.org/10.3389/fphys.2021.601369
+Medullary vein architecture modulates the white matter BOLD cerebrovascular reactivity signal response to CO2: observations from high-resolution T2* weighted imaging at 7T, AA Bhogal - Neuroimage, 2021, https://doi.org/10.1016/j.neuroimage.2021.118771
 
 and/or
 
-Alex A. Bhogal. (2021). abhogal-lab/seeVR: v1.01 (v1.01). Zenodo. https://doi.org/10.5281/zenodo.5283595
+Alex A. Bhogal. (2021). abhogal-lab/seeVR: Current version. Zenodo. https://doi.org/10.5281/zenodo.5283595
 
 Functionality:
 
