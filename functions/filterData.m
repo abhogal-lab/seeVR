@@ -24,13 +24,13 @@
 %
 %   guideim: should be a gray-scale/single channel image with structural
 %   information (i.e. the first volume in the original BOLD timeseries)
-%   
+%
 %   data: should be a gray-scale/single channel image of data to be
 %   smoothed (i.e. baseline-normalized BOLD data - %BOLD)
-%   
+%
 %   opts.filter: the selected filtering method - 'tips', 'bilateral',
 %   'gaussian'
-%   
+%
 %   opts.FWHM = FWHM of smoothing kernel in mm
 %
 %   opts.sigma_range: parameter that defines smoothing threshold - data
@@ -51,11 +51,11 @@ if isfield(opts,'FWHM'); else; opts.FWHM = [4 4 4]; end
 %sigma_spatial = FWHM/(2.355*voxelsize)
 
 
-   if opts.spatialdim == 2
-        opts.sigma_spatial = [opts.FWHM(1)/(opts.voxelsize(1)*2.355) opts.FWHM(2)/(opts.voxelsize(2)*2.355)  0];
-   else
-         opts.sigma_spatial = [opts.FWHM(1)/(opts.voxelsize(1)*2.355) opts.FWHM(2)/(opts.voxelsize(2)*2.355) opts.FWHM(3)/(opts.voxelsize(3)*2.355)];
-   end
+if opts.spatialdim == 2
+    opts.sigma_spatial = [opts.FWHM(1)/(opts.voxelsize(1)*2.355) opts.FWHM(2)/(opts.voxelsize(2)*2.355)  0];
+else
+    opts.sigma_spatial = [opts.FWHM(1)/(opts.voxelsize(1)*2.355) opts.FWHM(2)/(opts.voxelsize(2)*2.355) opts.FWHM(3)/(opts.voxelsize(3)*2.355)];
+end
 
 filtered_data = zeros(size(data));
 
@@ -67,15 +67,15 @@ end
 %run specified filter
 switch opts.filter
     
-    case 'imguideimd' 
-    if isfield(opts,'nHood'); else; opts.nHood = [3 3]; end
-    opts.spatialdim = 2;
-    disp('This is a 2D implementation; opts.spatialdim updated to 2')
-    
-    for ii=1:size(data,4)
-        filtered_data(:,:,:,ii) = imguideimdfilter(squeeze(data(:,:,:,ii)), guideim, 'NeighborhoodSize', opts.nHood);
-    end
-    
+    case 'imguided'
+        if isfield(opts,'nHood'); else; opts.nHood = [3 3]; end
+        opts.spatialdim = 2;
+        disp('This is a 2D implementation; opts.spatialdim updated to 2')
+        
+        for ii=1:size(data,4)
+            filtered_data(:,:,:,ii) = imguidedfilter(squeeze(data(:,:,:,ii)), guideim, 'NeighborhoodSize', opts.nHood);
+        end
+        
     case 'bilateral'
         
         mask = uint8(mask);
@@ -89,7 +89,11 @@ switch opts.filter
         if ispc
             filtered_data = winbilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
         else
-            filtered_data = bilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
+            if ismac
+                filtered_data = macbilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
+            else
+                filtered_data = bilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
+            end
         end
         filtered_data = permute(filtered_data, [2 3 4 1]);
         
@@ -106,7 +110,11 @@ switch opts.filter
         if ispc
             filtered_data = wintipsFilter(tdata,opts.sigma_spatial, opts.sigma_range, uint8(mask));
         else
-            filtered_data = tipsFilter(tdata,opts.sigma_spatial, opts.sigma_range, mask);
+            if ismac
+                filtered_data = mactipsFilter(tdata,opts.sigma_spatial, opts.sigma_range, mask);
+            else
+                filtered_data = tipsFilter(tdata,opts.sigma_spatial, opts.sigma_range, mask);
+            end
         end
         filtered_data = permute(filtered_data, [2 3 4 1]);
         
@@ -126,7 +134,11 @@ switch opts.filter
         if ispc
             filtered_data = winbilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
         else
-            filtered_data = bilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
+            if ismac
+                filtered_data = macbilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
+            else
+                filtered_data = bilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
+            end
         end
         filtered_data = permute(filtered_data, [2 3 4 1]);
         
