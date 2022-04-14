@@ -150,8 +150,11 @@ CVRidx_map = reshape(CVRidx_map, size(mask));
 nCVRidx_map = reshape(nCVRidx_map, size(mask));
 
 if opts.smoothmap
-    CVRidx_map = smthData(CVRidx_map,mask,opts);
-    nCVRidx_map = smthData(nCVRidx_map,mask,opts);
+    % deprecated smoothing
+    %CVRidx_map = smthData(CVRidx_map,mask,opts);
+    %nCVRidx_map = smthData(nCVRidx_map,mask,opts);
+    CVRidx_map = filterData(CVRidx_map,data(:,:,:,1),mask,opts);
+    nCVRidx_map =filterData(nCVRidx_map,data(:,:,:,1),mask,opts);
 end
 
 nCVRidx_map(nCVRidx_map > 30) = 0;
