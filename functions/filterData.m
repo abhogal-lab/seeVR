@@ -45,7 +45,7 @@ global opts;
 
 if isfield(opts,'filter'); else; opts.filter = 'bilateral'; end
 if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end
-if isfield(opts,'FWHM'); else; opts.FWHM = [4 4 4]; end
+if isfield(opts,'FWHM'); else; opts.FWHM = [6 6 6]; end
 
 %FWHM = voxelSize*sigma_spatial*2.355;
 %sigma_spatial = FWHM/(2.355*voxelsize)
@@ -121,7 +121,7 @@ switch opts.filter
     case 'gaussian'
         
         %to emulate gaussian smoothing, set very high range
-        opts.sigma_range = 1000000;
+        opts.sigma_range = 100000000;
         
         mask = uint8(mask);
         %setup CPUs
