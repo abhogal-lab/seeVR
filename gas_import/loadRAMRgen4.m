@@ -15,7 +15,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 
-function [corrvec_CO2,corrvec_O2] = loadRAMRgen4(opts)
+function [corrvec_CO2,corrvec_O2, corrvec_RR ] = loadRAMRgen4(opts)
 % This is the main function (used to call relevant sub-functions) to load
 % the GEN4 respiratory data. This function can also perform outlier
 % removal.
@@ -55,6 +55,17 @@ else
 end
 [MRTimes1,PO2mmHg1,PCO2mmHg1,PBarommHg1,PMouthmmH2O,FlowMouthmLmin,FlowS1mLmin,FlowS2mLmin,BreathPhase] = import_RGM(filename);
 
+%calculate picker derivative
+brdiff = diff(MRTimes)
+
+
+figure;
+subplot(2,1,1)
+plot(MRTimes1,PO2mmHg1)
+hold on; scatter(MRTimes, PO2mmHg)
+subplot(2,1,2)
+plot(MRTimes, RespirationrateBPM)
+
 %import events
 file = ls('Events.*');
 if ispc
@@ -77,7 +88,7 @@ end
 
 % resample and realign the breathing trace and the Endtidal trace to have the same start and end and same sampling rate
 
-[nxi,corrvec_CO2,corrvec_O2,nxi1,rawCO2,rawO2] = resampleEndtidalBreathing(MRTimes,PCO2mmHg,PO2mmHg,MRTimes1,PCO2mmHg1,PO2mmHg1,MRTimes3,Event,opts);
+[nxi,corrvec_CO2,corrvec_O2,nxi1,rawCO2,rawO2,corrvec_RR] = resampleEndtidalBreathing(MRTimes,PCO2mmHg,PO2mmHg,MRTimes1,PCO2mmHg1,PO2mmHg1,MRTimes3,RespirationrateBPM,Event,opts);
 
 end
 

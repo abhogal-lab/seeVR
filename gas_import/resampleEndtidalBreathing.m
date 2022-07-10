@@ -15,7 +15,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 
-function [xi,yi,yyi,xi1,yi1,yyi1] = resampleEndtidalBreathing(MRTimes,PCO2mmHg,PO2mmHg,MRTimes1,PCO2mmHg1,PO2mmHg1,MRTimes3,Event,opts)
+function [xi,yi,yyi,xi1,yi1,yyi1,rri] = resampleEndtidalBreathing(MRTimes,PCO2mmHg,PO2mmHg,MRTimes1,PCO2mmHg1,PO2mmHg1,MRTimes3,RR,Event,opts)
 % This function resamples the end tidal values for gen4 respiract systems
 % extra defines the amount of extra time points before start and end of the
 % sequence; there is also an option to remove outliers for breath hold data
@@ -44,6 +44,11 @@ nPCO2mmHg = [startval; PCO2mmHg; endval];
 startval = PO2mmHg(1,1);
 endval = PO2mmHg(end,1);
 nPO2mmHg = [startval; PO2mmHg; endval];
+
+%use first and last value of PO2mmHg trace to extend it with
+startval = RR(1,1);
+endval = RR(end,1);
+nRR = [startval; RR; endval];
 
 figure(1); %visual check
 subplot(2,3,1)
@@ -82,6 +87,7 @@ end
 %%% End-tidal values %%%
 [xi,yi] = resampletoTR(opts.TR,nMRTimes,nPCO2mmHg); %yi = resampled CO2
 [xi,yyi] = resampletoTR(opts.TR,nMRTimes,nPO2mmHg); %yyi = resampled O2
+[ri,rri] = resampletoTR(opts.TR,nMRTimes,nRR); %rri = resampled O2
 
 %visual check
 figure(1);
