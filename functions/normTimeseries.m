@@ -64,7 +64,7 @@ case 4
 [x,y,z,dyn] = size(data);     
 voxel_ts = 100*((voxel_ts - repmat(bvoxel_ts,1,dyn))./bvoxel_ts);
 %re-fill normalized BOLD timeseries
-ndata = nan([x*y*z dyn]); ndata(ndata > 50) = NaN; ndata(ndata <-50) = NaN;
+ndata = nan([x*y*z dyn]); 
 ndata(coordinates,:) = voxel_ts;
 ndata = reshape(ndata, [x y z dyn]);
 end
