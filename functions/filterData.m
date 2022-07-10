@@ -121,7 +121,7 @@ switch opts.filter
     case 'gaussian'
         
         %to emulate gaussian smoothing, set very high range
-        opts.sigma_range = 100000000;
+        opts.sigma_range = 10000000;
         
         mask = uint8(mask);
         %setup CPUs

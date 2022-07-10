@@ -46,7 +46,7 @@ warning('off');
 global opts;
 
 if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.08]; end  %default frequency band
-if isfield(opts,'smoothmap'); else; opts.fpass = 0; end  %default is to not smooth output maps
+if isfield(opts,'smoothmap'); else; opts.smoothmap = 0; end  %default is to not smooth output maps
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data is loaded this can be set to 1 to use native load/save functions
 if ispc
     opts.CVRidxdir = [opts.resultsdir,'CVRidx\']; mkdir(opts.CVRidxdir);
