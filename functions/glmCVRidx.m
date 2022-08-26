@@ -57,7 +57,6 @@ end
 data = double(data);
 [xx yy zz N] = size(data);
 
-
 %get voxels
 [voxels coordinates] = grabTimeseries(data, mask);
 [ref_voxels ref_coordinates] = grabTimeseries(data, refmask);

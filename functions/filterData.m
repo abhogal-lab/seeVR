@@ -39,13 +39,14 @@
 % *************************************************************************
 
 function [filtered_data] = filterData(data,guideim,mask,opts)
-
+data(isnan(data)) = 0;
 warning('off');
 global opts;
-
+type = class(data);
 if isfield(opts,'filter'); else; opts.filter = 'bilateral'; end
 if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end
-if isfield(opts,'FWHM'); else; opts.FWHM = [6 6 6]; end
+if isfield(opts,'FWHM'); else; opts.FWHM = [4 4 4]; end
+if isfield(opts,'sigma_range'); else; opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask); end
 
 %FWHM = voxelSize*sigma_spatial*2.355;
 %sigma_spatial = FWHM/(2.355*voxelsize)
@@ -121,7 +122,7 @@ switch opts.filter
     case 'gaussian'
         
         %to emulate gaussian smoothing, set very high range
-        opts.sigma_range = 10000000;
+        opts.sigma_range = 1000000000;
         
         mask = uint8(mask);
         %setup CPUs
@@ -143,5 +144,5 @@ switch opts.filter
         filtered_data = permute(filtered_data, [2 3 4 1]);
         
 end
-
+filtered_data = eval([type,'(filtered_data)']);
 end

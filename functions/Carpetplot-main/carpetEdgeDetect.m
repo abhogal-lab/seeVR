@@ -108,7 +108,12 @@ if isfield(opts.carpet,'contrast_threshold'); else; opts.carpet.contrast_thresho
 if isfield(opts.carpet,'neur_thresh'); else; opts.carpet.neur_thresh = 0.15; end
 if isfield(opts.carpet,'rescale'); else; opts.carpet.rescale = 1; end
 if isfield(opts.carpet,'knots'); else; opts.carpet.knots = 3; end
-if isfield(opts.carpet,'fittype'); else; opts.carpet.fittype = 'spline'; end %can be 'spline' or 'linear'
+if isfield(opts.carpet,'fittype'); else; opts.carpet.fittype = 'spline'; end                    %can be 'spline' or 'linear'
+if isfield(opts.carpet,'old_smooth'); else; opts.carpet.old_smooth = 0'; end                    %added smoothing option
+if isfield(opts.carpet,'invert'); else; opts.carpet.invert = 0'; end                            %inversion can help with certain datasets (i.e. Gd)
+if isfield(opts.carpet,'peak'); else; opts.carpet.peak = 0'; end                                %calculate based on inflections (i.e. Gd)
+if isfield(opts.carpet,'interp_factor'); else; opts.interp_factor = 1; end                      %factor by which to temporally interpolate data.
+
 
 %setup savedir
 if ispc
@@ -125,11 +130,43 @@ delete *transit*
 sort_map = sort_map(:);
 data = demeanData(data,mask);
 [voxels,coords] = grabTimeseries(data , mask);
-if opts.carpet.rescale
+ivoxels = zeros([length(coords), size(voxels,2)*opts.carpet.interp_factor]);
+
+%interpolate data
+parfor ii = 1:length(coords)
+    ivoxels(ii,:) = interp(voxels(ii,:),opts.carpet.interp_factor);
+end
+voxels = ivoxels; clear ivoxels;
+
+dvoxels = zeros([size(voxels,1) size(voxels,2)-1]);
+
+if opts.carpet.peak
     parfor ii=1:size(voxels,1)
-        voxels(ii,:) = rescale(voxels(ii,:));
+        dvoxels(ii,:) = diff(voxels(ii,:));
+    end
+    dvoxels(:,end+1) = dvoxels(:,end);
+    voxels = dvoxels; clear dvoxels;
+end
+
+if opts.carpet.rescale
+    if opts.carpet.invert
+        parfor ii=1:size(voxels,1)
+            voxels(ii,:) = abs(rescale(voxels(ii,:))-1);
+        end
+    else
+        parfor ii=1:size(voxels,1)
+            voxels(ii,:) = rescale(voxels(ii,:));
+        end
+    end
+else
+    if opts.carpet.invert
+        parfor ii=1:size(voxels,1)
+            voxels(ii,:) = abs(voxels(ii,:)-max(voxels(ii,:)));
+        end
     end
 end
+
+
 %sorted index at all non-zero coordinates
 [~,I] = sort(sort_map(coords), 'descend');
 im1 = voxels(I,:);
@@ -154,6 +191,10 @@ end
 maps.carpetMask = carpet_mask;
 
 %% Smooth image
+% if opts.GD
+% im1(im1>0) = 1;
+% end
+
 xdata = opts.TR:opts.TR:opts.TR*size(im1,2);
 scale_factor = 1; %Used to scale computation of edge angles if desired
 height = size(im1,1);
@@ -163,21 +204,31 @@ orig_avg = mean(im1);
 sort_avg = sort(orig_avg, 'descend');
 neur_thresh_val = sort_avg(floor(size(sort_avg,2)*opts.carpet.neur_thresh));
 
-%Create filter h for image blurring - meant to smooth out image for
-%clearer edges
-h = 1/12*[1 1.5 1;
-    1.5 2 1.5;
-    1 1.5 1];
-h = conv2(h,h);
-
-%Filter data for several repititions
-smoothed_data = filter2(h, im1);
-for i=1:5
-    smoothed_data = filter2(h, smoothed_data);
+if opts.carpet.old_smooth
+    %Create filter h for image blurring - meant to smooth out image for
+    %clearer edges
+    h = 1/12*[1 1.5 1;
+        1.5 2 1.5;
+        1 1.5 1];
+    h = conv2(h,h);
+    
+    %Filter data for several repititions
+    smoothed_data = filter2(h, im1);
+    for i=1:5
+        smoothed_data = filter2(h, smoothed_data);
+    end
+else
+    opts.filter = 'bilateral';
+    opts.FMWH = [10 10];
+    opts.spatialdim = 2;
+    im_mask = ones(size(im1));
+    [smoothed_data] = filterData(im1,im1,im_mask,opts);
 end
+
 old_im1 = im1;
 im1 = smoothed_data;
 
+figure; subplot(2,1,1); imagesc(old_im1); subplot(2,1,2); imagesc(smoothed_data)
 %% Average Time Series
 
 %Find and plot average time series
@@ -481,6 +532,6 @@ else
 end
 
 %save maps
- disp('saving maps in .mat file' )
- carpet_maps = maps;
- save([opts.carpetdir,'carpet_Maps.mat'], 'carpet_maps');
+disp('saving maps in .mat file' )
+carpet_maps = maps;
+save([opts.carpetdir,'carpet_Maps.mat'], 'carpet_maps');
