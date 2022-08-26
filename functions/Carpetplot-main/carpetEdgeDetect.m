@@ -218,8 +218,8 @@ if opts.carpet.old_smooth
         smoothed_data = filter2(h, smoothed_data);
     end
 else
-    opts.filter = 'bilateral';
-    opts.FMWH = [10 10];
+    opts.filter = 'gaussian';
+    opts.FMWH = [12 12];
     opts.spatialdim = 2;
     im_mask = ones(size(im1));
     [smoothed_data] = filterData(im1,im1,im_mask,opts);
@@ -228,7 +228,7 @@ end
 old_im1 = im1;
 im1 = smoothed_data;
 
-figure; subplot(2,1,1); imagesc(old_im1); subplot(2,1,2); imagesc(smoothed_data)
+%figure; colormap(gray); title('smoothing'); subplot(2,1,1); imagesc(old_im1); subplot(2,1,2); imagesc(smoothed_data)
 %% Average Time Series
 
 %Find and plot average time series
@@ -416,7 +416,7 @@ hold off;
 
 h1 = subplot(2,1,2);
 h1.Position = h1.Position + [0 0.185 0 -0.075];
-plot(plot_mat(:,2), plot_mat(:,1), '-ok', 'MarkerFaceColor', 'k', 'MarkerSize', 3);
+plot(plot_mat(:,2), plot_mat(:,1)/opts.carpet.interp_factor, '-ok', 'MarkerFaceColor', 'k', 'MarkerSize', 3);
 
 ax = gca;
 ax.FontSize = 12;
@@ -449,9 +449,9 @@ for ii=1:mm
     end
     if opts.niiwrite
         cd(opts.carpetdir)
-        niftiwrite(transit_map,['transitMap_',int2str(ii)],opts.info.map);
+        niftiwrite(transit_map/opts.carpet.interp_factor,['transitMap_',int2str(ii)],opts.info.map);
     else
-        saveImageData(transit_map, opts.headers.map, opts.carpetdir, ['transitMap_',int2str(ii),'.nii.gz'], 64);
+        saveImageData(transit_map/opts.carpet.interp_factor, opts.headers.map, opts.carpetdir, ['transitMap_',int2str(ii),'.nii.gz'], 64);
     end
     mapNr = ['transitMap_',int2str(ii)];
     eval(['maps.',mapNr,' = transit_map']);
@@ -467,11 +467,11 @@ if any(transit_line(ii,:)<0)
 end
 if opts.niiwrite
     cd(opts.carpetdir)
-    niftiwrite(transit_map,'meanTransitMap',opts.info.map);
+    niftiwrite(transit_map/opts.carpet.interp_factor,'meanTransitMap',opts.info.map);
 else
-    saveImageData(transit_map, opts.headers.map, opts.carpetdir, 'meanTransitMap.nii.gz', 64);
+    saveImageData(transit_map/opts.carpet.interp_factor, opts.headers.map, opts.carpetdir, 'meanTransitMap.nii.gz', 64);
 end
-maps.meanTransit = transit_map;
+maps.meanTransit = transit_map/opts.carpet.interp_factor;
 %% Main Fig 2: Create figure with neuro assigned edges and average BOLD signal
 
 figure('Position', [50 50 800 500])
