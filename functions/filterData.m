@@ -46,8 +46,18 @@ type = class(data);
 if isfield(opts,'filter'); else; opts.filter = 'bilateral'; end
 if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end
 if isfield(opts,'FWHM'); else; opts.FWHM = [4 4 4]; end
-if isfield(opts,'sigma_range'); else; opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask); end
-
+if isfield(opts,'sigma_range'); 
+%do nothing
+else 
+    if ndims(data) > 3
+    opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask); 
+    else
+        tmp = data.*mask;
+        tmp = tmp(:);
+        tmp(tmp == 0) = [];
+    opts.sigma_range = 10*std(tmp); 
+    end
+end
 %FWHM = voxelSize*sigma_spatial*2.355;
 %sigma_spatial = FWHM/(2.355*voxelsize)
 
