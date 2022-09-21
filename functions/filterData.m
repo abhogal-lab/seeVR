@@ -61,6 +61,15 @@ end
 %FWHM = voxelSize*sigma_spatial*2.355;
 %sigma_spatial = FWHM/(2.355*voxelsize)
 
+if numel(opts.FWHM) == 1
+    tmp = opts.FWHM;
+    switch opts.spatialdim
+        case 2        
+        opts.FWHM = [tmp tmp] 
+        case 3
+        opts.FWHM = [tmp tmp tmp]
+    end
+end
 
 if opts.spatialdim == 2
     opts.sigma_spatial = [opts.FWHM(1)/(opts.voxelsize(1)*2.355) opts.FWHM(2)/(opts.voxelsize(2)*2.355)  0];
