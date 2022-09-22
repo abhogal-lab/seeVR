@@ -15,6 +15,9 @@ image_path = [pathname,filename];
 info = niftiinfo(image_path);
 image = niftiread(image_path);
 
+%store original header
+opts.info.origInfo = info;
+
 %generate mask info
 opts.info.mask = info;
 opts.info.mask.Datatype = 'double';
