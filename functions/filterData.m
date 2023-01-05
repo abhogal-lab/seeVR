@@ -46,16 +46,28 @@ type = class(data);
 if isfield(opts,'filter'); else; opts.filter = 'bilateral'; end
 if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end
 if isfield(opts,'FWHM'); else; opts.FWHM = [4 4 4]; end
-if isfield(opts,'sigma_range'); 
-%do nothing
-else 
+if isfield(opts,'sigma_range')
+    
+    if opts.filter == 'bilateral' && opts.sigma_range = 1000000000;
+        %this means a previous gaussian run is not accounted for and default
+        %sigma_range parameter should be reset
+        if ndims(data) > 3
+            opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask);
+        else
+            tmp = data.*mask;
+            tmp = tmp(:);
+            tmp(tmp == 0) = [];
+            opts.sigma_range = 10*std(tmp);
+        end
+    end
+else
     if ndims(data) > 3
-    opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask); 
+        opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask);
     else
         tmp = data.*mask;
         tmp = tmp(:);
         tmp(tmp == 0) = [];
-    opts.sigma_range = 10*std(tmp); 
+        opts.sigma_range = 10*std(tmp);
     end
 end
 %FWHM = voxelSize*sigma_spatial*2.355;
@@ -64,10 +76,10 @@ end
 if numel(opts.FWHM) == 1
     tmp = opts.FWHM;
     switch opts.spatialdim
-        case 2        
-        opts.FWHM = [tmp tmp] 
+        case 2
+            opts.FWHM = [tmp tmp];
         case 3
-        opts.FWHM = [tmp tmp tmp]
+            opts.FWHM = [tmp tmp tmp];
     end
 end
 
