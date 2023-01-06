@@ -46,29 +46,15 @@ type = class(data);
 if isfield(opts,'filter'); else; opts.filter = 'bilateral'; end
 if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end
 if isfield(opts,'FWHM'); else; opts.FWHM = [4 4 4]; end
-if isfield(opts,'sigma_range')
-    
-    if opts.filter == 'bilateral' && opts.sigma_range = 1000000000;
-        %this means a previous gaussian run is not accounted for and default
-        %sigma_range parameter should be reset
-        if ndims(data) > 3
-            opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask);
-        else
-            tmp = data.*mask;
-            tmp = tmp(:);
-            tmp(tmp == 0) = [];
-            opts.sigma_range = 10*std(tmp);
-        end
-    end
-else
-    if ndims(data) > 3
+if isfield(opts,'sigma_range'); else
+%st default    
+if ndims(data) > 3
         opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask);
     else
         tmp = data.*mask;
         tmp = tmp(:);
         tmp(tmp == 0) = [];
         opts.sigma_range = 10*std(tmp);
-    end
 end
 %FWHM = voxelSize*sigma_spatial*2.355;
 %sigma_spatial = FWHM/(2.355*voxelsize)
@@ -91,11 +77,6 @@ end
 
 filtered_data = zeros(size(data));
 
-if isfield(opts,'sigma_range'); else
-    %opts.sigma_range = sqrt(2)*ROIstd(data(:,:,:,1),mask); %just a guess
-    opts.sigma_range = ROIstd(guideim,mask); %just a guess
-end
-
 %run specified filter
 switch opts.filter
     
@@ -109,7 +90,19 @@ switch opts.filter
         end
         
     case 'bilateral'
-        
+        if opts.sigma_range == 1000000000
+        %this means a previous gaussian run is not accounted and new
+        %argument is not provided before function call; reset default
+        if ndims(data) > 3
+            opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask);
+        else
+            tmp = data.*mask;
+            tmp = tmp(:);
+            tmp(tmp == 0) = [];
+            opts.sigma_range = 10*std(tmp);
+        end
+        end
+            
         mask = uint8(mask);
         %setup CPUs
         n_cpu = java.lang.Runtime.getRuntime().availableProcessors();
@@ -130,6 +123,18 @@ switch opts.filter
         filtered_data = permute(filtered_data, [2 3 4 1]);
         
     case 'tips'
+        if opts.sigma_range == 1000000000
+        %this means a previous gaussian run is not accounted and new
+        %argument is not provided before function call; reset default
+        if ndims(data) > 3
+            opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask);
+        else
+            tmp = data.*mask;
+            tmp = tmp(:);
+            tmp(tmp == 0) = [];
+            opts.sigma_range = 10*std(tmp);
+        end
+        end
         
         mask = uint8(mask);
         %setup CPUs
