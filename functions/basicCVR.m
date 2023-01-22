@@ -18,8 +18,7 @@
 % returns a map of the signal change at each voxel between those epochs.
 %
 % *************************************************************************
-% data: absolute timeseries data (i.e. 4D BOLD MRI dataset that is not 
-% expressed in %signal change)
+% data: normalized (normTimeseries) and smoothed (filgerData) timeseries
 %
 % mask: binary mask defining voxels of interest
 %
