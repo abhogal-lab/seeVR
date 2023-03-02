@@ -18,6 +18,8 @@
 function [resamp_time,resamp_data] = resampletoTR(TR,time,data)
 % this function resamples the "data" based on the "TR" given as input and
 % spits out the resampled time points and the corresponding data
+if iscolumn(time); else; time = time'; end
+if iscolumn(data); else; data = data'; end
 
 ntime = time - time(1,1); %make the first time value correspond to 0
 start_time = ntime(1,1);

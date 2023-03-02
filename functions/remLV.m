@@ -34,20 +34,21 @@ function [mmask] = remLV(data,mask,opts)
 
 warning('off')
 global opts
-
+tf = class(data);
+tf_mask = class(mask);
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
-if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end 
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end
 
 if ispc
     if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end
 else
     if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'/']; end
 end
-
+[x, y, z, ~] = size(data);
 [voxel_ts, coordinates] = grabTimeseries(data, mask);
 SD = nanstd(voxel_ts,0,2);
 MN = nanmean(voxel_ts,2);
-SDm = zeros(1,numel(mask)); tSNR = zeros(1,numel(mask));
+SDm = zeros(1,x*y*z); tSNR = zeros(1,x*y*z);
 SDm(coordinates) = SD;
 SDm = reshape(SDm, size(mask));
 tSNR(coordinates) = MN./SD;
@@ -57,30 +58,17 @@ tNSR = 1/tSNR;
 
 %save image
 
-
-%test to read nifti
-% V = niftiread('mWBmask_0.14477.nii.gz');
-% tinfo = niftiinfo('mWBmask_0.14477.nii.gz');
-% % niftiwrite(V, 'outbrain.nii', info);
 if opts.niiwrite
     cd(opts.resultsdir);
-    niftiwrite(SDm,'tSD',opts.info.map);
-    niftiwrite(tSNR,'tSNR',opts.info.map);
-    niftiwrite(SDinv,'SDinv',opts.info.map);
-    niftiwrite(tNSR,'tNSR',opts.info.map);
+    niftiwrite(cast(SDm,tf),'tSD',opts.info.map);
+    niftiwrite(cast(tSNR,tf),'tSNR',opts.info.map);
+    niftiwrite(cast(SDinv,tf),'SDinv',opts.info.map);
+    niftiwrite(cast(tNSR,tf),'tNSR',opts.info.map);
 else
     saveImageData(SDm,opts.headers.map,opts.resultsdir,'tSD.nii.gz',64);
     saveImageData(tSNR,opts.headers.map,opts.resultsdir,'tSNR.nii.gz',64);
     saveImageData(SDinv,opts.headers.map,opts.resultsdir,'SDinv.nii.gz',64);
     saveImageData(tNSR,opts.headers.map,opts.resultsdir,'tNSR.nii.gz',64);
-end
-
-if opts.verbose
-    disp('saving tSD map');
-    disp('saving tSNR map');
-    disp('saving 1/tSD map')
-    disp('saving tNSR map')
-    disp('updating whole brain mask')
 end
 
 %update WBmask to exclude unreliable signals
@@ -96,14 +84,36 @@ else
 end
 
 mmask(isinf(tNSR)) = 0; mmask(tNSR > opts.LVthresh) = 0; %This step should remove vessels and garbage data
-mmask = double(mmask);
 %saves new brain mask excluding voxels
 if opts.niiwrite
     name = [opts.resultsdir,'mWBmask_',num2str(opts.LVthresh)];
     name(name == '.') = '_';
-    niftiwrite(mmask,name,opts.info.mask);
+    niftiwrite(cast(mmask,opts.info.mask.Datatype),name,opts.info.mask);
 else
     saveImageData(mmask,opts.headers.mask,opts.resultsdir,['mWBmask_',num2str(opts.LVthresh),'.nii.gz'],64);
 end
+
+if opts.verbose
+    disp('saving tSD map');
+    disp('saving tSNR map');
+    disp('saving 1/tSD map')
+    disp('saving tNSR map')
+    disp('updating whole brain mask')
+    
+    % Plot
+    figure;
+    z = round(size(data,3)/2);
+    subplot(1,3,1)
+    imagesc(imrotate(mean(data(:,:,z,:),4),90));
+    title('mean image', 'Color', 'w'); colormap(gray); cleanPlot;
+    subplot(1,3,2)
+    imagesc(imrotate(mask(:,:,z),90));
+    title('original mask', 'Color', 'w'); cleanPlot;
+    subplot(1,3,3)
+    imagesc(imrotate(mmask(:,:,z),90));
+    title('modified mask', 'Color', 'w'); cleanPlot;
+    set(gcf, 'Units', 'pixels', 'Position', [200, 500, 600, 160]);
+end
+
 end
 

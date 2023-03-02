@@ -1,4 +1,4 @@
-function [image info] = loadMask(pathname, filename)
+function [img info] = loadImage(pathname, filename)
 
 warning('off')
 global opts;
@@ -9,11 +9,14 @@ end
 
 image_path = fullfile(pathname,filename);
 info = niftiinfo(image_path);
-image = niftiread(image_path);
+img = niftiread(image_path);
+opts.imagepath = pathname;
+opts.imagefile = filename;
+opts.voxelsize_image = info.PixelDimensions;
 
-%generate mask info
-opts.info.mask = info;
-opts.info.mask.MultiplicativeScaling = 1;
+%generate anat info
+opts.info.image = info;
+img(isinf(img)) = 0;
 opts.niiwrite = 1;
 
 end

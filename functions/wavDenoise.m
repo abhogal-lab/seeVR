@@ -22,6 +22,7 @@ function [wdenData]  = wavDenoise(data, mask, opts)
 
 global opts;
 t = cputime;
+
 %discrete wavelet transform ideal for denoising
 %1. multi-level wavelet decomposition to obtain co-efficients (fine-scale
 %analysys in sub-bands determined with HP and LP filters)
@@ -43,7 +44,7 @@ wdenData = nan([x*y*z dyn]);
 fd = zeros(size(voxel_ts));
 
 %denoise signals
-fd = wdenoise(voxel_ts',opts.level,'Wavelet',opts.family,'DenoisingMethod',opts.DenMeth,'ThresholdRule',opts.ThreshRule,'NoiseEstimate',opts.NoEst);
+fd = wdenoise(double(voxel_ts'),opts.level,'Wavelet',opts.family,'DenoisingMethod',opts.DenMeth,'ThresholdRule',opts.ThreshRule,'NoiseEstimate',opts.NoEst);
 fd = fd';
 
 wdenData (coordinates, :)  = fd;

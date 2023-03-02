@@ -30,6 +30,6 @@ end
 nii.hdr = header;
 nii.hdr.dime.datatype = datatype;
 nii.untouch = 1;
-save_untouch_nii(nii,[pathname,filename]);
+save_untouch_nii(nii,fullfile(pathname,filename));
 
 end

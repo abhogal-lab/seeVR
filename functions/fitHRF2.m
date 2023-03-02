@@ -21,26 +21,17 @@
 function [maps] = fitHRF2(mask,data,probe,opts)
 global opts
 warning('off')
-
+tf = class(data);
 if isfield(opts,'verbose'); else; opts.verbose = 0; end                    %turn on/off select command output
 if isfield(opts,'prewhite'); else; opts.prewhite = 0; end                  %pre-whiten data
 if isfield(opts,'interp_factor'); else; opts.interp_factor = 1; end        %interpolate timeseries
 if isfield(opts,'expHRF'); else; opts.expHRF = 0; end                      %convolve with exponential HRF (default = 0; use double gamma)
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                  %depending on how data is loaded this can be set to 1 to use native load/save functions
 if isfield(opts,'include_linear'); else; opts.include_linear = 0; end      %add a liner term to the HRF fit - this can possible account for strange behavior due to the convolution
+   
+if isfield(opts,'resultsdir'); else; opts.resultsdir = pwd; end
 
-
-if ispc
-    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end
-else
-    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'/']; end
-end
-if ispc
-    opts.hrfdir = [opts.resultsdir,'HRF\']; if exist(opts.hrfdir) == 7; else; mkdir(opts.hrfdir); end
-else
-    opts.hrfdir = [opts.resultsdir,'HRF/']; if exist(opts.hrfdir) == 7; else; mkdir(opts.hrfdir); end
-end
-
+opts.hrfdir = fullfile(opts.resultsdir,'HRF'); if exist(opts.hrfdir, 'dir') == 7; else; mkdir(opts.hrfdir); end
 [x, y, z, dyn] = size(data);
 
 
@@ -180,7 +171,7 @@ end
 if length(opts.onset) > 1; onset_map(coordinates) = onset_vec; onset_map = reshape(onset_map, [x y z]);
     if opts.niiwrite
         cd(opts.hrfdir);
-        niftiwrite(onset_map,onsetName,opts.info.map);
+        niftiwrite(cast(onset_map,tf),onsetName,opts.info.map);
     else
         saveImageData(onset_map,opts.headers.map,opts.hrfdir,onsetName,64);
     end
@@ -188,7 +179,7 @@ end
 if length(opts.disp) > 1; disp_map(coordinates) = disp_vec; disp_map = reshape(disp_map, [x y z]);
     if opts.niiwrite
         cd(opts.hrfdir);
-        niftiwrite(disp_map,dispName,opts.info.map);
+        niftiwrite(cast(disp_map,tf),dispName,opts.info.map);
     else
         saveImageData(disp_map,opts.headers.map,opts.hrfdir,dispName,64);
     end
@@ -196,7 +187,7 @@ end
 if length(opts.under) > 1; under_map(coordinates) = under_vec; under_map = reshape(under_map, [x y z]);
     if opts.niiwrite
         cd(opts.hrfdir);
-        niftiwrite(under_map,underName,opts.info.map);
+        niftiwrite(cast(under_map,tf),underName,opts.info.map);
     else
         saveImageData(under_map,opts.headers.map,opts.hrfdir,underName,64);
     end
@@ -205,13 +196,13 @@ end
 if opts.niiwrite
     cd(opts.hrfdir);
     if opts.expHRF
-        niftiwrite(HRF_map,'EXP_HRF_map',opts.info.map);
-        niftiwrite(r2_map,'EXP_HRF_r2_map',opts.info.map);
-        niftiwrite(beta_map,'EXP_HRF_beta_map',opts.info.map);        
+        niftiwrite(cast(HRF_map,tf),'EXP_HRF_map',opts.info.map);
+        niftiwrite(cast(r2_map,tf),'EXP_HRF_r2_map',opts.info.map);
+        niftiwrite(cast(beta_map,tf),'EXP_HRF_beta_map',opts.info.map);        
     else
-        niftiwrite(HRF_map,'GAMMA_HRF_map',opts.info.map);
-        niftiwrite(r2_map,'GAMMA_HRF_r2_map',opts.info.map);
-        niftiwrite(beta_map,'GAMMA_HRF_beta_map',opts.info.map);       
+        niftiwrite(cast(HRF_map,tf),'GAMMA_HRF_map',opts.info.map);
+        niftiwrite(cast(r2_map,tf),'GAMMA_HRF_r2_map',opts.info.map);
+        niftiwrite(cast(beta_map,tf),'GAMMA_HRF_beta_map',opts.info.map);       
     end
 else
     if opts.expHRF
@@ -230,5 +221,5 @@ maps.disp = disp_map;
 maps.under = under_map;
 maps.beta = beta_map;
 
-save([opts.resultsdir,'HRF_maps.mat'], 'maps');
+save(fullfile(opts.resultsdir,'HRF_maps.mat'), 'maps');
 end

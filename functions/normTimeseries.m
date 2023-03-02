@@ -37,8 +37,7 @@ function [ndata] = normTimeseries(data,mask,idx)
 
 warning('off')
 global opts;
-
-p = cputime;
+tf = class(data);
 switch nargin
     case 2
 TS = meanTimeseries(data,mask);
@@ -50,8 +49,8 @@ end
 
 [voxel_ts coordinates] = grabTimeseries(data, mask);
 bvoxel_ts = mean(voxel_ts(:,idx(1):idx(2)),2);
-%normalize signal
 
+%normalize signal
 switch ndims(data)
     case 3
 [x,y,dyn] = size(data);     
@@ -70,5 +69,5 @@ ndata = reshape(ndata, [x y z dyn]);
 end
 opts.norm_idx = idx;
 %disp(['Dataset has been normalized to baseline period']);
-
+ndata = cast(ndata,tf);
 end

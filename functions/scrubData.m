@@ -37,6 +37,7 @@ function [cleanData] = scrubData(data, mask, nuisance, probe, opts)
 
 warning('off');
 global opts;
+tf = class(data); 
 
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end 
 if isfield(opts,'save_cleaned'); else; opts.save_cleaned = 0; end
@@ -56,6 +57,11 @@ else
     if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
     limits = [0 size(nuisance,1)];
     nuisancemap = colormap(flip(brewermap(size(nuisance,2),'Spectral')));
+end
+
+for kk=1:size(nuisance,2)
+% demean regressors
+nuisance(:,kk) = rescale(demeanData(nuisance(:,kk)),-1,1);
 end
 
 [voxel_ts, coordinates] = grabTimeseries(data, mask);
@@ -105,26 +111,30 @@ else
 end
 subplot(5,1,3); plot(meanTimeseries(data,mask),'k'); title('Original Data'); xlim(limits)
 subplot(5,1,4); plot(nanmean(nuis_TS,2),'k'); title('nuisance Mean'); xlim(limits);
-subplot(5,1,5); plot(meanTimeseries(cleanData,mask),'k'); title('Clean Data'); xlabel('datapoints'); xlim(limits);
+%subplot(5,1,5); plot(meanTimeseries(cleanData,mask),'k'); title('Clean Data'); xlabel('datapoints'); xlim(limits);
+subplot(5,1,5); title('Clean Data'); xlabel('datapoints'); xlim(limits);
+plot(meanTimeseries(data,mask), 'k');
+hold on
+plot(meanTimeseries(cleanData,mask), 'r');
+legend('before scrubbing', 'after scrubbing')
+hold off
+
+
 
 if isfield(opts,'figdir')
-    saveas(gcf,[opts.figdir,'scrubData.fig']);
+    saveas(gcf,fullfile(opts.figdir,'scrubData.fig'));
 else
-    if ispc
-        saveas(gcf,[pwd,'\','scrubData.fig']);
-    else
-        saveas(gcf,[pwd,'/','scrubData.fig']);
-    end
+   saveas(gcf,fullfile(pwd,'scrubData.fig'));
 end
 
-if isfield(opts,'resultsdir')
-else
-    if ispc
-        opts.resultsdir = [pwd,'\'];
-    else
-        opts.resultsdir = [pwd,'/'];
-    end
-end
+% if isfield(opts,'resultsdir')
+% else
+%     if ispc
+%         opts.resultsdir = [pwd,'\'];
+%     else
+%         opts.resultsdir = [pwd,'/'];
+%     end
+% end
 
 if opts.save_cleaned
     if opts.niiwrite
@@ -135,6 +145,7 @@ if opts.save_cleaned
         saveImageData(cleanData, opts.headers.ts, opts.resultsdir, 'cleanBOLD.nii.gz', 64);
     end
 end
+cleanData = cast(cleanData, tf);
 
 end
 

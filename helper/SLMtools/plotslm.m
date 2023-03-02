@@ -261,7 +261,7 @@ end %
 % ===============================================
 %    nested functions - plots function/data/derivatives
 % ===============================================
-function plotcurve(plotstyle)
+    function [xev,ypred] = plotcurve(plotstyle)
 % plots the data and model. The options will be
 % 'fundata', 'fun', 'residuals', 'dy', 'dy2', 'dy3', 'integral'
 
@@ -290,6 +290,10 @@ switch plotstyle
     
     % plot the curve
     h = plot(xev,ypred);
+    %save variables to workspace
+    assignin('base', 'slm_xdata',  xev);
+    assignin('base', 'slm_ydata',  ypred);   
+    
     set(h,'Marker','none', ...
       'Color',params.LineColor, ...
       'LineStyle',params.LineStyle, ...

@@ -40,20 +40,17 @@
 % zfALFF_map: z-transformed fALFF map defined by the standard deviation of
 % fALFF values defined by the input mask
 function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)
-
-
 global opts
+ty = class(data);
+
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                  %depending on how data is loaded this can be set to 1 to use native load/save functions
-if ispc
-    opts.ALFFdir = [opts.resultsdir,'ALFF\']; mkdir(opts.ALFFdir);
-else
-    opts.ALFFdir = [opts.resultsdir,'ALFF/']; mkdir(opts.ALFFdir);
-end
+
+opts.ALFFdir = fullfile(opts.resultsdir,'ALFF'); mkdir(opts.ALFFdir);
+
 
 [xx yy zz N] = size(data);
 [refdata] = meanTimeseries(data, mask);
 
-opts.voxelsize = opts.headers.map.dime.pixdim(2:4)
 Fs = 1/opts.TR;
 dF = Fs/N;
 xdft = fft(refdata);
@@ -92,7 +89,7 @@ limits = string(opts.fpass);
 delimeter = {'_','_','_'};
 name = join(['ALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(ALFF_map,[opts.ALFFdir,name],opts.info.map);
+    niftiwrite(cast(ALFF_map,ty),[opts.ALFFdir,name],opts.info.map);
 else
     saveImageData(ALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end
@@ -100,7 +97,7 @@ end
 name = join(['zALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
     cd(opts.ALFFdir)
-    niftiwrite(zALFF_map,name,opts.info.map);
+    niftiwrite(cast(zALFF_map,ty),name,opts.info.map);
 else
     saveImageData(zALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end
@@ -113,14 +110,14 @@ fALFF_map = smthData( fALFF_map, double(mask), opts); zfALFF_map = smthData(zfAL
 %save fALFF
 name = join(['fALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(fALFF_map,name,opts.info.map);
+    niftiwrite(cast(fALFF_map,ty),name,opts.info.map);
 else
     saveImageData(fALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end
 %save fALFF z-map
 name = join(['zfALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(zfALFF_map,name,opts.info.map);
+    niftiwrite(cast(zfALFF_map,ty),name,opts.info.map);
 else
     saveImageData(zfALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end

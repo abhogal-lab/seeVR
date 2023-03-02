@@ -18,7 +18,7 @@
 function[BBBdata,yi yyi] = resampleGEN3(seqpath,TR,dyn,oversample)
 
 cd(seqpath); 
-traceFile =  ls('*bbb_mod.txt*')
+traceFile =  ls('*bbb_mod*')
 
 %import BBB
 fileToRead = [seqpath,traceFile];

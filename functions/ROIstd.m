@@ -25,8 +25,7 @@
 %
 % val: average value within ROI
 function [val] = ROIstd(data,mask)
-
-
+mask = logical(mask);
 data(isnan(data)) = 0; data(isinf(data)) = 0;
 temp = data(:).*mask(:);
 temp(temp == 0) = [];

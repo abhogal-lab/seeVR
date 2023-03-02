@@ -23,14 +23,10 @@
 % mask: binary mask defining voxels of interest
 function [img_ts] = meanTimeseries(data, mask)
 
-
 mask(isnan(mask)) = 0;
 mask = logical(mask(:));
 coordinates = find(mask); 
-
-%disp('Generate mean timeseries')
-
 [voxel_ts,~] = grabTimeseries(data,mask);
-
 img_ts = nanmean(voxel_ts,1);   
+
 end

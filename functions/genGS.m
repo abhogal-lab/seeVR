@@ -1,26 +1,26 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
 % <genGS: GLM based approach to regress out nuisance and data signals in provide residual timeseries data >
-% 
+%
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % This program is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
 % *************************************************************************
-% This function uses input nuissance regressors and data regressors 
+% This function uses input nuissance regressors and data regressors
 % (i.e. response models) to remove input data of all explainable
 % signal responses. The result is a residual 'global' signal that can be
 % added as a further nuisance regressor (see scrubData) or used as 'pseudo
-% resting-state' data. 
+% resting-state' data.
 %
 % data: input timeseries data (i.e. 4D BOLD MRI dataset)
 %
@@ -156,13 +156,9 @@ end
 resData = resData-offBOLD;
 
 if isfield(opts,'figdir')
-    saveas(gcf,[opts.figdir,'genGS.fig']);
+    saveas(gcf,fullfile(opts.figdir,'genGS.fig'));
 else
-    if ispc
-        saveas(gcf,[pwd,'\','genGS.fig']);
-    else
-        saveas(gcf,[pwd,'/','genGS.fig']);
-    end
+    saveas(gcf,fullfile(pwd,'genGS.fig'));
 end
 
 res_ts = meanTimeseries(resData,mask);

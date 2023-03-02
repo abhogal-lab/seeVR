@@ -173,7 +173,6 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 
 %save traces
 assignin('base', 'offset',  handles.offset)
-
 assignin('base', 'probe1',  handles.probe1)
 
 if handles.varCheck > 3
@@ -207,7 +206,7 @@ xlabel('scan number'); ylabel('probe'); title('main probe & signal');
 end
     
     
-saveas(gcf,[handles.figdir,'trace_alignment.fig']);
+saveas(gcf,fullfile(handles.figdir,'trace_alignment.fig'));
 disp('Closing alignment tool to continue analysis')
 uiresume(handles.figure1);
 guidata(hObject, handles);

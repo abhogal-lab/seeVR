@@ -44,7 +44,7 @@ function [CVRidx_map BP_ref bpData] = glmCVRidx(data, mask, refmask , opts)
 
 warning('off');
 global opts;
-
+ty = class(data);
 if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.08]; end  %default frequency band
 if isfield(opts,'smoothmap'); else; opts.smoothmap = 0; end  %default is to not smooth output maps
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data is loaded this can be set to 1 to use native load/save functions
@@ -53,7 +53,6 @@ if ispc
 else
     opts.CVRidxdir = [opts.resultsdir,'CVRidx/']; mkdir(opts.CVRidxdir);
 end
-
 
 data = double(data);
 [xx yy zz N] = size(data);
@@ -127,12 +126,24 @@ ylabel('a.u.')
 legend('mean reference time-series', 'BP reference mean-timeseries')
 
 %regress whole brain & reference signals against band passed reference
+try %try using GPU for this
+BP_ref = gpuArray(rescale(BP_ref)); %reference regressor rescaled
+D = [ones([length(BP_ref) 1]) BP_ref'];
+D = gpuArray(D);
+coef = D\BP_V';
+rcoef = D\BP_rV';
+coef = double(coef);
+rcoef = double(rcoef);
+%reference average beta value
+avg = mean(rcoef(2,:));
+catch
 BP_ref = rescale(BP_ref); %reference regressor rescaled
 D = [ones([length(BP_ref) 1]) BP_ref'];
 coef = D\BP_V';
 rcoef = D\BP_rV';
 %reference average beta value
 avg = mean(rcoef(2,:));
+end
 
 CVRidx = coef(2,:);
 bpData = zeros(size(data));
@@ -149,14 +160,6 @@ CVRidx_map(1, coordinates) = CVRidx;
 CVRidx_map = reshape(CVRidx_map, size(mask));
 nCVRidx_map = reshape(nCVRidx_map, size(mask));
 
-if opts.smoothmap
-    % deprecated smoothing
-    %CVRidx_map = smthData(CVRidx_map,mask,opts);
-    %nCVRidx_map = smthData(nCVRidx_map,mask,opts);
-    CVRidx_map = filterData(CVRidx_map,data(:,:,:,1),mask,opts);
-    nCVRidx_map =filterData(nCVRidx_map,data(:,:,:,1),mask,opts);
-end
-
 nCVRidx_map(nCVRidx_map > 30) = 0;
 nCVRidx_map(nCVRidx_map < -30) = 0;
 CVRidx_map(CVRidx_map > 30) = 0;
@@ -164,7 +167,7 @@ CVRidx_map(CVRidx_map < -30) = 0;
 
 if opts.niiwrite
     cd(opts.CVRidxdir);
-    niftiwrite(nCVRidx_map,'normCVRidx_map',opts.info.map);
+    niftiwrite(cast(nCVRidx_map,ty),'normCVRidx_map',opts.info.map);
 else
     saveImageData(nCVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64);
 end
@@ -175,7 +178,7 @@ nCVRidx_map(nCVRidx_map < -30) = 0;
 
 if opts.niiwrite
     cd(opts.CVRidxdir);
-    niftiwrite(CVRidx_map,'CVRidx_map',opts.info.map);
+    niftiwrite(cast(CVRidx_map),'CVRidx_map',opts.info.map);
 else
     saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
 end

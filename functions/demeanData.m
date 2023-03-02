@@ -29,7 +29,7 @@ function [dmData] = demeanData(data, mask)
 
 warning('off')
 global opts;
-
+tf = class(data);
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
 
 switch ndims(data)
@@ -59,5 +59,5 @@ switch ndims(data)
         dmData(coordinates,:) = voxel_ts;
         dmData = reshape(dmData,size(data));
 end
-
+dmData = cast(dmData,tf);
 end

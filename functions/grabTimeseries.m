@@ -29,6 +29,7 @@
 % coordinates: a tall array of spatial coordinates associated with each
 % voxel timeseries
 function [voxel_ts, coordinates] = grabTimeseries(data, mask)
+tf = class(data); 
 
 switch ndims(data)
     case 4
@@ -48,6 +49,7 @@ coordinates(any(isnan(clean_voxel_ts), 2), :) = [];
 %remove Inf rows
 coordinates(any(isinf(voxel_ts), 2), :) = [];
 voxel_ts(any(isinf(voxel_ts), 2), :) = [];
+voxel_ts = cast(voxel_ts,tf); coordinates = cast(coordinates,tf);
 
     case 3
 [x,y,dyn] = size(data);
@@ -66,6 +68,6 @@ coordinates(any(isnan(clean_voxel_ts), 2), :) = [];
 %remove Inf rows
 coordinates(any(isinf(voxel_ts), 2), :) = [];
 voxel_ts(any(isinf(voxel_ts), 2), :) = [];
-
+voxel_ts = cast(voxel_ts,tf); coordinates = cast(coordinates,tf);
 end
 end

@@ -18,7 +18,8 @@
 % returns a map of the signal change at each voxel between those epochs.
 %
 % *************************************************************************
-% data: normalized (normTimeseries) and smoothed (filgerData) timeseries
+% data: absolute timeseries data (i.e. 4D BOLD MRI dataset that is not 
+% expressed in %signal change)
 %
 % mask: binary mask defining voxels of interest
 %
@@ -35,7 +36,10 @@ function [delta] = basicCVR(data, mask, base_idx, stim_idx, opts)
 
 warning('off')
 global opts
+tf = class(data);
 
+disp('Normalizing to baseline')
+data = normTimeseries(data,mask,base_idx);
 sBOLD = data; sBOLD(isnan(sBOLD)) = 0;
 
 sBOLD( sBOLD == 0) = NaN;
@@ -45,12 +49,12 @@ base = nanmean(data(:,:,:,base_idx(1):base_idx(2)),4);
 stim = nanmean(data(:,:,:,stim_idx(1):stim_idx(2)),4);
 delta = stim - base; delta(~mask) = NaN;
 
-delta(delta > 15) = 0; delta(delta < -15) = 0; %remove large BOLD
+delta(delta > 20) = 0; delta(delta < -20) = 0; %remove large BOLD
 delta(isnan(delta)) = 0;
 disp('Saving CVR map')
 if opts.niiwrite
     cd(opts.resultsdir)
-    niftiwrite(delta,'basicCVR',opts.info.map);
+    niftiwrite(cast(delta,tf),'basicCVR',opts.info.map);
 else
 saveImageData(delta,opts.headers.map,opts.resultsdir,'basicCVR.nii.gz', 64);
 end

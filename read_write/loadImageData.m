@@ -11,7 +11,7 @@ if ~ispc
     if filename(end) == char(10); filename(end) = []; end
 end
 
-image_path = [pathname,filename];
+image_path = fullfile(pathname,filename);
 data = load_untouch_nii(image_path);
 image = (data.img);
 info.datatype = data.hdr.dime.datatype;

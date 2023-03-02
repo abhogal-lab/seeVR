@@ -36,6 +36,7 @@ function [idx, rdata] = chopTimeseries(data,mask,idx)
 % timeseries
 warning('off');
 global opts;
+tf = class(data);
 
 if isfield(opts,'save_rdata'); else; opts.save_rdata = 0; end %saves the shortened timeseries
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
@@ -104,6 +105,6 @@ else
     end
     
 end
-
+rdata = cast(rdata,tf);
 end
 

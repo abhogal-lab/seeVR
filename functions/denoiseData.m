@@ -33,7 +33,7 @@ function [denData] = denoiseData(data,mask,opts)
 global opts;
 if isfield(opts,'wavelet'); else; opts.wavelet = 1; end
 [xx yy zz dyn] = size(data);
-
+tf = class(data);
 if opts.wavelet
     try
 if license('test', 'wavelet_toolbox')
@@ -80,6 +80,6 @@ hold off
         end
     end
 end
-
+denData = cast(denData,tf);
 end
 
