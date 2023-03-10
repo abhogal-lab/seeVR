@@ -16,11 +16,12 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-function [newprobe, maps] = lagCVR(GMmask,mask,data,probe,nuisance,opts)
+function [newprobe, maps] = lagCVR(refmask,mask,data,probe,nuisance,opts)
 % This function calculates hemodynamic parameter maps with associated
 % statistical maps. For full usage details download the user manual from
 % https://www.seevr.nl/download-seevr/ or look at usage tutorials
 % https://www.seevr.nl/tutorials/
+refmask = logical(refmask); mask = logical(mask);
 warning('off');
 global opts;
 data(isnan(data)) = 0; data(isinf(data)) = 0;
@@ -50,7 +51,6 @@ if isfield(opts,'prewhite'); else; opts.prewhite = 0; end                 %zero 
 if isfield(opts,'interp_factor'); else; opts.interp_factor = 4; end       %factor by which to temporally interpolate data. Better for picking up lags between TR
 if isfield(opts,'load_probe'); else; opts.load_probe = 0; end             %saves time for creating regressor if one with the correct length already exists
 if isfield(opts,'save_rts'); else; opts.save_rts = 0; end                 %save correlation timeseries - can be used to visualize lags
-%setup main default parameters
 if isfield(opts,'rescale_probe'); else; opts.rescale_probe = 1; end       %rescaling may be helful for initial refinement run
 if isfield(opts,'trace_corr'); else; opts.trace_corr = 1; end             %perform additional correlation with gas trace (on top of optimized regressor)
 if isfield(opts,'refine_regressor'); else; opts.refine_regressor = 1; end %refine BOLD regressor. If '0' a straight correlation will be done with probe
@@ -84,7 +84,6 @@ if isfield(opts,'highlag'); else; opts.highlag = 60; end                  %upper
 opts.adjlowlag = opts.lowlag*opts.interp_factor; %setup lower lag limit; negative for misalignment and noisy correlation
 opts.adjhighlag = opts.highlag*opts.interp_factor; %setups upper lag limit; allow for long lags associated with pathology
 
-
 %check
 if opts.load_probe == 0 && opts.refine_regressor == 0 && opts.trace_corr == 0
     disp('check options; stopping analysis')
@@ -97,8 +96,9 @@ if opts.trace_corr == 0 && opts.robust == 1
     disp('...continuing without creating robust maps')
     opts.robust = 0;
 end
+
 %setup save directories
-if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end
+if isfield(opts,'resultsdir'); else; opts.resultsdir = fullfile(pwd); end
 if opts.corr_model; opts.corrlagdir = fullfile(opts.resultsdir,'corrLAG'); mkdir(opts.corrlagdir); end
 if opts.corr_model && opts.cvr_maps; opts.corrCVRdir = fullfile(opts.corrlagdir,'CVR'); mkdir(opts.corrCVRdir); end
 if opts.corr_model == 0; opts.cvr_maps = 0; end
@@ -122,7 +122,7 @@ t = cputime;
 % WB coordinates
 [orig_voxel_ts, coordinates] = grabTimeseries(data, mask);
 % GM coordinates
-[gm_voxel_ts, gmcoordinates] = grabTimeseries(data, GMmask);
+[gm_voxel_ts, gmcoordinates] = grabTimeseries(data, refmask);
 
 if opts.prewhite
     gm_voxel_ts = gm_voxel_ts'; parfor ii=1:size(gmcoordinates,1); [gm_voxel_ts(:,ii), ~, ~] = prewhiten(gm_voxel_ts(:,ii)); end; gm_voxel_ts = gm_voxel_ts';
@@ -381,11 +381,11 @@ if opts.corr_model
         %matrix cross correlation with probe
         a2=mat2cell(wb_voxel_ts,ones(1,size(wb_voxel_ts,1)),size(wb_voxel_ts,2)); %turn into cells so treat all rows independently
         
-        b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'normalized'),a2,'uniformoutput',false);
+        b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'coeff'),a2,'uniformoutput',false);
         corr_probe=cell2mat(b2); %reformat into correlation matrix
         corr_probe = corr_probe';
         %use highlag to restrict the number of correlations that need to be done
-        [~,lags] = xcorr(gm_voxel_ts_nonan(1,:),regr,opts.adjhighlag,'normalized');  %%%%%% !!!!!!!!!!
+        [~,lags] = xcorr(gm_voxel_ts_nonan(1,:),regr,opts.adjhighlag,'coeff');  %%%%%% !!!!!!!!!!
         
         %save correlations over time
         corr_ts = zeros([xx*yy*zz size(corr_probe,1)]);
@@ -801,7 +801,7 @@ end
 %% perform shifted regressor GLM
 
 if opts.glm_model
-    [~,lags] = xcorr(newprobe,newprobe,opts.adjhighlag,'normalized');  %%%%%% !!!!!!!!!!
+    [~,lags] = xcorr(newprobe,newprobe,opts.adjhighlag,'coeff');  %%%%%% !!!!!!!!!!
     idx = find(lags<=opts.adjlowlag | lags>=opts.adjhighlag);
     %remove lag values lower that what is possible
     lags(idx)=[];

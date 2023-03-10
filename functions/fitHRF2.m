@@ -21,6 +21,7 @@
 function [maps] = fitHRF2(mask,data,probe,opts)
 global opts
 warning('off')
+mask = logical(mask);
 tf = class(data);
 if isfield(opts,'verbose'); else; opts.verbose = 0; end                    %turn on/off select command output
 if isfield(opts,'prewhite'); else; opts.prewhite = 0; end                  %pre-whiten data

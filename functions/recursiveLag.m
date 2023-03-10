@@ -1,7 +1,10 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% Sections of this code were contributed by Allen A. Champagne, a.champagne@queensu.ca
-% The recursive lag approach is based on the origical code shared by Dr.
+% Sections of this code were contributed by Allen A. Champagne,
+% a.champagne@queensu.ca 
+% This implementation was developped by Stefan Rademakers
+% (stefan-rademakers@outlook.com) and is an adaptation of
+% the recursive lag approach and origical code shared by Dr.
 % Toshiko Aso:
 % https://github.com/aso-toshihiko/BOLDLagMapping_Deperfusioning
 % (aso.toshihiko@gmail.com )
@@ -21,7 +24,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 function [maps] = recursiveLag(refmask,mask,data,probe,nuisance,opts)
-
+refmask = logical(refmask); mask = logical(mask);
 warning('off');
 global opts;
 ty = class(data);

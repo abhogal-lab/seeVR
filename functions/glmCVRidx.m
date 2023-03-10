@@ -41,10 +41,10 @@
 %
 % bpData: a bandpassed version of the input data
 function [CVRidx_map BP_ref bpData] = glmCVRidx(data, mask, refmask , opts)
-
+refmask = logical(refmask); mask = logical(mask);
 warning('off');
 global opts;
-ty = class(data);
+tf = class(data);
 if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.08]; end  %default frequency band
 if isfield(opts,'smoothmap'); else; opts.smoothmap = 0; end  %default is to not smooth output maps
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data is loaded this can be set to 1 to use native load/save functions
@@ -167,7 +167,7 @@ CVRidx_map(CVRidx_map < -30) = 0;
 
 if opts.niiwrite
     cd(opts.CVRidxdir);
-    niftiwrite(cast(nCVRidx_map,ty),'normCVRidx_map',opts.info.map);
+    niftiwrite(cast(nCVRidx_map,tf),'normCVRidx_map',opts.info.map);
 else
     saveImageData(nCVRidx_map,opts.headers.map,opts.CVRidxdir,'normCVRidx_map.nii.gz',64);
 end

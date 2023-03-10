@@ -49,7 +49,7 @@ base = nanmean(data(:,:,:,base_idx(1):base_idx(2)),4);
 stim = nanmean(data(:,:,:,stim_idx(1):stim_idx(2)),4);
 delta = stim - base; delta(~mask) = NaN;
 
-delta(delta > 20) = 0; delta(delta < -20) = 0; %remove large BOLD
+delta(delta > 30) = 0; delta(delta < -30) = 0; %clip outliers
 delta(isnan(delta)) = 0;
 disp('Saving CVR map')
 if opts.niiwrite
