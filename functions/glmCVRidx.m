@@ -46,7 +46,6 @@ warning('off');
 global opts;
 tf = class(data);
 if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.08]; end  %default frequency band
-if isfield(opts,'smoothmap'); else; opts.smoothmap = 0; end  %default is to not smooth output maps
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data is loaded this can be set to 1 to use native load/save functions
 if ispc
     opts.CVRidxdir = [opts.resultsdir,'CVRidx\']; mkdir(opts.CVRidxdir);
@@ -178,7 +177,7 @@ nCVRidx_map(nCVRidx_map < -30) = 0;
 
 if opts.niiwrite
     cd(opts.CVRidxdir);
-    niftiwrite(cast(CVRidx_map),'CVRidx_map',opts.info.map);
+    niftiwrite(cast(CVRidx_map,tf)),'CVRidx_map',opts.info.map);
 else
     saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
 end
