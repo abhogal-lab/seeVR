@@ -47,11 +47,8 @@ global opts;
 tf = class(data);
 if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.08]; end  %default frequency band
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data is loaded this can be set to 1 to use native load/save functions
-if ispc
-    opts.CVRidxdir = [opts.resultsdir,'CVRidx\']; mkdir(opts.CVRidxdir);
-else
-    opts.CVRidxdir = [opts.resultsdir,'CVRidx/']; mkdir(opts.CVRidxdir);
-end
+
+opts.CVRidxdir = fullfile(opts.resultsdir,'CVRidx'); mkdir(opts.CVRidxdir);
 
 data = double(data);
 [xx yy zz N] = size(data);
