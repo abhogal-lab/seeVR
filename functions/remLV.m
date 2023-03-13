@@ -38,11 +38,9 @@ global opts
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end
 
-if ispc
-    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'\']; end
-else
-    if isfield(opts,'resultsdir'); else; opts.resultsdir = [pwd,'/']; end
-end
+
+if isfield(opts,'resultsdir'); else; opts.resultsdir = fullfile(pwd); end
+
 [x, y, z, ~] = size(data);
 [voxel_ts, coordinates] = grabTimeseries(data, mask);
 SD = nanstd(voxel_ts,0,2);
@@ -85,7 +83,7 @@ end
 mmask(isinf(tNSR)) = 0; mmask(tNSR > opts.LVthresh) = 0; %This step should remove vessels and garbage data
 %saves new brain mask excluding voxels
 if opts.niiwrite
-    name = [opts.resultsdir,'mWBmask_',num2str(opts.LVthresh)];
+    name = fullfile(opts.resultsdir,['mWBmask_',num2str(opts.LVthresh)]);
     name(name == '.') = '_';
     niftiwrite(cast(mmask,opts.maskDatatype),name,opts.info.mask);
 else
