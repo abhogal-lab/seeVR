@@ -1,10 +1,9 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% Sections of this code were contributed by Allen A. Champagne,
-% a.champagne@queensu.ca 
-% This implementation was developped by Stefan Rademakers
-% (stefan-rademakers@outlook.com) and is an adaptation of
-% the recursive lag approach and origical code shared by Dr.
+% This implementation was developped by Stefan Rademakers,
+% stefan-rademakers@outlook.com
+% Sections of this code were contributed by Allen A. Champagne, a.champagne@queensu.ca
+% The recursive lag approach is based on the origical code shared by Dr.
 % Toshiko Aso:
 % https://github.com/aso-toshihiko/BOLDLagMapping_Deperfusioning
 % (aso.toshihiko@gmail.com )
@@ -23,11 +22,12 @@
 %
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 function [maps] = recursiveLag(refmask,mask,data,probe,nuisance,opts)
 refmask = logical(refmask); mask = logical(mask);
 warning('off');
 global opts;
-ty = class(data);
+
 % check for statistics toolbox
 if license('test','Statistics_toolbox') == 0; opts.pca_analysis = 0; end
 
@@ -371,7 +371,7 @@ lag_map = NaN([xx*yy*zz length(lags)]);
 
 % WB cross-correlation to the probe across the limited range of lags
 a2=mat2cell(wb_voxel_ts,ones(1,size(wb_voxel_ts,1)),size(wb_voxel_ts,2));
-b2=cellfun(@(a2) xcorr(a2,newprobe,opts.lim,'normalized'),a2,'uniformoutput',false);
+b2=cellfun(@(a2) xcorr(a2,newprobe,opts.lim,'coeff'),a2,'uniformoutput',false);
 corr_probe = cell2mat(b2); corr_probe = corr_probe';
 if opts.uni
     [R, index] = max(corr_probe); % negative correlations will not weigh more than positive ones
@@ -382,7 +382,7 @@ R(R<opts.THR) = 0; % remove low r-values
 
 % comparison between the adj Aso method and a simple cross correlation to the initial regressor
 if opts.comp
-    check_b2=cellfun(@(a2) xcorr(a2,newprobe,'normalized'),a2,'uniformoutput',false);
+    check_b2=cellfun(@(a2) xcorr(a2,newprobe,'coeff'),a2,'uniformoutput',false);
     check_corr_probe = cell2mat(check_b2); check_corr_probe = check_corr_probe';
     idx = find(lags<opts.adjlowerthresh | lags>opts.adjupperthresh);
     check_corr_probe(idx,:)=[]; clear idx
@@ -404,7 +404,7 @@ end
 Uregr = zeros(size(newprobe)); Lregr = zeros(size(newprobe)); % initialization
 
 %% positive p
-it = 1; figure; hold on; 
+it = 1; 
 for p = 1:opts.adjhighlag-1
     disp('it: '+string(it)+'/'+string(length(opts.adjlowlag:opts.adjhighlag)-1))
     it = it + 1;
@@ -421,13 +421,17 @@ for p = 1:opts.adjhighlag-1
     a2=mat2cell(data,ones(1,size(data,1)),size(data,2));
     
     % form a new shifted regressor of the next positive lag step
+    if opts.rescale_probe;
+    regr = rescale(mean(wb_voxel_ts(ismember(Uindex,lmid+1),:),1));
+    else
     regr = mean(wb_voxel_ts(ismember(Uindex,lmid+1),:),1);
+    end
     figure(20); hold on; plot(regr);
     % shift the regressor such that its temporal position corresponds to the BOLD data
     Uregr(1+p:end) = regr(1:end-p); plot(rescale(Uregr));
     
     % find maximum cross-correlation across the limited range of calculated lags
-    b2=cellfun(@(a2) xcorr(a2,Uregr,opts.lim,'normalized'),a2,'uniformoutput',false);
+    b2=cellfun(@(a2) xcorr(a2,Uregr,opts.lim,'coeff'),a2,'uniformoutput',false);
     corr_probe = cell2mat(b2); corr_probe = corr_probe';
     if opts.uni
         [R, Uindex] = max(corr_probe); % negative correlations will not weigh more than positive ones
@@ -455,7 +459,7 @@ for p = 1:opts.adjhighlag-1
         Lregr(1:end-p) = regr(1+p:end); plot(rescale(Lregr));
         
         % find maximum cross-correlation across the limited range
-        b2=cellfun(@(a2) xcorr(a2,Lregr,opts.lim,'normalized'),a2,'uniformoutput',false);
+        b2=cellfun(@(a2) xcorr(a2,Lregr,opts.lim,'coeff'),a2,'uniformoutput',false);
         corr_probe = cell2mat(b2); corr_probe = corr_probe';
         if opts.uni
             [R, Lindex] = max(corr_probe); % negative correlations will not weigh more than positive ones
@@ -497,8 +501,8 @@ tmpLag = reshape(tmpLag,[xx yy zz]);
 maps.XCORR.recursiveLag_map = mask.*tmpLag;
 maps.XCORR.recursiveR_map = mask.*r_map;
 if opts.niiwrite
-    niftiwrite(cast(mask.*tmpLag,ty),'recursiveLag',opts.info.map);
-    niftiwrite(cast(mask.*r_map,ty),'recursiveR_map',opts.info.map);
+    niftiwrite(cast(mask.*tmpLag,opts.mapDatatype),'recursiveLag',opts.info.map);
+    niftiwrite(cast(mask.*r_map,opts.mapDatatype),'recursiveR_map',opts.info.map);
 else
     saveImageData(mask.*tmpLag, opts.headers.map, opts.corrlagdir, 'recursiveLag.nii.gz', datatype);
     saveImageData(mask.*r_map, opts.headers.map, opts.corrlagdir, 'recursiveR_map.nii.gz', datatype);

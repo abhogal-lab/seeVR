@@ -116,11 +116,7 @@ if isfield(opts.carpet,'interp_factor'); else; opts.carpet.interp_factor = 1; en
 
 
 %setup savedir
-if ispc
-    opts.carpetdir = [opts.resultsdir,'carpet\']; mkdir(opts.carpetdir);
-else
-    opts.carpetdir = [opts.resultsdir,'carpet/']; mkdir(opts.carpetdir);
-end
+opts.carpetdir = fullfile(opts.resultsdir,'carpet'); mkdir(opts.carpetdir);
 
 % delete any existing transit maps
 cd(opts.carpetdir);
@@ -184,7 +180,7 @@ carpet_mask(coords) = 1;
 carpet_mask = reshape(carpet_mask,size(mask));
 if opts.niiwrite
     cd(opts.carpetdir)
-    niftiwrite(carpet_mask,'carpetMask',opts.info.mask);
+    niftiwrite(cast(carpet_mask, opts.maskDatatype),'carpetMask',opts.info.mask);
 else
     saveImageData(carpet_mask, opts.headers.mask, opts.carpetdir, 'carpetMask.nii.gz', 64);
 end
@@ -435,7 +431,7 @@ end
 
 if opts.niiwrite
     cd(opts.carpetdir)
-    niftiwrite(carpet_mask,'carpetMask',opts.info.mask);
+    niftiwrite(cast(carpet_mask, opts.maskDatatype),'carpetMask',opts.info.mask);
 else
     saveImageData(carpet_mask, opts.headers.mask, opts.carpetdir, 'carpetMask.nii.gz', 64);
 end
@@ -449,7 +445,7 @@ for ii=1:mm
     end
     if opts.niiwrite
         cd(opts.carpetdir)
-        niftiwrite(transit_map/opts.carpet.interp_factor,['transitMap_',int2str(ii)],opts.info.map);
+        niftiwrite(cast(transit_map/opts.carpet.interp_factor,opts.mapDatatype),['transitMap_',int2str(ii)],opts.info.map);
     else
         saveImageData(transit_map/opts.carpet.interp_factor, opts.headers.map, opts.carpetdir, ['transitMap_',int2str(ii),'.nii.gz'], 64);
     end
@@ -467,7 +463,7 @@ if any(transit_line(ii,:)<0)
 end
 if opts.niiwrite
     cd(opts.carpetdir)
-    niftiwrite(transit_map/opts.carpet.interp_factor,'meanTransitMap',opts.info.map);
+    niftiwrite(cast(transit_map/opts.carpet.interp_factor, opts.mapDatatype),'meanTransitMap',opts.info.map);
 else
     saveImageData(transit_map/opts.carpet.interp_factor, opts.headers.map, opts.carpetdir, 'meanTransitMap.nii.gz', 64);
 end
@@ -535,3 +531,5 @@ end
 disp('saving maps in .mat file' )
 carpet_maps = maps;
 save([opts.carpetdir,'carpet_Maps.mat'], 'carpet_maps');
+
+end

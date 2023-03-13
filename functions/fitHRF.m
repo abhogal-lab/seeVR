@@ -21,7 +21,6 @@
 function [maps] = fitHRF(mask,data,probe,opts)
 global opts
 warning('off')
-tf = class(data);
 
 if isfield(opts,'verbose'); else; opts.verbose = 0; end                    %turn on/off select command output
 if isfield(opts,'prewhite'); else; opts.prewhite = 0; end                  %pre-whiten data
@@ -138,7 +137,7 @@ if ~opts.expHRF
     if length(opts.onset) > 1; onset_map(1, coordinates) = onset_vec; onset_map = reshape(onset_map, [x y z]);
         if opts.niiwrite
             cd(opts.hrfdir);
-            niftiwrite(cast(onset_map,tf),'onset_map',opts.info.map);
+            niftiwrite(cast(onset_map,opts.mapDatatype),'onset_map',opts.info.map);
         else
             saveImageData(onset_map,opts.headers.map,opts.hrfdir,'onset_map.nii.gz',64);
         end
@@ -146,7 +145,7 @@ if ~opts.expHRF
     if length(opts.disp) > 1; disp_map(1, coordinates) = disp_vec; disp_map = reshape(disp_map, [x y z]);
         if opts.niiwrite
             cd(opts.hrfdir);
-            niftiwrite(cast(disp_map,tf),'dispersion_map',opts.info.map);
+            niftiwrite(cast(disp_map,opts.mapDatatype),'dispersion_map',opts.info.map);
         else
             saveImageData(disp_map,opts.headers.map,opts.hrfdir,'dispersion_map.nii.gz',64);
         end
@@ -154,7 +153,7 @@ if ~opts.expHRF
     if length(opts.under) > 1; under_map(1, coordinates) = under_vec; under_map = reshape(under_map, [x y z]);
         if opts.niiwrite
             cd(opts.hrfdir);
-            niftiwrite(cast(under_map,tf),'undershoot_map',opts.info.map);
+            niftiwrite(cast(under_map,opts.mapDatatype),'undershoot_map',opts.info.map);
         else
             saveImageData(under_map,opts.headers.map,opts.hrfdir,'undershoot_map.nii.gz',64);
         end
@@ -166,9 +165,9 @@ end
 if opts.expHRF
     if opts.niiwrite
         cd(opts.hrfdir);
-        niftiwrite(cast(HRF_map,tf),'expHRF_map',opts.info.map);
-        niftiwrite(cast(r2_map,tf),'expHRF_r2_map',opts.info.map);
-        niftiwrite(cast(beta_map,tf),'expHRF_beta_map',opts.info.map);
+        niftiwrite(cast(HRF_map,opts.mapDatatype),'expHRF_map',opts.info.map);
+        niftiwrite(cast(r2_map,opts.mapDatatype),'expHRF_r2_map',opts.info.map);
+        niftiwrite(cast(beta_map,opts.mapDatatype),'expHRF_beta_map',opts.info.map);
 
     else
         saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'expHRF_map.nii.gz',64);
@@ -179,8 +178,8 @@ else
     if length(opts.disp) > length(opts.onset)
         if opts.niiwrite
             cd(opts.hrfdir);
-            niftiwrite(cast(HRF_map,tf),'dispHRF_map',opts.info.map);
-            niftiwrite(cast(r2_map,tf),'dispHRF_r2_map',opts.info.map);
+            niftiwrite(cast(HRF_map,opts.mapDatatype),'dispHRF_map',opts.info.map);
+            niftiwrite(cast(r2_map,opts.mapDatatype),'dispHRF_r2_map',opts.info.map);
         else
             saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'dispHRF_map.nii.gz',64);
             saveImageData(r2_map,opts.headers.map,opts.hrfdir,'dispHRF_r2_map.nii.gz',64);
@@ -188,8 +187,8 @@ else
     elseif length(opts.disp) < length(opts.onset)
         if opts.niiwrite
             cd(opts.hrfdir);
-            niftiwrite(cast(HRF_map,tf),'onsetHRF_map',opts.info.map);
-            niftiwrite(cast(r2_map,tf),'onsetHRF_r2_map',opts.info.map);
+            niftiwrite(cast(HRF_map,opts.mapDatatype),'onsetHRF_map',opts.info.map);
+            niftiwrite(cast(r2_map,opts.mapDatatype),'onsetHRF_r2_map',opts.info.map);
         else
             saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'onsetHRF_map.nii.gz',64);
             saveImageData(r2_map,opts.headers.map,opts.hrfdir,'onsetHRF_r2_map.nii.gz',64);
@@ -197,8 +196,8 @@ else
     else
         if opts.niiwrite
             cd(opts.hrfdir);
-            niftiwrite(cast(HRF_map,tf),'HRF_map',opts.info.map);
-            niftiwrite(cast(r2_map,tf),'HRF_r2_map',opts.info.map);
+            niftiwrite(cast(HRF_map,opts.mapDatatype),'HRF_map',opts.info.map);
+            niftiwrite(cast(r2_map,opts.mapDatatype),'HRF_r2_map',opts.info.map);
         else
             saveImageData(HRF_map,opts.headers.map,opts.hrfdir,'HRF_map.nii.gz',64);
             saveImageData(r2_map,opts.headers.map,opts.hrfdir,'HRF_r2_map.nii.gz',64);

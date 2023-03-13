@@ -109,6 +109,7 @@ if size(nuisance,2) > 1
 else
     subplot(5,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii),-1,1), 'Color', 'r'); end; title('rescaled nuisance regressor(s)'); xlim(limits);
 end
+
 subplot(5,1,3); plot(meanTimeseries(data,mask),'k'); title('Original Data'); xlim(limits)
 subplot(5,1,4); plot(nanmean(nuis_TS,2),'k'); title('nuisance Mean'); xlim(limits);
 %subplot(5,1,5); plot(meanTimeseries(cleanData,mask),'k'); title('Clean Data'); xlabel('datapoints'); xlim(limits);
@@ -120,21 +121,12 @@ legend('before scrubbing', 'after scrubbing')
 hold off
 
 
-
 if isfield(opts,'figdir')
     saveas(gcf,fullfile(opts.figdir,'scrubData.fig'));
 else
    saveas(gcf,fullfile(pwd,'scrubData.fig'));
 end
 
-% if isfield(opts,'resultsdir')
-% else
-%     if ispc
-%         opts.resultsdir = [pwd,'\'];
-%     else
-%         opts.resultsdir = [pwd,'/'];
-%     end
-% end
 
 if opts.save_cleaned
     if opts.niiwrite

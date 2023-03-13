@@ -36,7 +36,6 @@ function [idx, rdata] = chopTimeseries(data,mask,idx)
 % timeseries
 warning('off');
 global opts;
-tf = class(data);
 
 if isfield(opts,'save_rdata'); else; opts.save_rdata = 0; end %saves the shortened timeseries
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
@@ -92,7 +91,7 @@ if opts.niiwrite
     
     if opts.save_rdata
         cd(opts.resultsdir)
-        niftiwrite(rdata,'rBOLD',opts.info.rts);
+        niftiwrite(cast(rdata, opts.tsDatatype),'rBOLD',opts.info.rts);
     end
 else
     
@@ -105,6 +104,6 @@ else
     end
     
 end
-rdata = cast(rdata,tf);
+rdata = cast(rdata,opts.tsDatatype);
 end
 

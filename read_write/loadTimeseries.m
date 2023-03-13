@@ -25,13 +25,15 @@ end
 
 
 opts.info.ts = info;
+opts.tsDatatype = info.Datatype;
+
 opts.info.map = info;
 opts.info.map.raw.dim(1) = 3;
 opts.info.map.raw.dim(5) = 1;
 opts.info.map.raw.pixdim(5) = 0;
 opts.info.map.PixelDimensions = opts.info.ts.PixelDimensions(1:3);
 opts.info.map.ImageSize = opts.info.ts.ImageSize(1:3);
-opts.info.mask.MultiplicativeScaling = 1; %test to fix saving later on
+opts.mapDatatype = info.Datatype;
 
 image(isinf(image)) = 0;
 

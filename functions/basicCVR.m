@@ -32,11 +32,11 @@
 % opts.headers.map, opts.resultsdir
 %
 % delta: a map of calculated signal changes from baseline
+
 function [delta] = basicCVR(data, mask, base_idx, stim_idx, opts)
 
 warning('off')
 global opts
-tf = class(data);
 
 disp('Normalizing to baseline')
 data = normTimeseries(data,mask,base_idx);
@@ -49,12 +49,12 @@ base = nanmean(data(:,:,:,base_idx(1):base_idx(2)),4);
 stim = nanmean(data(:,:,:,stim_idx(1):stim_idx(2)),4);
 delta = stim - base; delta(~mask) = NaN;
 
-delta(delta > 30) = 0; delta(delta < -30) = 0; %clip outliers
+delta(delta > 20) = 0; delta(delta < -20) = 0; %remove large BOLD
 delta(isnan(delta)) = 0;
 disp('Saving CVR map')
 if opts.niiwrite
     cd(opts.resultsdir)
-    niftiwrite(cast(delta,tf),'basicCVR',opts.info.map);
+    niftiwrite(cast(delta, opts.mapDatatype),'basicCVR',opts.info.map);
 else
 saveImageData(delta,opts.headers.map,opts.resultsdir,'basicCVR.nii.gz', 64);
 end

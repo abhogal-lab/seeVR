@@ -41,12 +41,10 @@
 % fALFF values defined by the input mask
 function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)
 global opts
-ty = class(data);
 
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                  %depending on how data is loaded this can be set to 1 to use native load/save functions
 
 opts.ALFFdir = fullfile(opts.resultsdir,'ALFF'); mkdir(opts.ALFFdir);
-
 
 [xx yy zz N] = size(data);
 [refdata] = meanTimeseries(data, mask);
@@ -97,7 +95,7 @@ end
 name = join(['zALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
     cd(opts.ALFFdir)
-    niftiwrite(cast(zALFF_map,ty),name,opts.info.map);
+    niftiwrite(cast(zALFF_map, opts.mapDatatype),name,opts.info.map);
 else
     saveImageData(zALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end
@@ -110,14 +108,14 @@ fALFF_map = smthData( fALFF_map, double(mask), opts); zfALFF_map = smthData(zfAL
 %save fALFF
 name = join(['fALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(cast(fALFF_map,ty),name,opts.info.map);
+    niftiwrite(cast(fALFF_map, opts.mapDatatype),name,opts.info.map);
 else
     saveImageData(fALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end
 %save fALFF z-map
 name = join(['zfALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(cast(zfALFF_map,ty),name,opts.info.map);
+    niftiwrite(cast(zfALFF_map, opts.mapDatatype),name,opts.info.map);
 else
     saveImageData(zfALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end

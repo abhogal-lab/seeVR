@@ -13,6 +13,7 @@ img = niftiread(image_path);
 opts.imagepath = pathname;
 opts.imagefile = filename;
 opts.voxelsize_image = info.PixelDimensions;
+opts.imageDatatype = info.Datatype;
 
 %generate anat info
 opts.info.image = info;
