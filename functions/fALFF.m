@@ -81,14 +81,14 @@ ALFF_map = zeros(size(mask)); ALFF_map = ALFF_map(:); zALFF_map = ALFF_map;
 ALFF_map(coordinates,1) =  vALFF/rALFF; %divide by global mean ALFF - see: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3902859/
 zALFF_map(coordinates,1) = (vALFF - mean(vALFF))/std(vALFF); %calculate z-score
 ALFF_map = reshape(ALFF_map,size(mask)); zALFF_map = reshape(zALFF_map,size(mask));
-ALFF_map = smthData( ALFF_map, double(mask), opts); zALFF_map = smthData(zALFF_map, double(mask), opts);
+
 limits = string(opts.fpass);
 
 %save ALFF
 delimeter = {'_','_','_'};
 name = join(['ALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(cast(ALFF_map,ty),[opts.ALFFdir,name],opts.info.map);
+    niftiwrite(cast(ALFF_map,opts.mapDatatype),[opts.ALFFdir,name],opts.info.map);
 else
     saveImageData(ALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
 end
@@ -107,7 +107,6 @@ fALFF_map = zeros(size(mask)); fALFF_map = fALFF_map(:); zfALFF_map = fALFF_map;
 fALFF_map(coordinates,1) =  vALFF./fvALFF;
 zfALFF_map(coordinates,1) = (fALFF_map(coordinates,1) - mean(fALFF_map(coordinates,1)))/std(fALFF_map(coordinates,1));
 fALFF_map = reshape(fALFF_map,size(mask)); zfALFF_map = reshape(zfALFF_map,size(mask));
-fALFF_map = smthData( fALFF_map, double(mask), opts); zfALFF_map = smthData(zfALFF_map, double(mask), opts);
 
 %save fALFF
 name = join(['fALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
