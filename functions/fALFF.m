@@ -54,7 +54,7 @@ dF = Fs/N;
 xdft = fft(refdata);
 xdft = xdft(1:N/2+1);
 %reference signal
-psdx = (abs(xdft)/N).*2; %square this to get the power (ampl^2 = pwer)
+psdx = (abs(xdft).*2)/N; %square this to get the power (ampl^2 = pwer)
 psdx(2:end-1) = 2*psdx(2:end-1);
 freq = 0:Fs/length(data):Fs/2;
 
@@ -64,14 +64,14 @@ Lowf = opts.fpass(1); Highf = opts.fpass(2);
 [Lowval,Lowidx]=min(abs(freq-Lowf));
 [Highval,Highidx]=min(abs(freq-Highf));
 
-rALFF = sum(sqrt(psdx(1,Lowidx:Highidx))); %whols brain reference ALFF see: https://pubmed.ncbi.nlm.nih.gov/16919409/
+rALFF = sum(sqrt(psdx(1,Lowidx:Highidx))); %whole brain reference ALFF see: https://pubmed.ncbi.nlm.nih.gov/16919409/
 
 %voxel-wise ALFF
 [voxels coordinates] = grabTimeseries(data, mask);
 xdft = fft(voxels,[],2);
 xdft = xdft(:,1:N/2+1);
-psdx = (abs(xdft)/N).^2; %square this to get the power (ampl^2 = pwer)
-psdx(2:end-1) = 2*psdx(2:end-1);
+psdx = (abs(xdft).^2)/N; %square this to get the power (ampl^2 = pwer)
+psdx(2:end-1) = 2*psdx(2:end-1); %not sure yet is factor 2 is needed
 
 vALFF = sum(sqrt(psdx(:,Lowidx:Highidx)),2); %ALFF in freq band of interest
 fvALFF = sum(sqrt(psdx),2); %whole spectrum reference ALFF
