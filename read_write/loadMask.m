@@ -15,6 +15,7 @@ image = niftiread(image_path);
 opts.info.mask = info;
 opts.info.mask.MultiplicativeScaling = 1;
 opts.niiwrite = 1;
+opts.maskDatatype = info.Datatype;
 
 end
 
