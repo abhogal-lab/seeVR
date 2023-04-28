@@ -90,7 +90,6 @@ else
     saveImageData(mmask,opts.headers.mask,opts.resultsdir,['mWBmask_',num2str(opts.LVthresh),'.nii.gz'],64);
 end
 
-if opts.verbose
     disp('saving tSD map');
     disp('saving tSNR map');
     disp('saving 1/tSD map')
@@ -110,7 +109,6 @@ if opts.verbose
     imagesc(imrotate(mmask(:,:,z),90));
     title('modified mask', 'Color', 'w'); cleanPlot;
     set(gcf, 'Units', 'pixels', 'Position', [200, 500, 600, 160]);
-end
 
 end
 

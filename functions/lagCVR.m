@@ -22,6 +22,9 @@ function [newprobe, maps] = lagCVR(refmask, mask, data, probe, nuisance, opts)
 % https://www.seevr.nl/download-seevr/ or look at usage tutorials
 % https://www.seevr.nl/tutorials/
 refmask = logical(refmask); mask = logical(mask);
+probe = double(probe);
+data = double(data);
+
 warning('off');
 global opts;
 data(isnan(data)) = 0; data(isinf(data)) = 0;
@@ -102,8 +105,8 @@ if opts.corr_model; opts.corrlagdir = fullfile(opts.resultsdir,'corrLAG'); mkdir
 if opts.corr_model && opts.cvr_maps; opts.corrCVRdir = fullfile(opts.corrlagdir,'CVR'); mkdir(opts.corrCVRdir); end
 if opts.corr_model == 0; opts.cvr_maps = 0; end
 if opts.glm_model
-        opts.glmlagdir = fullfile(opts.resultsdir,'glmLAG'); mkdir(opts.glmlagdir);
-        opts.glmCVRdir = fullfile(opts.glmlagdir,'CVR'); mkdir(opts.glmCVRdir);
+    opts.glmlagdir = fullfile(opts.resultsdir,'glmLAG'); mkdir(opts.glmlagdir);
+    if opts.cvr_maps; opts.glmCVRdir = fullfile(opts.glmlagdir,'CVR'); mkdir(opts.glmCVRdir); end
 end
 
 %optional image outputs
@@ -896,11 +899,12 @@ if opts.glm_model
             beta = zeros([1 size(wb_voxel_ts,1)]);
             rsquared = zeros([1 size(wb_voxel_ts,1)]);
             nuis = zeros([size(norm_np,1) 1]);
+            
             for ii = 1:size(wb_voxel_ts,1)
                 tcoef = regr_coef(:,:,ii);
                 X =  wb_voxel_ts(ii,:);
                 for jj=1:size(regr_matrix,1)
-                    tnuis = norm_np*squeeze(tcoef(jj,2:end));
+                    tnuis = norm_np*squeeze(tcoef(jj,2:end-1)'); % check
                     tY =  tcoef(jj,end).*regr_matrix(jj,:)+ (nuis + sum(tnuis,2))' + tcoef(jj,1);
                     R2(jj) = corr2(tY,X)^2;
                 end
@@ -909,7 +913,7 @@ if opts.glm_model
                 rsquared(1,ii) = M;
                 beta(1,ii) = regr_coef(I,2,ii);
             end
-            beta(beta > 20) = 0; beta(beta < -20) = 0;
+            beta(beta > 30) = 0; beta(beta < -30) = 0;
         end
         
         lagmatrix = lags(maxindex);
@@ -942,7 +946,7 @@ if opts.glm_model
         cSSE(1, coordinates) = SSE; cSSE = reshape(cSSE, [xx yy zz]);
         cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);
         
- 
+        
         switch pp
             case 1
                 if opts.niiwrite
@@ -997,99 +1001,100 @@ if opts.glm_model
         end
         
         %%%%% generate lag-corrected CVR maps %%%%
-        
-        disp('Generating lag-adjusted CVR maps based on GLM analysis')
-        cCVR = zeros([1 xx*yy*zz]);
-        shifted_regr = NaN([length(coordinates) dyn*opts.interp_factor]);
-        
-        regr = probe;
-        for ii = 1:length(coordinates)
-            corr_regr = circshift(regr',maxindex(ii));
-            if maxindex > 0
-                corr_regr(1,1:maxindex(ii)) = regr(1,1);
-            elseif index < 0
-                corr_regr(1,end-maxindex:end) = regr(1,end);
-            else
-                %do nothing because index is zero = zero shift
-            end
-            shifted_regr(ii,:) = corr_regr;
-        end
-        
-        regr_coef = zeros([2 length(coordinates)]);
-        parfor ii=1:length(coordinates)
-            A = shifted_regr(ii,:);
-            B = clean_voxel_ts(ii,:); B(isnan(A)) = []; A(isnan(A)) = [];
-            C = [ones([length(A) 1]) A'];
-            regr_coef(:,ii)= C\B';
-        end
-        
-        cCVR(1,coordinates) = regr_coef(end,:); %extract slope
-        cCVR(cCVR > 20) = 0; cCVR(cCVR < -20) = 0; %cleanup base CVR map
-        cCVR = reshape(cCVR, [xx yy zz]);
-        %save lag-adjusted CVR map
-        if pp == 1
-            if opts.niiwrite
-                cd(opts.glmCVRdir)
-                niftiwrite(cast(mask.*cCVR,opts.mapDatatype),'optiReg_cCVR',opts.info.map);
-            else
-                saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'optiReg_cCVR.nii.gz', datatype);
-            end
-        else
-            if opts.niiwrite
-                cd(opts.glmCVRdir)
-                niftiwrite(cast(mask.*cCVR,opts.mapDatatype),'inputReg_cCVR',opts.info.map);
-            else
-                saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'inputReg_cCVR.nii.gz', datatype);
-            end
-        end
-        maps.GLM.CVR.optiReg_cCVR = cCVR;
-        %calculate statistics
-        SSE = zeros([1 size(wb_voxel_ts,1)]); SST = zeros([1 size(wb_voxel_ts,1)]); cT = zeros([1 size(wb_voxel_ts,1)]);
-        parfor ii=1:size(wb_voxel_ts,1)
-            A = shifted_regr(ii,:);
-            X = clean_voxel_ts(ii,:); X(isnan(A)) = []; A(isnan(A)) = [];
-            Y = regr_coef(2,ii)*A' + regr_coef(1,ii);
-            cT(1,ii) = regr_coef(2,ii)./nanstd(X-Y'); %(t = beta/STDEVr)
-            SSE(1,ii) = (norm(X - Y'))^2;
-            SST(1,ii) = (norm(X-mean(X)))^2;
-        end
-        
-        R2 = 1 - SSE./SST;
-        cR2 = zeros([1 xx*yy*zz]); cSSE = zeros([1 xx*yy*zz]);  cTstat = zeros([1 xx*yy*zz]);
-        cR2(1, coordinates) = R2'; cR2 = reshape(cR2, [xx yy zz]);
-        cSSE(1, coordinates) = SSE; cSSE = reshape(cSSE, [xx yy zz]);
-        cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);
-        %save lag-adjusted stats data
-        if pp == 1
-            if opts.niiwrite
-                cd(opts.glmCVRdir)
-                niftiwrite(cast(mask.*cR2,opts.mapDatatype),'optiReg_cR2',opts.info.map);
-                niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'optiReg_cSSE',opts.info.map);
-                niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'optiReg_cTstat',opts.info.map);
-            else
-                saveImageData(mask.*cR2, opts.headers.map, opts.glmCVRdir, 'optiReg_cR2.nii.gz', datatype);
-                saveImageData(mask.*cSSE, opts.headers.map, opts.glmCVRdir, 'optiReg_cSSE.nii.gz', datatype);
-                saveImageData(mask.*cTstat, opts.headers.map, opts.glmCVRdir,'optiReg_cTstat.nii.gz', datatype);
-            end
-            maps.GLM.CVR.optiReg_cR2 = cR2;
-            maps.GLM.CVR.optiReg_cSSE = cSSE;
-            maps.GLM.CVR.optiReg_cTstat = cTstat;
+        if opts.cvr_maps
+            disp('Generating lag-adjusted CVR maps based on GLM analysis')
+            cCVR = zeros([1 xx*yy*zz]);
+            shifted_regr = NaN([length(coordinates) dyn*opts.interp_factor]);
             
-        else
-            if opts.niiwrite
-                cd(opts.glmCVRdir)
-                niftiwrite(cast(mask.*cR2,opts.mapDatatype),'inputReg_cR2',opts.info.map);
-                niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'inputReg_cSSE',opts.info.map);
-                niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'inputReg_cTstat',opts.info.map);
-            else
-                saveImageData(mask.*cR2, opts.headers.map, opts.glmCVRdir, 'inputReg_cR2.nii.gz', datatype);
-                saveImageData(mask.*cSSE, opts.headers.map, opts.glmCVRdir, 'inputReg_cSSE.nii.gz', datatype);
-                saveImageData(mask.*cTstat, opts.headers.map, opts.glmCVRdir,'inputReg_cTstat.nii.gz', datatype);
+            regr = probe;
+            for ii = 1:length(coordinates)
+                corr_regr = circshift(regr',maxindex(ii));
+                if maxindex > 0
+                    corr_regr(1,1:maxindex(ii)) = regr(1,1);
+                elseif index < 0
+                    corr_regr(1,end-maxindex:end) = regr(1,end);
+                else
+                    %do nothing because index is zero = zero shift
+                end
+                shifted_regr(ii,:) = corr_regr;
             end
+            
+            regr_coef = zeros([2 length(coordinates)]);
+            parfor ii=1:length(coordinates)
+                A = shifted_regr(ii,:);
+                B = clean_voxel_ts(ii,:); B(isnan(A)) = []; A(isnan(A)) = [];
+                C = [ones([length(A) 1]) A'];
+                regr_coef(:,ii)= C\B';
+            end
+            
+            cCVR(1,coordinates) = regr_coef(end,:); %extract slope
+            cCVR(cCVR > 20) = 0; cCVR(cCVR < -20) = 0; %cleanup base CVR map
+            cCVR = reshape(cCVR, [xx yy zz]);
+            %save lag-adjusted CVR map
+            if pp == 1
+                if opts.niiwrite
+                    cd(opts.glmCVRdir)
+                    niftiwrite(cast(mask.*cCVR,opts.mapDatatype),'optiReg_cCVR',opts.info.map);
+                else
+                    saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'optiReg_cCVR.nii.gz', datatype);
+                end
+            else
+                if opts.niiwrite
+                    cd(opts.glmCVRdir)
+                    niftiwrite(cast(mask.*cCVR,opts.mapDatatype),'inputReg_cCVR',opts.info.map);
+                else
+                    saveImageData(mask.*cCVR, opts.headers.map, opts.glmCVRdir, 'inputReg_cCVR.nii.gz', datatype);
+                end
+            end
+            maps.GLM.CVR.optiReg_cCVR = cCVR;
+            %calculate statistics
+            SSE = zeros([1 size(wb_voxel_ts,1)]); SST = zeros([1 size(wb_voxel_ts,1)]); cT = zeros([1 size(wb_voxel_ts,1)]);
+            parfor ii=1:size(wb_voxel_ts,1)
+                A = shifted_regr(ii,:);
+                X = clean_voxel_ts(ii,:); X(isnan(A)) = []; A(isnan(A)) = [];
+                Y = regr_coef(2,ii)*A' + regr_coef(1,ii);
+                cT(1,ii) = regr_coef(2,ii)./nanstd(X-Y'); %(t = beta/STDEVr)
+                SSE(1,ii) = (norm(X - Y'))^2;
+                SST(1,ii) = (norm(X-mean(X)))^2;
+            end
+            
+            R2 = 1 - SSE./SST;
+            cR2 = zeros([1 xx*yy*zz]); cSSE = zeros([1 xx*yy*zz]);  cTstat = zeros([1 xx*yy*zz]);
+            cR2(1, coordinates) = R2'; cR2 = reshape(cR2, [xx yy zz]);
+            cSSE(1, coordinates) = SSE; cSSE = reshape(cSSE, [xx yy zz]);
+            cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);
+            %save lag-adjusted stats data
+            if pp == 1
+                if opts.niiwrite
+                    cd(opts.glmCVRdir)
+                    niftiwrite(cast(mask.*cR2,opts.mapDatatype),'optiReg_cR2',opts.info.map);
+                    niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'optiReg_cSSE',opts.info.map);
+                    niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'optiReg_cTstat',opts.info.map);
+                else
+                    saveImageData(mask.*cR2, opts.headers.map, opts.glmCVRdir, 'optiReg_cR2.nii.gz', datatype);
+                    saveImageData(mask.*cSSE, opts.headers.map, opts.glmCVRdir, 'optiReg_cSSE.nii.gz', datatype);
+                    saveImageData(mask.*cTstat, opts.headers.map, opts.glmCVRdir,'optiReg_cTstat.nii.gz', datatype);
+                end
+                maps.GLM.CVR.optiReg_cR2 = cR2;
+                maps.GLM.CVR.optiReg_cSSE = cSSE;
+                maps.GLM.CVR.optiReg_cTstat = cTstat;
+                
+            else
+                if opts.niiwrite
+                    cd(opts.glmCVRdir)
+                    niftiwrite(cast(mask.*cR2,opts.mapDatatype),'inputReg_cR2',opts.info.map);
+                    niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'inputReg_cSSE',opts.info.map);
+                    niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'inputReg_cTstat',opts.info.map);
+                else
+                    saveImageData(mask.*cR2, opts.headers.map, opts.glmCVRdir, 'inputReg_cR2.nii.gz', datatype);
+                    saveImageData(mask.*cSSE, opts.headers.map, opts.glmCVRdir, 'inputReg_cSSE.nii.gz', datatype);
+                    saveImageData(mask.*cTstat, opts.headers.map, opts.glmCVRdir,'inputReg_cTstat.nii.gz', datatype);
+                end
+            end
+            maps.GLM.CVR.inputReg_cR2 = cR2;
+            maps.GLM.CVR.inputReg_cSSE = cSSE;
+            maps.GLM.CVR.inputReg_cTstat = cTstat;
         end
-        maps.GLM.CVR.inputReg_cR2 = cR2;
-        maps.GLM.CVR.inputReg_cSSE = cSSE;
-        maps.GLM.CVR.inputReg_cTstat = cTstat;
     end
     disp(['finished running GLM analysis in: ',int2str((cputime-q)/60),' minutes'])
     disp('saving maps in .mat file' )

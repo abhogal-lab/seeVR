@@ -47,6 +47,7 @@ if isfield(opts,'filter'); else; opts.filter = 'bilateral'; end
 if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end
 if isfield(opts,'FWHM'); else; opts.FWHM = [4 4 4]; end
 if isfield(opts,'sigma_range') 
+    
 %do nothing
 else 
     if ndims(data) > 3
@@ -65,9 +66,9 @@ if numel(opts.FWHM) == 1
     tmp = opts.FWHM;
     switch opts.spatialdim
         case 2        
-        opts.FWHM = [tmp tmp] 
+        opts.FWHM = [tmp tmp]; 
         case 3
-        opts.FWHM = [tmp tmp tmp]
+        opts.FWHM = [tmp tmp tmp];
     end
 end
 
@@ -85,6 +86,10 @@ if isfield(opts,'sigma_range'); else
 end
 
 %run specified filter
+
+opts.sigma_spatial = double(opts.sigma_spatial);
+opts.sigma_range = double(opts.sigma_range);
+
 switch opts.filter
     
     case 'imguided'
@@ -107,7 +112,7 @@ switch opts.filter
         tdata = single(permute(data,[4 1 2 3]));
         
         if ispc
-            filtered_data = winbilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
+            filtered_data = winbilatFilter(tdata, single(guideim), double(opts.sigma_spatial), opts.sigma_range, mask);
         else
             if ismac
                 filtered_data = macbilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
