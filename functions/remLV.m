@@ -31,14 +31,14 @@
 % mmask: this is the modified mask where voxels above the specified
 % threshold have been removed
 function [mmask] = remLV(data,mask,opts)
-
 warning('off')
 global opts
 
+mask = logical(mask);
+data = double(data);
+
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end
-
-
 if isfield(opts,'resultsdir'); else; opts.resultsdir = fullfile(pwd); end
 
 [x, y, z, ~] = size(data);

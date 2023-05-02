@@ -44,7 +44,8 @@ function [maps, BP_ref, bpData] = glmCVRidx(data, mask, refmask, nuisance, opts)
 warning('off');
 global opts;
 
-refmask = logical(refmask); mask = logical(mask);
+refmask = logical(refmask); 
+mask = logical(mask);
 
 if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.1164]; end  %default frequency band see doi: 10.1148/radiol.2021203568
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data is loaded this can be set to 1 to use native load/save functions

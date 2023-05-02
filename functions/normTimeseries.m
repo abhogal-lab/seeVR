@@ -34,10 +34,12 @@
 % opts.norm_idx: this parameter is changed to reflect the selected baseline
 % start and end indices.
 function [ndata] = normTimeseries(data,mask,idx)
-
-warning('off')
 global opts;
+
+mask = logical(mask);
 tf = class(data);
+data = double(data);
+
 switch nargin
     case 2
 TS = meanTimeseries(data,mask);
@@ -45,6 +47,7 @@ figure; plot(TS); title('Select start and end of baseline: 2 clicks');
 [idx,~] = ginput(2); idx = round(idx); %select points 
 close(gcf);
     case 3
+        %do nothing since idx are provided
 end
 
 [voxel_ts coordinates] = grabTimeseries(data, mask);
@@ -69,5 +72,4 @@ ndata = reshape(ndata, [x y z dyn]);
 end
 opts.norm_idx = idx;
 %disp(['Dataset has been normalized to baseline period']);
-ndata = cast(ndata,tf);
 end

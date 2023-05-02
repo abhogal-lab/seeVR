@@ -28,7 +28,9 @@
 %
 % sdata: this is smoothed version of the input data
 function [sdata] = smthData(data, mask, opts)
+tf = class(data);
 mask = logical(mask);
+data = double(data);
 
 warning('off')
 global opts
@@ -115,7 +117,7 @@ switch ndim
                 end
         end
 end
-sdata = double(mask.*data_smooth);
+sdata = cast(mask.*data_smooth,tf);
 
 disp('Finished smoothing Data')
 end

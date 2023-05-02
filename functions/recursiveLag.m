@@ -42,7 +42,7 @@ if isfield(opts,'gpu'); else; opts.gpu = 0; end                           %use g
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                 % depending on how data is loaded this can be set to 1 to use native load/save functions
 if isfield(opts,'plot'); else; opts.plot = 0; end                         % show or hide selected plots
 if isfield(opts,'prewhite'); else; opts.prewhite = 0; end                 % zero mean and unit variance of data. Normally leads to bad results
-if isfield(opts,'interp_factor'); else; opts.interp_factor = 4; end       % factor by which to temporally interpolate data. Better for picking up lags between TR
+if isfield(opts,'interp_factor'); else; opts.interp_factor = 2; end       % factor by which to temporally interpolate data. Better for picking up lags between TR
 if isfield(opts,'load_probe'); else; opts.load_probe = 0; end             % saves time for creating regressor if one with the correct length already exists
 if isfield(opts,'glm_model'); else; opts.glm_model = 0; end               % perform GLM based lag regression. This works well for high temporal resolution data
 if isfield(opts,'uni'); else; opts.uni = 0; end                           % if this is set to 1 negative correlations will be ignored
@@ -79,8 +79,8 @@ opts.adjlowerthresh = opts.lowerlagthresh*opts.interp_factor;
 opts.adjupperthresh = opts.upperlagthresh*opts.interp_factor;
 
 % correlation
-if isfield(opts,'lowlag'); else; opts.lowlag = -3; end                    % lower threshold for correlation (generaly -3 to 0)
-if isfield(opts,'highlag'); else; opts.highlag = 40; end                  % upper threshold for correlation (in healthy up to 20-40, in disease 60-90)
+if isfield(opts,'lowlag'); else; opts.lowlag = -5; end                    % lower threshold for correlation (generaly -3 to 0)
+if isfield(opts,'highlag'); else; opts.highlag = 10; end                  % upper threshold for correlation (in healthy up to 20-40, in disease 60-90)
 
 % account for interpolation factor
 opts.adjlowlag = opts.lowlag*opts.interp_factor;                          % setups lower lag limit; negative for misalignment and noisy correlation

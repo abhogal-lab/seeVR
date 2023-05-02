@@ -38,6 +38,7 @@ function [cleanData] = scrubData(data, mask, nuisance, probe, opts)
 warning('off');
 global opts;
 tf = class(data); 
+data = double(data);
 
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end 
 if isfield(opts,'save_cleaned'); else; opts.save_cleaned = 0; end

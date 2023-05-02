@@ -31,9 +31,12 @@
 % denData: a denoised/smoothed version of the input data
 function [denData] = denoiseData(data,mask,opts)   
 global opts;
-if isfield(opts,'wavelet'); else; opts.wavelet = 1; end
 [xx yy zz dyn] = size(data);
+data = double(data);
+mask = logical(mask);
 tf = class(data);
+
+if isfield(opts,'wavelet'); else; opts.wavelet = 1; end
 if opts.wavelet
     try
 if license('test', 'wavelet_toolbox')
