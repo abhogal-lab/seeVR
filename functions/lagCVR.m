@@ -173,7 +173,7 @@ if opts.refine_regressor
             disp(['Correlating TS voxelwise to probe ',num2str(roundprobe)]);disp(' . ');disp(' . ');disp(' . ');
             % voxelwise corrrelation with probe
             
-            [~,lags] = xcorr(newprobe,gm_voxel_ts_nonan(1,:),'coeff');  %%%%%% !!!!!!!!!!
+            [~,lags] = xcorr(newprobe,gm_voxel_ts_nonan(1,:)','coeff');  
             %matrix cross correlation with probe
             
             a=gm_voxel_ts_nonan;

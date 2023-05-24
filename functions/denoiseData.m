@@ -32,9 +32,10 @@
 function [denData] = denoiseData(data,mask,opts)   
 global opts;
 [xx yy zz dyn] = size(data);
-data = double(data);
+
 mask = logical(mask);
 tf = class(data);
+data = double(data);
 
 if isfield(opts,'wavelet'); else; opts.wavelet = 1; end
 if opts.wavelet
@@ -49,7 +50,7 @@ end
     [voxel_ts, coordinates] = grabTimeseries(data, mask);
     if isfield(opts,'method'); else; opts.method = 'movmean'; end
     if isfield(opts,'winsize'); else; opts.winsize = round(0.05*size(data,4))'; end %5 percent window
-    voxel_ts = smoothdata(voxel_ts,2,opts.method);
+    voxel_ts = smoothdata(voxel_ts,2,opts.method, opts.winsize);
     denData = reshape(data, [xx*yy*zz dyn]);
     denData(coordinates,:) = voxel_ts;
     denData = reshape(denData, size(data));
@@ -58,13 +59,13 @@ else
     [voxel_ts, coordinates] = grabTimeseries(data, mask);
     if isfield(opts,'method'); else; opts.method = 'movmean'; end
     if isfield(opts,'winsize'); else; opts.winsize = round(0.05*size(data,4))'; end %5 percent window
-    voxel_ts = smoothdata(voxel_ts,2,opts.method);
+    voxel_ts = smoothdata(voxel_ts,2,opts.method, opts.winsize);
     denData = reshape(data, [xx*yy*zz dyn]);
     denData(coordinates,:) = voxel_ts;
     denData = reshape(denData, size(data));  
 end
-if opts.verbose
 
+if opts.verbose
 figure; hold on;
 xdata = [opts.TR:opts.TR:opts.TR*size(data,4)];
 plot(xdata, meanTimeseries(data,mask), 'k', 'LineWidth',2);
@@ -83,6 +84,7 @@ hold off
         end
     end
 end
+
 denData = cast(denData,tf);
 end
 
