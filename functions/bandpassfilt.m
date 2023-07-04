@@ -30,7 +30,6 @@
 %
 % refmask: binary mask that defines the reference signals of interest
 %
-% nuisance: set of nuisance parameters for regression
 %
 % opts: options structure containing required variables for this specific
 % function; i.e. opts.fpass opts.headers.map, opts.info.map, opts,niiwrite, opts.resultsdir
