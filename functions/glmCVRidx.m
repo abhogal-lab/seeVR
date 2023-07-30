@@ -147,6 +147,7 @@ if isempty(np) || nnz(np) == 0
         D = gpuArray([ones([length(BP_ref) 1]) BP_ref']);
         coef = D\BP_V';
         coef = gather(coef);
+        BP_ref = gather(BP_ref);
     catch
         BP_ref = rescale(BP_ref); %reference regressor rescaled
         D = [ones([length(BP_ref) 1]) BP_ref'];

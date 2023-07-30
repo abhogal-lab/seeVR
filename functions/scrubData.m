@@ -27,7 +27,8 @@ function [cleanData] = scrubData(data, mask, nuisance, probe, opts)
 % mask: binary mask defining voxels of interest
 %
 % nuisance: and array of nuisance regressors (or a single regressor) having
-% the same number of time-points as the input data.
+% the same number of time-points as the input data. Generally these will be
+% the rotations and translations derived from motion correction
 %
 % probe: an array of data-probes (explanatory variables) having the same
 % number of time-points as the input data
@@ -37,11 +38,18 @@ function [cleanData] = scrubData(data, mask, nuisance, probe, opts)
 
 warning('off');
 global opts;
-tf = class(data); 
+tf = class(data);
 data = double(data);
+nuisance = double(nuisance);
+probe = double(rescale(probe));
 
-if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end 
+[x,y,z,dyn] = size(data);
+[voxel_ts, coordinates] = grabTimeseries(data, mask);
+
+%function options
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end
 if isfield(opts,'save_cleaned'); else; opts.save_cleaned = 0; end
+if isfield(opts,'disperse_probe'); else; opts.disperse_probe = 1; end %convolves the input probe with a few exponentials to create additional EVs
 
 if isempty(probe)
     probe = zeros(length(nuisance));
@@ -57,21 +65,25 @@ else
     test1 = nuisance(1,:); test2 = nuisance(:,1);
     if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
     limits = [0 size(nuisance,1)];
-    nuisancemap = colormap(flip(brewermap(size(nuisance,2),'Spectral')));
 end
 
-for kk=1:size(nuisance,2)
-% demean regressors
-nuisance(:,kk) = rescale(demeanData(nuisance(:,kk)),-1,1);
+
+%prepare nuisance probes
+[np0] = prepNuisance(nuisance,probe, opts);
+nuisancemap = colormap(flip(brewermap(size(np0,2),'Spectral')));
+
+if opts.disperse_probe
+opts.disp = [5 15 25 35]; %dispersion
+[~,~,probe] = convHRF(probe, opts);
+probe = probe';
 end
 
-[voxel_ts, coordinates] = grabTimeseries(data, mask);
-[probe,~]=licols(probe);
+probemap = colormap(flip(brewermap(size(probe,2),'Spectral')));
 probesize = size(probe,2);
-np = [probe nuisance];
-
 
 %perform regression
+np = [probe np0];
+
 D = [ones([length(np) 1]) np];
 np_coef = D\voxel_ts';
 
@@ -79,13 +91,13 @@ np_coef = D\voxel_ts';
 nuis = squeeze(np_coef(2+probesize:end,:));
 nuis_TS = zeros(size(voxel_ts))';
 
-parfor ii=1:size(nuisance,2)
-    tmp = nuisance(:,ii)*nuis(ii,:);
+parfor ii=1:size(np0,2)
+    tmp = np0(:,ii)*nuis(ii,:);
     nuis_TS = nuis_TS+tmp;
 end
+
 switch ndims(data)
     case 4
-        [x,y,z,dyn] = size(data);
         clean_data = voxel_ts - nuis_TS';
         cleanData = zeros([x*y*z,size(clean_data,2)]);
         cleanData(coordinates,:) = clean_data ;
@@ -98,36 +110,33 @@ switch ndims(data)
         cleanData = reshape(cleanData,[x y dyn]);
 end
 
+%plot results
 figure;
-
 if size(probe,2) > 1
-    subplot(5,1,1); hold on; for ii=1:size(probe,2); plot(np(:,ii), 'Color', probemap(ii,:)); end; title('data probe(s)'); xlim(limits);
+    subplot(5,1,1); hold on; for ii=1:size(probe,2); plot(probe(:,ii), 'Color', probemap(ii,:)); end; title('data probe(s)'); xlim(limits);
 else
-    subplot(5,1,1); hold on; for ii=1:size(probe,2); plot(np(:,ii), 'Color', 'k'); end; title('data probe(s)'); xlim(limits);
+    subplot(5,1,1); hold on; for ii=1:size(probe,2); plot(probe(:,ii), 'Color', 'k'); end; title('data probe(s)'); xlim(limits);
 end
-if size(nuisance,2) > 1
-    subplot(5,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii),-1,1), 'Color', nuisancemap(ii,:)); end; title('rescaled nuisance regressor(s)'); xlim(limits);
+if size(np0,2) > 1
+    subplot(5,1,2); hold on; for ii=1:size(np0,2); plot(np0(:,ii), 'Color', nuisancemap(ii,:)); end; title('nuisance regressor(s)'); xlim(limits);
 else
-    subplot(5,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii),-1,1), 'Color', 'r'); end; title('rescaled nuisance regressor(s)'); xlim(limits);
+    subplot(5,1,2); hold on; for ii=1:size(np0,2); plot(np0(:,ii), 'Color', 'r'); end; title('nuisance regressor(s)'); xlim(limits);
 end
 
 subplot(5,1,3); plot(meanTimeseries(data,mask),'k'); title('Original Data'); xlim(limits)
 subplot(5,1,4); plot(nanmean(nuis_TS,2),'k'); title('nuisance Mean'); xlim(limits);
-%subplot(5,1,5); plot(meanTimeseries(cleanData,mask),'k'); title('Clean Data'); xlabel('datapoints'); xlim(limits);
-subplot(5,1,5); title('Clean Data'); xlabel('datapoints'); xlim(limits);
+subplot(5,1,5); title('Clean Data'); xlabel('datapoints');
 plot(meanTimeseries(data,mask), 'k');
 hold on
-plot(meanTimeseries(cleanData,mask), 'r');
+plot(meanTimeseries(cleanData,mask), 'r'); xlim(limits);
 legend('before scrubbing', 'after scrubbing')
 hold off
-
 
 if isfield(opts,'figdir')
     saveas(gcf,fullfile(opts.figdir,'scrubData.fig'));
 else
-   saveas(gcf,fullfile(pwd,'scrubData.fig'));
+    saveas(gcf,fullfile(pwd,'scrubData.fig'));
 end
-
 
 if opts.save_cleaned
     if opts.niiwrite

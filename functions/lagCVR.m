@@ -125,6 +125,8 @@ t = cputime;
 [orig_voxel_ts, coordinates] = grabTimeseries(data, mask);
 % GM coordinates
 [gm_voxel_ts, gmcoordinates] = grabTimeseries(data, refmask);
+%clean up a bit
+clear data
 
 if opts.prewhite
     gm_voxel_ts = gm_voxel_ts'; parfor ii=1:size(gmcoordinates,1); [gm_voxel_ts(:,ii), ~, ~] = prewhiten(gm_voxel_ts(:,ii)); end; gm_voxel_ts = gm_voxel_ts';
@@ -514,7 +516,7 @@ if opts.trace_corr && opts.robust
     %save image
     if opts.niiwrite
         cd(opts.corrlagdir);
-        niftiwrite(cast(mask,opts.mapDatatype).*robustIR,'robustLAG_r',opts.info.map);
+        niftiwrite(cast(mask.*robustIR,opts.mapDatatype),'robustLAG_r',opts.info.map);
     else
         saveImageData(mask.*robustIR, opts.headers.map, opts.corrlagdir,'robustLAG_r.nii.gz', datatype);
     end
@@ -683,10 +685,10 @@ if opts.cvr_maps
             case 1 %entdidal
                 if opts.niiwrite
                     cd(opts.corrCVRdir);
-                    niftiwrite(cast(mask,opts.mapDatatype).*cCVR,'cCVR_map',opts.info.map);
-                    niftiwrite(cast(mask,opts.mapDatatype).*cR2,'cR2_map',opts.info.map);
-                    niftiwrite(cast(mask,opts.mapDatatype).*cSSE,'cSSE2_map',opts.info.map);
-                    niftiwrite(cast(mask,opts.mapDatatype).*cTstat,'cTstat_map',opts.info.map);
+                    niftiwrite(cast(mask.*cCVR,opts.mapDatatype),'cCVR_map',opts.info.map);
+                    niftiwrite(cast(mask.*cR2,opts.mapDatatype),'cR2_map',opts.info.map);
+                    niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'cSSE2_map',opts.info.map);
+                    niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'cTstat_map',opts.info.map);
                 else
                     saveImageData(mask.*cCVR, opts.headers.map, opts.corrCVRdir,'cCVR_map.nii.gz', datatype);
                     saveImageData(mask.*cR2, opts.headers.map, opts.corrCVRdir,'cR2_map.nii.gz', datatype);

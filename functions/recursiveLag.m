@@ -23,7 +23,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-function [maps] = recursiveLag(refmask,mask,data,probe,nuisance,opts)
+function [maps] = recursiveLag(refmask,mask,data,probe,opts)
 refmask = logical(refmask); mask = logical(mask);
 warning('off');
 global opts;
@@ -33,9 +33,6 @@ if license('test','Statistics_toolbox') == 0; opts.pca_analysis = 0; end
 
 maps = struct();
 if iscolumn(probe); else; probe = probe'; end
-if isempty(nuisance); nuisance = ones(size(probe)); end
-test1 = nuisance(1,:); test2 = nuisance(:,1);
-if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
 
 % setup default parameters
 if isfield(opts,'gpu'); else; opts.gpu = 0; end                           %use gpu
@@ -116,6 +113,8 @@ end
 %% grab coordinates
 [orig_voxel_ts, coordinates] = grabTimeseries(data, mask);    % WB coordinates
 [gm_voxel_ts, gmcoordinates] = grabTimeseries(data, refmask); % GM coordinates 
+%clean up a bit
+clear data; 
 
 % perform pre-whitening
 if opts.prewhite
@@ -127,7 +126,6 @@ end
 % interpolate variables
 probe = interp(probe,opts.interp_factor); % interpolate data by a factor of the number of slices for more accurate timing
 orig_regr = interp(orig_regr,opts.interp_factor); % save input regressor to generate corrected CVR maps
-for ii=1:size(nuisance,2); np(:,ii) = demeanData(rescale(interp(nuisance(:,ii),opts.interp_factor))); end
 gm_voxel_ts_nonan=zeros([length(gmcoordinates),opts.interp_factor*dyn]);
 parfor ii = 1:length(gmcoordinates)
     gm_voxel_ts_nonan(ii,:) = interp(gm_voxel_ts(ii,:),opts.interp_factor);

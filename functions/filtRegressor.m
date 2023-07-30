@@ -34,9 +34,9 @@
 % outnuisance: regressors having a correlation higher than the threshold
 function [innuisance outnuisance] = filtRegressor(nuisance, probe, opts)
 
-
 warning('off');
 global opts
+
 if isfield(opts,'motioncorr'); else; opts.motioncorr = 0.3; end
 
 test1 = nuisance(1,:); test2 = nuisance(:,1);
@@ -74,11 +74,11 @@ subplot(cols,1,2); plot(xdata, nuisance);
 title('motion parameters & derivatives'); xlabel('time(s)'); 
 xlim([0 xdata(end)]);
 subplot(cols,1,3); plot(xdata, innuisance); 
-title('nuisance < r-threshold'); xlabel('time(s)');
+title('accepted nuisance signals'); xlabel('time(s)');
 xlim([0 xdata(end)]);
 if ~isempty(outnuisance)
 subplot(cols,1,4); plot(xdata, outnuisance); 
-title('nuisance > r-threshold'); xlabel('time(s)');
+title('rejected nuisance signals'); xlabel('time(s)');
 xlim([0 xdata(end)]);
 end
 end

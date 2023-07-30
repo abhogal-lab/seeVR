@@ -17,7 +17,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
-function [maps] = carpetEdgeDetect(data,sort_map, mask, opts)
+function [maps] = carpetEdgeDetect(data, sort_map, mask, opts)
 
 global opts
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
