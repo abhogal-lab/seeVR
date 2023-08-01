@@ -73,70 +73,53 @@ end
 options = optimoptions('lsqcurvefit','Display','none','FunctionTolerance',1.0000e-8,...
     'StepTolerance', 1.0000e-8, 'MaxIter',150);
 
-    nr_params = 3
-    
-    b = nan([length(coordinates), nr_params]);
-    
-    model = (@(a,t) a(1)*rescale(real(ifft(ifftshift(fftinput(probe).*fftexponential(a(2),t)))))+a(nr_params));
-    a0 = [0 20 0];
-    lb = [ 0  0 -10];
-    ub = [ 30 opts.maxTau 20];
-    
-    tic
-    
-    parfor ii=1:length(coordinates)
-        try
-            b(ii,:) = lsqcurvefit(model,[range(ts(ii,:)) 20 0],t,ts(ii,:),lb,ub,options);
-        catch
-            %continue
-                     printf(['error voxel ',int2str(ii)])
-        end
-        %         y_fit = model(b(ii,:),t);
-        %         % Plot the results
-        %         figure
-        %         plot(t,(ts(ii,:)),'r-',t,(y_fit),'b-');
-        %         legend('Observed Data','Fitted Model');
-        %         pause(0.1)
-    end
-    
-    b1_vec = zeros([1 xx*yy*zz]);
-    b2_vec = b1_vec; b3_vec = b1_vec;
-    
-    b1_vec(1, coordinates) = b(:,1); b1_map = reshape(b1_vec, [xx yy zz]);
-    b2_vec(1, coordinates) = b(:,2); b2_map = reshape(b2_vec, [xx yy zz]);
-    b3_vec(1, coordinates) = b(:,3); b3_map = reshape(b3_vec, [xx yy zz]);
-    
-    if opts.niiwrite
-        cd(opts.dynamicdir);
-        niftiwrite(cast(mask.*b1_map,opts.mapDatatype),'exp_scaling',opts.info.map);
-        niftiwrite(cast(mask.*b2_map,opts.mapDatatype),'exp_tau',opts.info.map);
-        niftiwrite(cast(mask.*b3_map,opts.mapDatatype),'exp_offset',opts.info.map);       
-    else
-        saveImageData(mask.*b1_map, opts.headers.map, opts.dynamicdir, 'exp_scaling.nii.gz', datatype);
-        saveImageData(mask.*b2_map, opts.headers.map, opts.dynamicdir, 'exp_tau.nii.gz', datatype);
-        saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'exp_offset.nii.gz', datatype);
-        
-    end
-    
-    maps.expHRF.scale = b1_map;
-    maps.expHRF.tau = b2_map;
-    maps.expHRF.offset = b3_map;
-    
-    %rebuild model responses
-    responseFits = zeros(size(ts));
-        
-    parfor ii=1:length(coordinates)
-        
-    responseFits(ii,:) = b(ii,1).*rescale(real(ifft(ifftshift(fftinput(probe).*fftshift(fft(exp(-t/b(ii,2))))))))+b(ii,3);
-    
-    end
+nr_params = 3
 
-    toc
-    
+b = nan([length(coordinates), nr_params]);
 
-    maps.GLM.b1_map = b1_map;
-    maps.GLM.b2_map = b2_map;
-    maps.b3_map = b3_map;
-    toc
+model = (@(a,t) a(1)*rescale(real(ifft(ifftshift(fftinput(probe).*fftexponential(a(2),t)))))+a(nr_params));
+a0 = [0 20 0];
+lb = [ 0  0 -10];
+ub = [ 30 opts.maxTau 20];
+
+tic
+
+parfor ii=1:length(coordinates)
+    try
+        b(ii,:) = lsqcurvefit(model,[range(ts(ii,:)) 20 0],t,ts(ii,:),lb,ub,options);
+    catch
+        %continue
+        printf(['error voxel ',int2str(ii)])
+    end
+    %         y_fit = model(b(ii,:),t);
+    %         % Plot the results
+    %         figure
+    %         plot(t,(ts(ii,:)),'r-',t,(y_fit),'b-');
+    %         legend('Observed Data','Fitted Model');
+    %         pause(0.1)
+end
+
+b1_vec = zeros([1 xx*yy*zz]);
+b2_vec = b1_vec; b3_vec = b1_vec;
+
+b1_vec(1, coordinates) = b(:,1); b1_map = reshape(b1_vec, [xx yy zz]);
+b2_vec(1, coordinates) = b(:,2); b2_map = reshape(b2_vec, [xx yy zz]);
+b3_vec(1, coordinates) = b(:,3); b3_map = reshape(b3_vec, [xx yy zz]);
+
+if opts.niiwrite
+    cd(opts.dynamicdir);
+    niftiwrite(cast(mask.*b1_map,opts.mapDatatype),'exp_scaling',opts.info.map);
+    niftiwrite(cast(mask.*b2_map,opts.mapDatatype),'exp_tau',opts.info.map);
+    niftiwrite(cast(mask.*b3_map,opts.mapDatatype),'exp_offset',opts.info.map);
+else
+    saveImageData(mask.*b1_map, opts.headers.map, opts.dynamicdir, 'exp_scaling.nii.gz', datatype);
+    saveImageData(mask.*b2_map, opts.headers.map, opts.dynamicdir, 'exp_tau.nii.gz', datatype);
+    saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'exp_offset.nii.gz', datatype);
+    
+end
+
+maps.expHRF.scale = b1_map;
+maps.expHRF.tau = b2_map;
+maps.expHRF.offset = b3_map;
 
 end
