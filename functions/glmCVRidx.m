@@ -52,12 +52,17 @@ if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data
     
 if isempty(nuisance); np = []; else
     test1 = nuisance(1,:); test2 = nuisance(:,1);
-    if length(test1) > length(test2); nuisance = nuisance'; end
-    for ii=1:size(nuisance,2); np(:,ii) = rescale(nuisance(:,ii),-1,1); end
-    %removes linearly dependent components
-    %norm_np = np;
-    [norm_np,~]=licols(np);
+    if length(test1) > length(test2); nuisance = nuisance'; 
+    end
+    
     clear test1 test2
+
+%prepare nuisance probes
+reference = meanTimeseries(data, refmask);
+np = prepNuisance(nuisance,reference, opts);
+%[norm_np,~]=licols(np);
+norm_np = np;
+clear reference;
 end
 
 opts.CVRidxdir = fullfile(opts.resultsdir,'CVRidx'); mkdir(opts.CVRidxdir);
@@ -129,7 +134,7 @@ figure; hold on
 plot(rescale(mean_ts));
 plot(rescale(BP_ref+mean(mean_ts)));
 title('reference regressor before and after bandpass');
-saveas(gcf,[opts.figdir,'reference_regressor.fig']);
+saveas(gcf,fullfile(opts.figdir,'reference_regressor.fig'));
 xlabel('image volumes')
 ylabel('a.u.')
 legend('mean reference time-series', 'BP reference mean-timeseries')
@@ -147,7 +152,6 @@ if isempty(np) || nnz(np) == 0
         D = gpuArray([ones([length(BP_ref) 1]) BP_ref']);
         coef = D\BP_V';
         coef = gather(coef);
-        BP_ref = gather(BP_ref);
     catch
         BP_ref = rescale(BP_ref); %reference regressor rescaled
         D = [ones([length(BP_ref) 1]) BP_ref'];
