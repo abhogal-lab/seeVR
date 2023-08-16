@@ -14,7 +14,20 @@
 % 
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+%
+%
+% inputs: this function takes either 3 or 4 inputs. The first input is the
+% trace to be aligned. This is typically the end-tidal CO2 trace that has
+% been resampled to the TR of the scan (use resampletoTR.m). A second 
+% physiolgical trace can be passed as the second input (for example petO2)
+% to be aligned as a 'passenger trace'. The third input is the reference
+% signal. For example the meanTimeseries in the GMmask. If only 3 inputs
+% are supplied, then the first input should be the physiological trace and
+% the second input the reference signal. The last input should be the opts
+% structyre
+%
+% usage: trAlign(petCO2, petO2, reference, opts)
+%        trAlign(petCO2, reference, opts)
 function varargout = trAlign(varargin)
 
 % Begin initialization code - DO NOT EDIT

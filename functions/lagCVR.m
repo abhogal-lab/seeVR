@@ -67,7 +67,7 @@ if isfield(opts,'norm_regr'); else; opts.norm_regr = 0; end               %norma
 if isfield(opts,'robust'); else; opts.robust = 0; end                     %calculate robust lag and CVR
 if isfield(opts,'refine_lag'); else; opts.refine_lag = 1; end             %When set to 1, lag calculation will reprocess voxels with clipped values by creating a new mean time series that averages data from neighboring voxels
 if isfield(opts,'win_size'); else; opts.win_size = 1; end                 %the number of voxels to consider around the voxel of interest when opts.refine_lag = 1;
-
+if isfield(opts,'refine_iter'); else; opts.refine_iter = 2; end           %how many iterations for lag_map refinement 
 if opts.niiwrite
     if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end
 end
@@ -350,20 +350,24 @@ end
 %%% grabbing WB timeseries
 tic
 wb_voxel_ts=zeros([length(coordinates) opts.interp_factor*dyn]);
-clean_voxel_ts=zeros([length(coordinates) opts.interp_factor*dyn]);
+
 %For lags you want to use wb_voxel_ts (accounting for prewhitening. For CVR
 %maps always regress original regressor with clean timeseries
-ip = opts.interp_factor;
+
+if opts.cvr_maps && opts.prewhite
+    opts.prewhite = 0; 
+    disp('prewhitening is not compatible with CVR mapping')
+    disp('CVR option takes priotity... for lag mapping using prewhitening, set opts.cvr_maps = 1 + opts.prewhite = 1')
+end
+
 if opts.prewhite
     parfor ii = 1:length(coordinates)
-        clean_voxel_ts(ii,:) = interp(orig_voxel_ts(ii,:),ip);
-        wb_voxel_ts(ii,:) = interp(pw_voxel_ts(ii,:),ip);
+                wb_voxel_ts(ii,:) = interp(pw_voxel_ts(ii,:),opts.interp_factor);
     end
 else
     parfor ii = 1:length(coordinates)
-        clean_voxel_ts(ii,:) = interp(orig_voxel_ts(ii,:),ip);
+        wb_voxel_ts(ii,:) = interp(orig_voxel_ts(ii,:),opts.interp_factor);
     end
-    wb_voxel_ts = clean_voxel_ts;
 end; clear ip
 
 
@@ -446,10 +450,15 @@ if opts.corr_model
         %identify clipped lag values and use neighboring information to
         %improve correlation
         if opts.refine_lag
-            
+            iter = 1;
+            passes = 0;
             maxlag = max(lag_map(:));
+            %for iter=1:opts.refine_iter
+            while iter
+            passes = passes + 1
             max_map = zeros(size(lag_map));
             max_map(lag_map == maxlag) = 1;
+                      
             %get new coordinates
             [~, newcoordinates] = grabTimeseries(data, max_map);
             
@@ -471,11 +480,12 @@ if opts.corr_model
                 tmp =  data(X_rng,Y_rng,Z_rng,:);
                 tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), size(tmp,4)]);
                 tmp(find(tmp(:,1) == 0),:) = [];
+                data(X(kk),Y(kk),Z(kk),:) = mean(tmp); %update data matrix for next iteration
                 newTS(kk,:) = interp(mean(tmp),opts.interp_factor);
             end
             
             clear tmp
-            corr_probe=[];a2=[];b2=[];
+            corr_probe2=[];a2=[];b2=[];
             
             %matrix cross correlation with probe
             a2=mat2cell(newTS,ones(1,size(newTS,1)),size(newTS,2)); %turn into cells so treat all rows independently
@@ -508,14 +518,20 @@ if opts.corr_model
             tmpLag = reshape(tmpLag,[xx yy zz]);
             
             %update the index for the corrected ma
-            
             index_map(pp,newcoordinates) = index2;
+            perc = 100*(length(index2)/length(coordinates))
+            if perc > 10 || passes < 5; continue; else; iter = 0; end
             
             clear rvec2 index2;
+            end
         end
         
-        
-        
+  %update_voxels - need to find a better way to do this
+  [orig_voxel_ts, coordinates] = grabTimeseries(data, mask);
+  parfor ii = 1:length(coordinates)
+        wb_voxel_ts(ii,:) = interp(orig_voxel_ts(ii,:),opts.interp_factor);
+  end      
+    
         %save lag and r maps
         switch pp
             case 1
@@ -650,7 +666,7 @@ if opts.cvr_maps
         %create base CVR map
         A = regr;
         C = [ones([length(A) 1]) A]; clear A
-        regr_coef = C\clean_voxel_ts';
+        regr_coef = C\wb_voxel_ts';
         
         bCVR(1,coordinates) = regr_coef(2,:); %extract slope
         bCVR(bCVR > 10) = 0; bCVR(bCVR < -10) = 0; %cleanup base CVR map
@@ -745,7 +761,7 @@ if opts.cvr_maps
         regr_coef = zeros([2 length(coordinates)]);
         parfor ii=1:length(coordinates)
             A = shifted_regr(ii,:);
-            B = clean_voxel_ts(ii,:); B(isnan(A)) = []; A(isnan(A)) = [];
+            B = wb_voxel_ts(ii,:); B(isnan(A)) = []; A(isnan(A)) = [];
             C = [ones([length(A) 1]) A'];
             regr_coef(:,ii)= C\B';
         end
@@ -759,7 +775,7 @@ if opts.cvr_maps
         SSE = zeros([1 size(wb_voxel_ts,1)]); SST = zeros([1 size(wb_voxel_ts,1)]); cT = zeros([1 size(wb_voxel_ts,1)]);
         parfor ii=1:size(wb_voxel_ts,1)
             A = shifted_regr(ii,:);
-            X = clean_voxel_ts(ii,:); X(isnan(A)) = []; A(isnan(A)) = [];
+            X = wb_voxel_ts(ii,:); X(isnan(A)) = []; A(isnan(A)) = [];
             Y = regr_coef(2,ii)*A' + ones([1 length(A)])'.*regr_coef(1,ii);
             cT(1,ii) = regr_coef(2,ii)./nanstd(X-Y'); %(t = beta/STDEVr)
             SSE(1,ii) = (norm(X - Y'))^2;
@@ -1115,7 +1131,7 @@ if opts.glm_model
             regr_coef = zeros([2 length(coordinates)]);
             parfor ii=1:length(coordinates)
                 A = shifted_regr(ii,:);
-                B = clean_voxel_ts(ii,:); B(isnan(A)) = []; A(isnan(A)) = [];
+                B = wb_voxel_ts(ii,:); B(isnan(A)) = []; A(isnan(A)) = [];
                 C = [ones([length(A) 1]) A'];
                 regr_coef(:,ii)= C\B';
             end
@@ -1144,7 +1160,7 @@ if opts.glm_model
             SSE = zeros([1 size(wb_voxel_ts,1)]); SST = zeros([1 size(wb_voxel_ts,1)]); cT = zeros([1 size(wb_voxel_ts,1)]);
             parfor ii=1:size(wb_voxel_ts,1)
                 A = shifted_regr(ii,:);
-                X = clean_voxel_ts(ii,:); X(isnan(A)) = []; A(isnan(A)) = [];
+                X = wb_voxel_ts(ii,:); X(isnan(A)) = []; A(isnan(A)) = [];
                 Y = regr_coef(2,ii)*A' + regr_coef(1,ii);
                 cT(1,ii) = regr_coef(2,ii)./nanstd(X-Y'); %(t = beta/STDEVr)
                 SSE(1,ii) = (norm(X - Y'))^2;
