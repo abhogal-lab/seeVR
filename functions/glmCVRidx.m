@@ -139,11 +139,12 @@ xlabel('image volumes')
 ylabel('a.u.')
 legend('mean reference time-series', 'BP reference mean-timeseries')
 
+
+
 % prep data: s_0 = (s - mean(s))/(2|s - mean(s)|/sqrt(N)
 % reported in https://doi.org/10.1371/journal.pone.0274220
 %BP_V = (BP_V-mean(BP_V))/(2*norm(BP_V-mean(BP_V))/sqrt(N));
 %BP_rV = (BP_rV-mean(BP_rV))/(2*norm(BP_rV-mean(BP_rV))/sqrt(N));
-
 
 %regress whole brain & reference signals against band passed reference
 if isempty(np) || nnz(np) == 0
@@ -180,10 +181,14 @@ bpData = reshape(bpData,size(data));
 CVRidx_map = zeros([1 numel(mask)]);
 CVRidx_map(1, coordinates) = CVRidx;
 CVRidx_map = reshape(CVRidx_map, size(mask));
+%remove outliers
+CVRidx_map(CVRidx_map > 100) = 0; CVRidx_map(CVRidx_map < -100) = 0;
 
 %normalized to reference response
 mean_ref_response = ROImean(CVRidx_map,refmask);
 nCVRidx_map = CVRidx_map/mean_ref_response;
+%remove outliers
+nCVRidx_map(nCVRidx_map > 100) = 0; nCVRidx_map(nCVRidx_map < -100) = 0;
 
 if opts.niiwrite
     cd(opts.CVRidxdir);

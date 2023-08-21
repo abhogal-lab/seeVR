@@ -67,7 +67,8 @@ if isfield(opts,'norm_regr'); else; opts.norm_regr = 0; end               %norma
 if isfield(opts,'robust'); else; opts.robust = 0; end                     %calculate robust lag and CVR
 if isfield(opts,'refine_lag'); else; opts.refine_lag = 1; end             %When set to 1, lag calculation will reprocess voxels with clipped values by creating a new mean time series that averages data from neighboring voxels
 if isfield(opts,'win_size'); else; opts.win_size = 1; end                 %the number of voxels to consider around the voxel of interest when opts.refine_lag = 1;
-if isfield(opts,'refine_iter'); else; opts.refine_iter = 2; end           %how many iterations for lag_map refinement 
+if isfield(opts,'passes'); else; opts.passes = 8; end                     %how many iterations for lag_map refinement 
+
 if opts.niiwrite
     if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end
 end
@@ -443,9 +444,9 @@ if opts.corr_model
         r_map = reshape(r_map,[xx yy zz]);
         %fill lag map
         lag_map(1,coordinates) = lags(1,index_map(pp,coordinates));
-        tmpLag = opts.TR*(lag_map/opts.interp_factor); tmpLag(1,coordinates) = tmpLag(1,coordinates) + abs(min(tmpLag(:))); %puts lag maps back into seconds
+%        tmpLag = opts.TR*(lag_map/opts.interp_factor); tmpLag(1,coordinates) = tmpLag(1,coordinates) + abs(min(tmpLag(:))); %puts lag maps back into seconds
         lag_map = reshape(lag_map,[xx yy zz]);
-        tmpLag = reshape(tmpLag,[xx yy zz]);
+ %       tmpLag = reshape(tmpLag,[xx yy zz]);
         
         %identify clipped lag values and use neighboring information to
         %improve correlation
@@ -453,7 +454,7 @@ if opts.corr_model
             iter = 1;
             passes = 0;
             maxlag = max(lag_map(:));
-            %for iter=1:opts.refine_iter
+           
             while iter
             passes = passes + 1
             max_map = zeros(size(lag_map));
@@ -513,26 +514,41 @@ if opts.corr_model
             r_map(newcoordinates) = rvec2;
             r_map = reshape(r_map,[xx yy zz]);
             lag_map(newcoordinates) = lags(1,index2);
-            tmpLag = opts.TR*(lag_map/opts.interp_factor); tmpLag(newcoordinates) = tmpLag(newcoordinates) + abs(min(tmpLag(:))); %puts lag maps back into seconds
             lag_map = reshape(lag_map,[xx yy zz]);
-            tmpLag = reshape(tmpLag,[xx yy zz]);
             
             %update the index for the corrected ma
             index_map(pp,newcoordinates) = index2;
             perc = 100*(length(index2)/length(coordinates))
-            if perc > 10 || passes < 5; continue; else; iter = 0; end
+            disp([int2str(perc), ' percent of voxels have clipped lag values'])
+            if perc > 3 
+                if passes < opts.passes
+                continue; 
+                else; iter = 0;
+                disp('exceeded the maximum allowed passes')
+                disp('... to increase passes set opts.passes to a higher value')
+                end
+            else
+                iter = 0;
+            end
+                
             
             clear rvec2 index2;
             end
         end
         
-  %update_voxels - need to find a better way to do this
-  [orig_voxel_ts, coordinates] = grabTimeseries(data, mask);
-  parfor ii = 1:length(coordinates)
-        wb_voxel_ts(ii,:) = interp(orig_voxel_ts(ii,:),opts.interp_factor);
-  end      
+%   %update_voxels - need to find a better way to do this
+% if voxels are updated with locally smoothed information then we change
+% CVR, and we dont want this - we only want to improve lag estimates
+%   [orig_voxel_ts, coordinates] = grabTimeseries(data, mask);
+%   parfor ii = 1:length(coordinates)
+%         wb_voxel_ts(ii,:) = interp(orig_voxel_ts(ii,:),opts.interp_factor);
+%   end      
     
         %save lag and r maps
+        
+        tmpLag = opts.TR*(lag_map/opts.interp_factor).*mask;
+        if min(tmpLag(:) < 0); tmpLag = tmpLag + abs(min(tmpLag(:))); end
+        
         switch pp
             case 1
                 if opts.niiwrite
