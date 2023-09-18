@@ -89,7 +89,7 @@ parfor ii=1:length(coordinates)
         b(ii,:) = lsqcurvefit(model,[range(ts(ii,:)) 20 0],t,ts(ii,:),lb,ub,options);
     catch
         %continue
-        printf(['error voxel ',int2str(ii)])
+        %printf(['error voxel ',int2str(ii)])
     end
     %         y_fit = model(b(ii,:),t);
     %         % Plot the results

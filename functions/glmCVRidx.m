@@ -79,7 +79,7 @@ Fs = 1/opts.TR;
 t = 0:1/Fs:1-1/Fs;
 N = size(voxels,2);
 dF = Fs/N;
-mean_ts = detrend(mean(ref_voxels,1)); % detrend reference time-series
+mean_ts = mean(ref_voxels,1); 
 freq = 0:Fs/length(mean_ts):Fs/2;
 Lowf = opts.fpass(1); Highf = opts.fpass(2); %Hz
 

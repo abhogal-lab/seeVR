@@ -53,7 +53,7 @@ switch opts.add_derivatives
 end
 
 if opts.add_drift
-    drift_term = legendreP(opts.legendre_order, 1:1:length(nuisance));
+    drift_term = LegendreN(opts.legendre_order, 1:1:length(nuisance));
     %concatenate motion params with drift term
     np0 = [motion drift_term'];
 else

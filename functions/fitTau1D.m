@@ -23,7 +23,7 @@
 % ts: input timeseries data (i.e. average BOLD signal calculated over an ROI using meanTimeseries)
 %
 
-function [y_fit] = fitTau1D(probe, ts, opts)
+function [y_fit, b] = fitTau1D(probe, ts, opts)
 global opts
 ts = double(ts);
 if iscolumn(probe); probe = probe'; end
