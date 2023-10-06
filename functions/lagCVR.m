@@ -67,7 +67,7 @@ if isfield(opts,'norm_regr'); else; opts.norm_regr = 0; end               %norma
 if isfield(opts,'robust'); else; opts.robust = 0; end                     %calculate robust lag and CVR
 if isfield(opts,'refine_lag'); else; opts.refine_lag = 1; end             %When set to 1, lag calculation will reprocess voxels with clipped values by creating a new mean time series that averages data from neighboring voxels
 if isfield(opts,'win_size'); else; opts.win_size = 1; end                 %the number of voxels to consider around the voxel of interest when opts.refine_lag = 1;
-if isfield(opts,'passes'); else; opts.passes = 8; end                     %how many iterations for lag_map refinement 
+if isfield(opts,'passes'); else; opts.passes = 10; end                     %how many iterations for lag_map refinement 
 
 if opts.niiwrite
     if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end
@@ -640,7 +640,7 @@ if opts.trace_corr && opts.robust
     %save image
     if opts.niiwrite
         cd(opts.corrlagdir);
-        niftiwrite(cast(mask,opts.mapDatatype).*robustIR,'robustLAG_r',opts.info.map);
+        niftiwrite(cast(logical(mask)*robustIR,opts.mapDatatype),'robustLAG_r',opts.info.map);
     else
         saveImageData(mask.*robustIR, opts.headers.map, opts.corrlagdir,'robustLAG_r.nii.gz', datatype);
     end
@@ -962,7 +962,7 @@ if opts.glm_model
         %perform regression at all lag times
         
         if isempty(np) || nnz(np) == 0
-            if opts.gpu
+            try
                 regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
                 wb_voxel_ts = gpuArray(wb_voxel_ts);
                 for ii=1:size(regr_matrix,1)
@@ -971,7 +971,7 @@ if opts.glm_model
                     regr_coef(ii,:,:)= gather(C\wb_voxel_ts(:,~isnan(A))');
                 end
                 wb_voxel_ts = gather(wb_voxel_ts);
-            else
+            catch
                 regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
                 parfor ii=1:size(regr_matrix,1)
                     A = regr_matrix(ii,:);
@@ -1002,7 +1002,7 @@ if opts.glm_model
         else
             regr_coef = zeros([size(lags,2) (size(norm_np,2)+2) length(coordinates)]);
             %run GLM
-            if opts.gpu
+            try
                 wb_voxel_ts = gpuArray(wb_voxel_ts);
                 for ii=1:size(regr_matrix,1)
                     A = gpuArray(regr_matrix(ii,:));
@@ -1010,7 +1010,7 @@ if opts.glm_model
                     regr_coef(ii,:,:)= gather(C\wb_voxel_ts(:,~isnan(A))');
                 end
                 wb_voxel_ts = gather(wb_voxel_ts);
-            else
+            catch
                 parfor ii=1:size(regr_matrix,1)
                     A = regr_matrix(ii,:);
                     C = [ones([length(A(1,~isnan(A))) 1]) norm_np(~isnan(A),:) A(1,~isnan(A))'];
