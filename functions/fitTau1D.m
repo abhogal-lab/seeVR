@@ -53,7 +53,7 @@ try
     b = lsqcurvefit(model,[range(ts) 20 0],t,ts,lb,ub,options)
 catch
     %continue
-    printf('error; please check inputs')
+    disp('error; please check inputs')
 end
 y_fit = model(b,t);
 % Plot the results
