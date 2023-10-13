@@ -29,7 +29,7 @@ t = cputime;
 %2. identify suitable thresholding technique based on data
 %3. threshold co-efficients and reconstruct the signal
 if isfield(opts,'family'); else opts.family = 'db4'; end
-if isfield(opts,'level'); else opts.level = 2; end
+if isfield(opts,'level'); else opts.wdlevel = 2; end
 if isfield(opts,'DenMeth'); else opts.DenMeth = 'UniversalThreshold'; end
 if isfield(opts,'ThreshRule'); else opts.ThreshRule = 'Hard'; end
 if isfield(opts,'NoEst'); else opts.NoEst = 'LevelIndependent'; end
@@ -40,15 +40,15 @@ if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select comm
 data(data == 0) = NaN;
 wdenData = nan([x*y*z dyn]);
 [voxel_ts, coordinates] = grabTimeseries(data, mask);
-
+clear data;
 fd = zeros(size(voxel_ts));
 
 %denoise signals
-fd = wdenoise(double(voxel_ts'),opts.level,'Wavelet',opts.family,'DenoisingMethod',opts.DenMeth,'ThresholdRule',opts.ThreshRule,'NoiseEstimate',opts.NoEst);
+fd = wdenoise(double(voxel_ts'),opts.wdlevel,'Wavelet',opts.family,'DenoisingMethod',opts.DenMeth,'ThresholdRule',opts.ThreshRule,'NoiseEstimate',opts.NoEst);
 fd = fd';
-
+clear voxel_ts
 wdenData (coordinates, :)  = fd;
-wdenData  = reshape(wdenData ,[ x y z dyn]);
+wdenData  = reshape(wdenData ,[x y z dyn]);
 
 disp(['finished discreet wavelet denoising in: ',int2str(cputime-t),' seconds']);
 
