@@ -966,7 +966,7 @@ if opts.glm_model
         %perform regression at all lag times
         
         if isempty(np) || nnz(np) == 0
-            try
+            if opts.gpu
                 regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
                 wb_voxel_ts = gpuArray(wb_voxel_ts);
                 for ii=1:size(regr_matrix,1)
@@ -975,7 +975,7 @@ if opts.glm_model
                     regr_coef(ii,:,:)= gather(C\wb_voxel_ts(:,~isnan(A))');
                 end
                 wb_voxel_ts = gather(wb_voxel_ts);
-            catch
+                else
                 regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
                 parfor ii=1:size(regr_matrix,1)
                     A = regr_matrix(ii,:);
