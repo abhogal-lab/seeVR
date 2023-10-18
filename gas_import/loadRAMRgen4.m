@@ -52,12 +52,12 @@ filename = fullfile(opts.seqpath,file);
 brdiff = diff(MRTimes)
 
 
-figure;
-subplot(2,1,1)
-plot(MRTimes1,PO2mmHg1)
-hold on; scatter(MRTimes, PO2mmHg)
-subplot(2,1,2)
-plot(MRTimes, RespirationrateBPM)
+% figure;
+% subplot(2,1,1)
+% plot(MRTimes1,PO2mmHg1)
+% hold on; scatter(MRTimes, PO2mmHg)
+% subplot(2,1,2)
+% plot(MRTimes, RespirationrateBPM)
 
 %import events
 file = ls('Events.*');

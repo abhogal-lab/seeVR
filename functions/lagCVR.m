@@ -468,6 +468,7 @@ if opts.corr_model
             newTS = zeros([length(X) length(regr)]);
             
             for kk=1:length(X)
+                try
                 %extract timeseries and neighboring timeseries
                 X_rng = X(kk)-opts.win_size:X(kk)+opts.win_size;
                 Y_rng = Y(kk)-opts.win_size:Y(kk)+opts.win_size;
@@ -483,6 +484,9 @@ if opts.corr_model
                 tmp(find(tmp(:,1) == 0),:) = [];
                 data(X(kk),Y(kk),Z(kk),:) = mean(tmp); %update data matrix for next iteration
                 newTS(kk,:) = interp(mean(tmp),opts.interp_factor);
+                catch
+                    disp('error; skipping voxel')
+                end
             end
             
             clear tmp
@@ -520,7 +524,7 @@ if opts.corr_model
             index_map(pp,newcoordinates) = index2;
             perc = 100*(length(index2)/length(coordinates))
             disp([int2str(perc), ' percent of voxels have clipped lag values'])
-            if perc > 3 
+            if perc > 2 
                 if passes < opts.passes
                 continue; 
                 else; iter = 0;
@@ -547,7 +551,7 @@ if opts.corr_model
         %save lag and r maps
         
         tmpLag = opts.TR*(lag_map/opts.interp_factor).*mask;
-        if min(tmpLag(:) < 0); tmpLag = tmpLag + abs(min(tmpLag(:))); end
+        if min(tmpLag(:)) < 0; tmpLag = tmpLag + abs(min(tmpLag(:))); end
         
         switch pp
             case 1
@@ -998,7 +1002,7 @@ if opts.glm_model
                 rsquared(1,ii) = M;
                 beta(1,ii) = regr_coef(I,2,ii);
             end
-            beta(beta > 10) = 0; beta(beta < -10) = 0;
+            beta(beta > 30) = 0; beta(beta < -30) = 0;
         else
             regr_coef = zeros([size(lags,2) (size(norm_np,2)+2) length(coordinates)]);
             %run GLM
@@ -1048,7 +1052,8 @@ if opts.glm_model
         GLM_Estimate = reshape(GLM_Estimate,[xx yy zz]);
         
         tmp = opts.TR*(lagmatrix/opts.interp_factor);
-        tmpLag = zeros([xx*yy*zz,1]);  tmpLag(coordinates,:) = tmp + abs(min(tmp(:))); clear tmp
+        if min(tmp(:)) < 0; tmp = tmp + abs(min(tmp(:))); end       
+        tmpLag = zeros([xx*yy*zz,1]);  tmpLag(coordinates,:) = tmp; clear tmp
         tmpLag = reshape(tmpLag,[xx yy zz]);
         
         %calculate statistics

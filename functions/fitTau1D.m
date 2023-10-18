@@ -31,10 +31,7 @@ if iscolumn(ts); ts = ts'; end
 
 if isfield(opts,'maxTau'); else; opts.maxTau = 300; end                   %maximum exponential dispersion time constant - data dependent
 
-opts.dynamicdir = fullfile(opts.resultsdir,'tau'); mkdir(opts.dynamicdir);
-
 t = double(opts.TR:opts.TR:length(probe)*opts.TR);
-
 
 options = optimoptions('lsqcurvefit','Display','none','FunctionTolerance',1.0000e-8,...
     'StepTolerance', 1.0000e-8, 'MaxIter',150);
@@ -44,7 +41,7 @@ nr_params = 3;
 b = nan([length(probe), nr_params]);
 
 model = (@(a,t) a(1)*rescale(real(ifft(ifftshift(fftinput(probe).*fftexponential(a(2),t)))))+a(nr_params));
-a0 = [0 20 0];
+a0 = [mean(ts)/mean(probe) 1 mean(ts)];
 lb = [ 0  0 -Inf];
 ub = [ Inf opts.maxTau Inf];
 
