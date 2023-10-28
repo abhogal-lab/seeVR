@@ -644,7 +644,7 @@ if opts.trace_corr && opts.robust
     %save image
     if opts.niiwrite
         cd(opts.corrlagdir);
-        niftiwrite(cast(logical(mask)*robustIR,opts.mapDatatype),'robustLAG_r',opts.info.map);
+        niftiwrite(cast(logical(mask).*robustIR,opts.mapDatatype),'robustLAG_r',opts.info.map);
     else
         saveImageData(mask.*robustIR, opts.headers.map, opts.corrlagdir,'robustLAG_r.nii.gz', datatype);
     end
@@ -966,7 +966,7 @@ if opts.glm_model
         %perform regression at all lag times
         
         if isempty(np) || nnz(np) == 0
-            if opts.gpu
+            try
                 regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
                 wb_voxel_ts = gpuArray(wb_voxel_ts);
                 for ii=1:size(regr_matrix,1)
@@ -975,7 +975,7 @@ if opts.glm_model
                     regr_coef(ii,:,:)= gather(C\wb_voxel_ts(:,~isnan(A))');
                 end
                 wb_voxel_ts = gather(wb_voxel_ts);
-                else
+            catch
                 regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
                 parfor ii=1:size(regr_matrix,1)
                     A = regr_matrix(ii,:);
