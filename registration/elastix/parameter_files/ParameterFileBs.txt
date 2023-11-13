@@ -1,0 +1,66 @@
+(FixedInternalImagePixelType "float")
+(MovingInternalImagePixelType "float")
+(FixedImageDimension 3)
+(MovingImageDimension 3)
+(UseDirectionCosines "false")
+
+// **************** Main Components **************************
+
+(Registration "MultiMetricMultiResolutionRegistration")
+(Interpolator "BSplineInterpolator")
+(ResampleInterpolator "FinalBSplineInterpolator")
+(Resampler "DefaultResampler")
+
+(FixedImagePyramid "FixedSmoothingImagePyramid")
+(MovingImagePyramid "MovingSmoothingImagePyramid")
+
+(Optimizer "AdaptiveStochasticGradientDescent")
+(Transform "BSplineTransform")
+(Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
+(Metric0Weight 1)
+(Metric1Weight 50) // OPTIMIZED BY QUANTITATIVE MEASURES
+
+// ***************** Transformation **************************
+
+(GridSpacingSchedule 4 2 1)
+(FinalGridSpacingInPhysicalUnits 6)
+(HowToCombineTransforms "Compose")
+
+// ******************* Similarity measure *********************
+
+(NumberOfHistogramBins 60) // OPTIMIZED BY QUANTITATIVE MEASURES
+
+// ******************** Multiresolution **********************
+
+(NumberOfResolutions 3)
+(ImagePyramidSchedule 8 8 8  4 4 4  1 1 1)
+
+// ******************* Optimizer ****************************
+
+(MaximumNumberOfIterations 2000 4000 6000) 
+
+// **************** Image sampling **********************
+
+(NumberOfSpatialSamples 8000) 
+(NewSamplesEveryIteration "true")
+(ImageSampler "MultiInputRandomCoordinate")
+(SampleRegionSize 40)  
+(UseRandomSampleRegion "true")
+(MaximumNumberOfSamplingAttempts 5)
+(RequiredRatioOfValidSamples 0.05)
+
+// ************* Interpolation and Resampling ****************
+
+(BSplineInterpolationOrder 3)
+(FinalBSplineInterpolationOrder 3)
+
+(ShowExactMetricValue "false") 
+//(WriteTransformParametersEachResolution "true")
+//(WriteResultImageAfterEachResolution "true")
+//(WritePyramidImagesAfterEachResolution "true")
+
+(DefaultPixelValue 0)
+(WriteResultImage "true")
+(ResultImagePixelType "double")
+(ResultImageFormat "nii.gz")
+

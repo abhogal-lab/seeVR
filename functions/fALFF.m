@@ -41,13 +41,16 @@
 % fALFF values defined by the input mask
 function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)
 global opts
+data = double(data);
+temp_info = opts.info.map;
+temp_info.Datatype = 'double';
 
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                  %depending on how data is loaded this can be set to 1 to use native load/save functions
-
+if isfield(opts,'fpass'); else; opts.fpass = [0.0000001 0.15]; end
 opts.ALFFdir = fullfile(opts.resultsdir,'ALFF'); mkdir(opts.ALFFdir);
 
 [xx yy zz N] = size(data);
-[refdata] = meanTimeseries(data, mask);
+[refdata] = meanTimeseries(data, refmask);
 
 Fs = 1/opts.TR;
 dF = Fs/N;
@@ -57,13 +60,11 @@ xdft = xdft(1:N/2+1);
 psdx = (abs(xdft).*2)/N; %square this to get the power (ampl^2 = pwer)
 psdx(2:end-1) = 2*psdx(2:end-1);
 freq = 0:Fs/length(data):Fs/2;
-
 Lowf = opts.fpass(1); Highf = opts.fpass(2);
 
 %find idx for low & high freq
 [Lowval,Lowidx]=min(abs(freq-Lowf));
 [Highval,Highidx]=min(abs(freq-Highf));
-
 rALFF = sum(sqrt(psdx(1,Lowidx:Highidx))); %whole brain reference ALFF see: https://pubmed.ncbi.nlm.nih.gov/16919409/
 
 %voxel-wise ALFF
@@ -85,21 +86,19 @@ ALFF_map = reshape(ALFF_map,size(mask)); zALFF_map = reshape(zALFF_map,size(mask
 limits = string(opts.fpass);
 
 %save ALFF
-delimeter = {'_','_','_'};
-name = join(['ALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
+delimeter = {'_','_'};
 if opts.niiwrite
-    niftiwrite(cast(ALFF_map,opts.mapDatatype),[opts.ALFFdir,name],opts.info.map);
+    niftiwrite(ALFF_map,fullfile(opts.ALFFdir,'ALFF_map'),temp_info);
 else
-    saveImageData(ALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+    saveImageData(ALFF_map,opts.headers.map,opts.ALFFdir,'ALFF_map',64)
 end
 
 %save ALFF z-map
-name = join(['zALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
     cd(opts.ALFFdir)
-    niftiwrite(cast(zALFF_map, opts.mapDatatype),name,opts.info.map);
+    niftiwrite(zALFF_map,fullfile(opts.ALFFdir,'zALFF_map'),temp_info);
 else
-    saveImageData(zALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+    saveImageData(zALFF_map,opts.headers.map,opts.ALFFdir,'zALFF_map',64)
 end
 
 %generate ALFF map and z-transformed ALFF map
@@ -109,18 +108,16 @@ zfALFF_map(coordinates,1) = (fALFF_map(coordinates,1) - mean(fALFF_map(coordinat
 fALFF_map = reshape(fALFF_map,size(mask)); zfALFF_map = reshape(zfALFF_map,size(mask));
 
 %save fALFF
-name = join(['fALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(cast(fALFF_map, opts.mapDatatype),name,opts.info.map);
+    niftiwrite(fALFF_map,fullfile(opts.ALFFdir,'fALFF_map'),temp_info);
 else
-    saveImageData(fALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+    saveImageData(fALFF_map,opts.headers.map,opts.ALFFdir,'fALFF_map',64)
 end
 
 %save fALFF z-map
-name = join(['zfALFF_map',limits(1),limits(2),'.nii.gz'],delimeter);
 if opts.niiwrite
-    niftiwrite(cast(zfALFF_map, opts.mapDatatype),name,opts.info.map);
+    niftiwrite(zfALFF_map,fullfile(opts.ALFFdir,'zfALFF_map'),temp_info);
 else
-    saveImageData(zfALFF_map,opts.headers.map,opts.ALFFdir,char(name),64)
+    saveImageData(zfALFF_map,opts.headers.map,opts.ALFFdir,'zfALFF_map',64)
 end
 end
