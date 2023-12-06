@@ -16,13 +16,6 @@
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
 % *************************************************************************
-% this function is inspited by the following manuscript:
-% Cerebrovascular Reactivity Mapping Using Resting-State BOLD Functional MRI in Healthy Adults and Patients with Moyamoya Disease
-% https://doi.org/10.1148/radiol.2021203568
-% https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6494444/
-% glmCVRidx uses a general linear model to evaluate the voxel-wise signal
-% response relative to some reference signal. Specific data frequency bands
-% can be isolated (i.e. for resting state fMRI analysis).
 %
 % data: input timeseries data (i.e. 4D BOLD MRI dataset)
 %
@@ -38,7 +31,7 @@
 % BP_ref: the bandpassed reference signal (defined by opts.fpass) from the
 % ROI defined by refmask
 %
-% bpData: a bandpassed version of the input data
+% bpData: a bandpassed version of the input data%
 function [bpData] = bandpassfilt(data, mask, refmask, opts)
 warning('off');
 global opts;
