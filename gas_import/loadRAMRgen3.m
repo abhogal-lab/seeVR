@@ -30,7 +30,7 @@
 % corrvec_O2: the temporally resampled (to opts.TR) end-expired O2 traces
 function [corrvec_CO2 corrvec_O2] = loadRAMRgen3(opts)
 global opts
-if isfield(opts,'figdir');
+if isfield(opts,'figdir')
 else
         disp('opts.figdir not specified... saving results in opts.savedir folder')
         opts.figdir = opts.savedir;

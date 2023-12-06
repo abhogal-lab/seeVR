@@ -34,14 +34,14 @@ function [probe1a,probe2a] = autoAlign(probe1,probe2, TS)
 varCheck = nargin;
 switch varCheck
     case 3
-        if iscolumn(probe1); else probe1 = probe1'; end
-        if iscolumn(probe2); else probe2 = probe2'; end
-        if iscolumn(TS); else TS = TS'; end
+        if iscolumn(probe1); else; probe1 = probe1'; end
+        if iscolumn(probe2); else; probe2 = probe2'; end
+        if iscolumn(TS); else; TS = TS'; end
         TS = rescale(TS);
     case 2
-        if iscolumn(probe1); else probe1 = probe1'; end
+        if iscolumn(probe1); else; probe1 = probe1'; end
         TS = probe2;
-        if iscolumn(TS); else TS = TS'; end
+        if iscolumn(TS); else; TS = TS'; end
         TS = rescale(TS);
 end
 
@@ -105,13 +105,19 @@ try
     
     R2 = 1 - SSE./SST;
     x = [1:1:length(SSE)];
-    p = polyfit(x,SSE,4);
+    %p = polyfit(x,SSE,4);
+    
+    
+    slm = slmengine(double(x),double(SSE),'plot','on','knots',20,'increasing','off', ...
+    'leftslope',0,'rightslope',0);  
+    f = slmeval(x,slm)
     
     % Evaluate the fitted polynomial p and plot:
-    f = polyval(p,x);
+    %f = polyval(p,x);
     figure; subplot(2,1,1)
     plot(x,SSE,'o',x,f,'-')
-    legend('SSE','4th order polynomial fit');
+    %legend('SSE','4th order polynomial fit');
+    legend('SSE','spline fit');
     title('Refined shift search')
     
     [M,I] = min(f);

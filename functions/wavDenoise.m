@@ -28,6 +28,7 @@ t = cputime;
 %analysys in sub-bands determined with HP and LP filters)
 %2. identify suitable thresholding technique based on data
 %3. threshold co-efficients and reconstruct the signal
+
 if isfield(opts,'family'); else opts.family = 'db4'; end
 if isfield(opts,'level'); else opts.wdlevel = 2; end
 if isfield(opts,'DenMeth'); else opts.DenMeth = 'UniversalThreshold'; end
