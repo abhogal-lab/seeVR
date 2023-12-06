@@ -40,6 +40,7 @@
 % ROI defined by refmask
 %
 % bpData: a bandpassed version of the input data
+
 function [maps, BP_ref, bpData] = glmCVRidx(data, mask, refmask, nuisance, opts)
 warning('off');
 global opts;
