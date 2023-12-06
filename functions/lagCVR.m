@@ -727,7 +727,7 @@ if opts.cvr_maps
                 maps.XCORR.CVR.bSSE = bSSE;
                 maps.XCORR.CVR.bTstat = bSSE;
                 
-                disp('Base CVR, r2, Tstat and SSE maps were created using entidal regressor')
+                disp('Base CVR, r2, Tstat and SSE maps were created using endtidal regressor')
                 CVR(1,:,:,:) = mask.*bCVR;
                 TSTAT(1,:,:,:) = mask.*bTstat;
                 RC(1,:,:,:) = mask.*bR2;
@@ -751,7 +751,7 @@ if opts.cvr_maps
                 maps.XCORR.CVR.bSSE_eff = bSSE;
                 maps.XCORR.CVR.bTstat_eff = bSSE;
                 
-                disp('Base CVR, r2, Tstat and SSE maps were created using effective entidal regressor')
+                disp('Base CVR, r2, Tstat and SSE maps were created using effective endtidal regressor')
                 CVR(2,:,:,:) = mask.*bCVR;
                 TSTAT(2,:,:,:) = mask.*bTstat;
                 RC(2,:,:,:) = mask.*bR2;
