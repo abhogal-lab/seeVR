@@ -16,13 +16,10 @@
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
 % *************************************************************************
-% this function is inspited by the following manuscript:
-% Cerebrovascular Reactivity Mapping Using Resting-State BOLD Functional MRI in Healthy Adults and Patients with Moyamoya Disease
-% https://doi.org/10.1148/radiol.2021203568
-% https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6494444/
-% glmCVRidx uses a general linear model to evaluate the voxel-wise signal
-% response relative to some reference signal. Specific data frequency bands
-% can be isolated (i.e. for resting state fMRI analysis).
+% this function is inspited by the manuscript from Poublanc et al.:
+% Measuring cerebrovascular reactivity: the dynamic response to a step hypercapnic stimulus
+% DOI: 10.1038/jcbfm.2015.114
+%
 %
 % data: input timeseries data (i.e. 4D BOLD MRI dataset)
 %
@@ -31,8 +28,6 @@
 % probe: usually PetCO2 or optimized regressor derived from lagCVR
 % function. The proble is the 'reference' response
 %
-% nuisance: set of nuisance parameters for regression
-
 function [maps] = fitTau(probe, data, mask, opts)
 global opts
 ty = class(data);
@@ -121,9 +116,10 @@ options = optimoptions('lsqcurvefit','Display','none','FunctionTolerance',1.0000
     maps.expHRF.scale = b1_map;
     maps.expHRF.tau = b2_map;
     maps.expHRF.offset = b3_map;
-    
-    %rebuild model responses
-    responseFits = zeros(size(ts));
+
+%Working on using tau fit to more accurately estimate CVR    
+%rebuild model responses
+%responseFits = zeros(size(ts));
         
 %     parfor ii=1:length(coordinates)
 %         
