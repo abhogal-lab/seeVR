@@ -45,7 +45,6 @@ if isfield(opts,'glm_model'); else; opts.glm_model = 0; end               % perf
 if isfield(opts,'uni'); else; opts.uni = 0; end                           % if this is set to 1 negative correlations will be ignored
 if isfield(opts,'useGPU'); else; opts.useGPU = 0; end                     % alot of cards may not have enough memory for this so default is no
 
-
 % setup main default parameters
 if isfield(opts,'rescale_probe'); else; opts.rescale_probe = 1; end       % rescaling may be helful for initial refinement run
 if isfield(opts,'trace_corr'); else; opts.trace_corr = 1; end             % perform additional correlation with gas trace (on top of optimized regressor)
