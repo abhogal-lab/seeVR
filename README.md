@@ -6,7 +6,7 @@
 # seeVR
 A toolbox for analyzing cerebro-vascular other related hemodynamic data:
 
-SeeVR is an open-source toolbox MATLAB distributed under the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later option. Most of the optimization has been done using Matlab 2020+. SeeVR makes use of the parallel computing toolbox (workaround = replace parfor with for loops), the statistics toolbox and the wavelet toolbox. Wherever possible alternative implementations are avilable when these toolboxes are not available. If you run into any errors or bugs, have any feedback or would like to see new things implemented please don't hesitate to contact me at a.bhogal@umcutrecht.nl or via the contact form at https://www.seevr.nl/contact-collaboration/.
+SeeVR is an open-source toolbox MATLAB distributed under the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later option. Most of the optimization has been done using Matlab 2020+. SeeVR makes use of the parallel computing toolbox (workaround = replace parfor with for loops), the statistics toolbox and the wavelet toolbox. Wherever possible alternative implementations are available when these toolboxes are not available. If you run into any errors or bugs, have any feedback or would like to see new things implemented please don't hesitate to contact me at a.bhogal@umcutrecht.nl or via the contact form at https://www.seevr.nl/contact-collaboration/.
 
 If you use any CVR functionality for your work (or any derivatives based on the seeVR toolbox) please cite the following paper:
 
