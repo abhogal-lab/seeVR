@@ -3,7 +3,7 @@
 % <affineReg: uses elastix to perform affine registration of a functional
 % to an anatomical image. The function returns the path to both the forward
 % and inverse transformation parameter file >
-% 
+%
 %
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -48,34 +48,41 @@
 % stored: e.g., /seeVR-main/registration/elastix
 
 function [image, forward_transform, inverse_transform] = affineReg(moveImg, moveMask, refImg, refMask, param_af, regdir, elastixDir)
+global opts;
 
-if ispc
-    elastixDir = fullfile(elastixDir,'windows');
-else if ismac
-        elastixDir = fullfile(elastixDir,'mac','bin');
-    else
-        elastixDir = fullfile(elastixDir,'linux','bin');
-    end
+try opts.elastixdir; catch
+    error('elastix directory not specified fir affineReg function... specify path to elastix: opts.elastixdir = ADDPATH')
 end
 
-affine_command = [fullfile(elastixDir,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
+elastixroot = opts.elastixdir;
+
+%setup OS-dependent paths
+if ispc
+    elastixrootOS = fullfile(elastixroot,'windows');
+elseif ismac
+    elastixrootOS = fullfile(elastixroot,'mac');
+else
+    elastixrootOS = fullfile(elastixroot,'linux');
+end
+
+affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
 dos(affine_command);
 
 
 forward_transform = fullfile(regdir,'TransformParameters.0.txt')
 disp(['transformation parameter file saved as: ',forward_transform])
 
-% calculate inverse 
+% calculate inverse
 invdir = fullfile(regdir, 'inverse'); mkdir(invdir);
-moveImg_new = fullfile(regdir, 'result.0.nii.gz'); 
-inverse_command = [fullfile(elastixDir,'elastix'),' -f ',moveImg,' -fMask ',moveMask, ' -m ',moveImg_new,' -mMask ',refMask,' -t0 ',forward_transform,' -p ',param_af,' -out ',invdir ];
+moveImg_new = fullfile(regdir, 'result.0.nii.gz');
+inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -fMask ',moveMask, ' -m ',moveImg_new,' -mMask ',refMask,' -t0 ',forward_transform,' -p ',param_af,' -out ',invdir ];
 system(inverse_command);
 
 inverse_transform = fullfile(invdir,'TransformParameters.0.txt')
 disp(['inverse transformation parameter file saved as: ',inverse_transform])
 
 % load registered image
-[image,~] = loadImage(regdir, 'result.0.nii.gz'); 
+[image,~] = loadImage(regdir, 'result.0.nii.gz');
 
 end
 

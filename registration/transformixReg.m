@@ -35,21 +35,27 @@
 % stored: e.g., /seeVR-main/registration/elastix
 
 function [image] = transformixReg(inputImg, transformfile, transformdir, opts)
-global opts
+global opts;
 
-if ispc
-    elastixDir = fullfile(opts.elastixDir,'windows');
-else if ismac
-        elastixDir = fullfile(opts.elastixDir,'mac','bin');
-    else
-        elastixDir = fullfile(opts.elastixDir,'linux','bin');
-    end
+try opts.elastixdir; catch
+    error('elastix directory not specified fir affineReg function... specify path to elastix: opts.elastixdir = ADDPATH')
 end
 
-transform_command = [fullfile(opts.elastixDir, 'transformix'),' -in ',inputImg,' -out ',transformdir, ' -tp ', transformfile];
+elastixroot = opts.elastixdir;
+
+%setup OS-dependent paths
+if ispc
+    elastixrootOS = fullfile(elastixroot,'windows');
+elseif ismac
+    elastixrootOS = fullfile(elastixroot,'mac');
+else
+    elastixrootOS = fullfile(elastixroot,'linux');
+end
+
+transform_command = [fullfile(elastixrootOS, 'transformix'),' -in ',inputImg,' -out ',transformdir, ' -tp ', transformfile];
 dos(transform_command);
 
 % load registered image
-[image,~] = loadImage(transformdir, 'result.nii.gz'); 
+[image,~] = loadImage(transformdir, 'result.nii.gz');
 
 end
