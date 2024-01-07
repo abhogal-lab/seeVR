@@ -442,6 +442,7 @@ if opts.corr_model
         r_map = zeros([xx*yy*zz 1]); lag_map = zeros([1 xx*yy*zz]);
         r_map(coordinates) = rvec(pp,:);
         r_map = reshape(r_map,[xx yy zz]);
+        
         %fill lag map
         lag_map(1,coordinates) = lags(1,index_map(pp,coordinates));
 %        tmpLag = opts.TR*(lag_map/opts.interp_factor); tmpLag(1,coordinates) = tmpLag(1,coordinates) + abs(min(tmpLag(:))); %puts lag maps back into seconds
@@ -520,7 +521,7 @@ if opts.corr_model
             lag_map(newcoordinates) = lags(1,index2);
             lag_map = reshape(lag_map,[xx yy zz]);
             
-            %update the index for the corrected ma
+            %update the index for the corrected map
             index_map(pp,newcoordinates) = index2;
             perc = 100*(length(index2)/length(coordinates))
             disp([int2str(perc), ' percent of voxels have clipped lag values'])
@@ -534,22 +535,12 @@ if opts.corr_model
             else
                 iter = 0;
             end
-                
-            
+                          
             clear rvec2 index2;
             end
         end
-        
-%   %update_voxels - need to find a better way to do this
-% if voxels are updated with locally smoothed information then we change
-% CVR, and we dont want this - we only want to improve lag estimates
-%   [orig_voxel_ts, coordinates] = grabTimeseries(data, mask);
-%   parfor ii = 1:length(coordinates)
-%         wb_voxel_ts(ii,:) = interp(orig_voxel_ts(ii,:),opts.interp_factor);
-%   end      
     
-        %save lag and r maps
-        
+        %save lag and r maps        
         tmpLag = opts.TR*(lag_map/opts.interp_factor).*mask;
         if min(tmpLag(:)) < 0; tmpLag = tmpLag + abs(min(tmpLag(:))); end
         
@@ -714,12 +705,10 @@ if opts.cvr_maps
                     cd(opts.corrCVRdir);
                     niftiwrite(cast(mask.*bCVR,opts.mapDatatype),'bCVR_map',opts.info.map);
                     niftiwrite(cast(mask.*bR2,opts.mapDatatype),'bR2_map',opts.info.map);
-                    niftiwrite(cast(mask.*bSSE,opts.mapDatatype),'bSSE2_map',opts.info.map);
                     niftiwrite(cast(mask.*bTstat,opts.mapDatatype),'bTstat_map',opts.info.map);
                 else
                     saveImageData(mask.*bCVR, opts.headers.map, opts.corrCVRdir, 'bCVR_map.nii.gz', datatype);
                     saveImageData(mask.*bR2, opts.headers.map, opts.corrCVRdir,'bR2_map.nii.gz', datatype);
-                    saveImageData(mask.*bSSE, opts.headers.map, opts.corrCVRdir,'bSSE_map.nii.gz', datatype);
                     saveImageData(mask.*bTstat, opts.headers.map, opts.corrCVRdir,'bTstat_map.nii.gz', datatype);
                 end
                 maps.XCORR.CVR.bCVR = bCVR;
@@ -738,12 +727,10 @@ if opts.cvr_maps
                     opts.corrCVRdir
                     niftiwrite(cast(mask.*bCVR,opts.mapDatatype),'bCVR_eff_map',opts.info.map);
                     niftiwrite(cast(mask.*bR2,opts.mapDatatype),'bR2_eff_map',opts.info.map);
-                    niftiwrite(cast(mask.*bSSE,opts.mapDatatype),'bSSE2_eff_map',opts.info.map);
                     niftiwrite(cast(mask.*bTstat,opts.mapDatatype),'bTstat_eff_map',opts.info.map);
                 else
                     saveImageData(mask.*bCVR, opts.headers.map, opts.corrCVRdir, 'bCVR_eff_map.nii.gz', datatype);
                     saveImageData(mask.*bR2, opts.headers.map, opts.corrCVRdir,'bR2_eff_map.nii.gz', datatype);
-                    saveImageData(mask.*bSSE, opts.headers.map, opts.corrCVRdir,'bSSE_eff_map.nii.gz', datatype);
                     saveImageData(mask.*bTstat, opts.headers.map, opts.corrCVRdir,'bTstat_eff_map.nii.gz', datatype);
                 end
                 maps.XCORR.CVR.bCVR_eff = bCVR;
@@ -814,12 +801,10 @@ if opts.cvr_maps
                     cd(opts.corrCVRdir);
                     niftiwrite(cast(mask.*cCVR,opts.mapDatatype),'cCVR_map',opts.info.map);
                     niftiwrite(cast(mask.*cR2,opts.mapDatatype),'cR2_map',opts.info.map);
-                    niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'cSSE2_map',opts.info.map);
                     niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'cTstat_map',opts.info.map);
                 else
                     saveImageData(mask.*cCVR, opts.headers.map, opts.corrCVRdir,'cCVR_map.nii.gz', datatype);
                     saveImageData(mask.*cR2, opts.headers.map, opts.corrCVRdir,'cR2_map.nii.gz', datatype);
-                    saveImageData(mask.*cSSE, opts.headers.map, opts.corrCVRdir,'cSSE_map.nii.gz', datatype);
                     saveImageData(mask.*cTstat, opts.headers.map, opts.corrCVRdir,'cTstat_map.nii.gz', datatype);
                 end
                 maps.XCORR.CVR.cCVR = cCVR;
@@ -849,12 +834,10 @@ if opts.cvr_maps
                     cd(opts.corrCVRdir);
                     niftiwrite(cast(mask.*cCVR,opts.mapDatatype),'cCVR_eff_map',opts.info.map);
                     niftiwrite(cast(mask.*cR2,opts.mapDatatype),'cR2_eff_map',opts.info.map);
-                    niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'cSSE2_eff_map',opts.info.map);
                     niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'cTstat_eff_map',opts.info.map);
                 else
                     saveImageData(mask.*cCVR, opts.headers.map, opts.corrCVRdir,'cCVR_eff_map.nii.gz', datatype);
                     saveImageData(mask.*cR2, opts.headers.map, opts.corrCVRdir,'cR2_eff_map.nii.gz', datatype);
-                    saveImageData(mask.*cSSE, opts.headers.map, opts.corrCVRdir,'cSSE_eff_map.nii.gz', datatype);
                     saveImageData(mask.*cTstat, opts.headers.map, opts.corrCVRdir,'cTstat_eff_map.nii.gz', datatype);
                 end
                 maps.XCORR.CVR.cCVR_eff = cCVR;
@@ -1074,9 +1057,9 @@ if opts.glm_model
         cR2 = zeros([1 xx*yy*zz]); cSSE = zeros([1 xx*yy*zz]);
         cR2(1, coordinates) = R2; cR2 = reshape(cR2, [xx yy zz]);
         cSSE(1, coordinates) = SSE; cSSE = reshape(cSSE, [xx yy zz]);
-        cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);
-        
-        
+        cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);       
+       
+            
         switch pp
             case 1
                 if opts.niiwrite
@@ -1085,16 +1068,15 @@ if opts.glm_model
                     niftiwrite(cast(mask.*tmpLag,opts.mapDatatype),'optiReg_lags',opts.info.map);
                     niftiwrite(cast(mask.*GLM_lags,opts.mapDatatype),'uncor_optiReg_lags',opts.info.map);
                     niftiwrite(cast(mask.*cR2,opts.mapDatatype),'optiReg_R2',opts.info.map);
-                    niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'optiReg_SSE',opts.info.map);
                     niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'optiReg_Tstat',opts.info.map);
                 else
                     saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'optiReg_beta.nii.gz', datatype);
                     saveImageData(mask.*tmpLag, opts.headers.map, opts.glmlagdir, 'optiReg_lags.nii.gz', datatype);
                     saveImageData(mask.*GLM_lags, opts.headers.map,opts.glmlagdir, 'uncor_optiReg_lags.nii.gz', datatype);
                     saveImageData(mask.*cR2, opts.headers.map, opts.glmlagdir, 'optiReg_R2.nii.gz', datatype);
-                    saveImageData(mask.*cSSE, opts.headers.map, opts.glmlagdir, 'optiReg_SSE.nii.gz', datatype);
                     saveImageData(mask.*cTstat, opts.headers.map, opts.glmlagdir, 'optiReg_Tstat.nii.gz', datatype);
                 end
+                
                 maps.GLM.optiReg_ES = GLM_Estimate;
                 maps.GLM.optiReg_lags = tmpLag;
                 maps.GLM.uncor_optiReg_lags = GLM_lags;
@@ -1110,14 +1092,12 @@ if opts.glm_model
                     niftiwrite(cast(mask.*tmpLag,opts.mapDatatype),'inputReg_lags',opts.info.map);
                     niftiwrite(cast(mask.*GLM_lags,opts.mapDatatype),'uncor_inputReg_lags',opts.info.map);
                     niftiwrite(cast(mask.*cR2,opts.mapDatatype),'inputReg_R2',opts.info.map);
-                    niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'inputReg_SSE',opts.info.map);
                     niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'inputReg_Tstat',opts.info.map);
                 else
                     saveImageData(mask.*GLM_Estimate, opts.headers.map, opts.glmlagdir, 'inputReg_beta.nii.gz', datatype);
                     saveImageData(mask.*tmpLag, opts.headers.map, opts.glmlagdir, 'inputReg_lags.nii.gz', datatype);
                     saveImageData(mask.*GLM_lags, opts.headers.map, opts.glmlagdir, 'uncor_inputReg_lags.nii.gz', datatype);
                     saveImageData(mask.*cR2, opts.headers.map, opts.glmlagdir, 'inputReg_R2.nii.gz', datatype);
-                    saveImageData(mask.*cSSE, opts.headers.map, opts.glmlagdir, 'inputReg_SSE.nii.gz', datatype);
                     saveImageData(mask.*cTstat, opts.headers.map, opts.glmlagdir, 'inputReg_Tstat.nii.gz', datatype);
                 end
                 maps.GLM.inputReg_ES = GLM_Estimate;
@@ -1198,11 +1178,9 @@ if opts.glm_model
                 if opts.niiwrite
                     cd(opts.glmCVRdir)
                     niftiwrite(cast(mask.*cR2,opts.mapDatatype),'optiReg_cR2',opts.info.map);
-                    niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'optiReg_cSSE',opts.info.map);
                     niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'optiReg_cTstat',opts.info.map);
                 else
                     saveImageData(mask.*cR2, opts.headers.map, opts.glmCVRdir, 'optiReg_cR2.nii.gz', datatype);
-                    saveImageData(mask.*cSSE, opts.headers.map, opts.glmCVRdir, 'optiReg_cSSE.nii.gz', datatype);
                     saveImageData(mask.*cTstat, opts.headers.map, opts.glmCVRdir,'optiReg_cTstat.nii.gz', datatype);
                 end
                 maps.GLM.CVR.optiReg_cR2 = cR2;
@@ -1213,11 +1191,9 @@ if opts.glm_model
                 if opts.niiwrite
                     cd(opts.glmCVRdir)
                     niftiwrite(cast(mask.*cR2,opts.mapDatatype),'inputReg_cR2',opts.info.map);
-                    niftiwrite(cast(mask.*cSSE,opts.mapDatatype),'inputReg_cSSE',opts.info.map);
                     niftiwrite(cast(mask.*cTstat,opts.mapDatatype),'inputReg_cTstat',opts.info.map);
                 else
                     saveImageData(mask.*cR2, opts.headers.map, opts.glmCVRdir, 'inputReg_cR2.nii.gz', datatype);
-                    saveImageData(mask.*cSSE, opts.headers.map, opts.glmCVRdir, 'inputReg_cSSE.nii.gz', datatype);
                     saveImageData(mask.*cTstat, opts.headers.map, opts.glmCVRdir,'inputReg_cTstat.nii.gz', datatype);
                 end
             end

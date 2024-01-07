@@ -96,7 +96,7 @@
 // Maximum number of iterations in each resolution level:
 // 200-500 works usually fine for affine registration.
 // For more robustness, you may increase this to 1000-2000.
-(MaximumNumberOfIterations 3500)
+(MaximumNumberOfIterations 2500)
 
 // The step size of the optimizer, in mm. By default the voxel size is used.
 // which usually works well. In case of unusual high-resolution images
@@ -111,7 +111,7 @@
 // With an AdaptiveStochasticGradientDescent optimizer,
 // in combination with the two options below, around 2000
 // samples may already suffice.
-(NumberOfSpatialSamples 4000)
+(NumberOfSpatialSamples 2500)
 
 // Refresh these spatial samples in every iteration, and select
 // them randomly. See the manual for information on other sampling
@@ -125,7 +125,7 @@
 // It may improve accuracy if you set this to 3. Never use 0.
 // An order of 1 gives linear interpolation. This is in most 
 // applications a good choice.
-(BSplineInterpolationOrder 3)
+(BSplineInterpolationOrder 1)
 
 // Order of B-Spline interpolation used for applying the final
 // deformation.
@@ -133,7 +133,7 @@
 // 1 gives worse accuracy (linear interpolation)
 // 0 gives worst accuracy, but is appropriate for binary images
 // (masks, segmentations); equivalent to nearest neighbor interpolation.
-(FinalBSplineInterpolationOrder 3)
+(FinalBSplineInterpolationOrder 1)
 
 //Default pixel value for pixels that come from outside the picture:
 (DefaultPixelValue 0)
