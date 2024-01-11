@@ -166,6 +166,7 @@ if opts.refine_regressor
         roundprobe=0;
         stop=0;
         while stop==0
+            tic
             roundprobe=roundprobe+1;
             
             if roundprobe == 1 %rescaling probe may be helpful for initial iteration
@@ -226,7 +227,7 @@ if opts.refine_regressor
             ts_lag_filt(remove)=[];
             
             % re-aligning all timeseries based on lag for PCA
-            tic
+            
             new_shifted_ts = zeros(length(ts_lag_filt), length(probe));
             for hh = 1:length(ts_lag_filt)
                 new_shifted_ts(hh,:) = circshift(gm_voxel_ts_nonan_filt(:,hh),ts_lag_filt(hh));
@@ -237,8 +238,7 @@ if opts.refine_regressor
                 else
                     new_shifted_ts(hh,:) = gm_voxel_ts_nonan_filt(:,hh);
                 end
-            end
-            toc
+            end         
             
             disp('finished correlation, estimating new probe')
             
@@ -281,7 +281,6 @@ if opts.refine_regressor
                 outputpca = nan(size(pca_components));
                 clear pearsR
                 pearsR = zeros([1 length(pca_components(:,1))]);
-                tic
                 parfor dd = 1:length(pca_components(:,1))
                     pearsR(dd) = corr(newprobe,pca_components(dd,:)');
                     
@@ -296,7 +295,7 @@ if opts.refine_regressor
                 % weigthed average of refined regressor
                 newprobe=[];
                 newprobe = nanmean(outputpca,1)';
-                
+                toc
             else
                 newprobe=[];
                 newprobe = (nanmean(new_shifted_ts,1))';
@@ -680,7 +679,7 @@ if opts.cvr_maps
         regr_coef = C\wb_voxel_ts';
         
         bCVR(1,coordinates) = regr_coef(2,:); %extract slope
-        bCVR(bCVR > 10) = 0; bCVR(bCVR < -10) = 0; %cleanup base CVR map
+        bCVR(bCVR > 30) = 0; bCVR(bCVR < -30) = 0; %cleanup base CVR map
         bCVR = reshape(bCVR, [xx yy zz]);
         %original observations
         X = wb_voxel_ts;
@@ -774,7 +773,7 @@ if opts.cvr_maps
         end
         
         cCVR(1,coordinates) = regr_coef(2,:); %extract slope
-        cCVR(cCVR > 10) = 0; cCVR(cCVR < -10) = 0; %cleanup base CVR map
+        cCVR(cCVR > 30) = 0; cCVR(cCVR < -30) = 0; %cleanup base CVR map
         cCVR = reshape(cCVR, [xx yy zz]);
         
         %calculate statistics
@@ -898,9 +897,11 @@ if opts.cvr_maps && opts.eff_probe && opts.trace_corr && opts.robust
     if opts.robustR
         if opts.niiwrite
             cd(opts.corrCVRdir);
-            niftiwrite(cast(mask.*robustIR,opts.mapDatatype),'robustCVR_R',opts.info.map);
+            niftiwrite(cast(mask.*robustIR,opts.mapDatatype),'robustCVR_r',opts.info.map);
+            niftiwrite(cast(mask.*(robustIR.^2),opts.mapDatatype),'robustCVR_r2',opts.info.map);
         else
-            saveImageData(mask.*robustIR, opts.headers.map, opts.corrCVRdir,'robustCVR_R.nii.gz', datatype);
+            saveImageData(mask.*robustIR, opts.headers.map, opts.corrCVRdir,'robustCVR_r.nii.gz', datatype);
+            saveImageData(mask.*(robustIR.^2), opts.headers.map, opts.corrCVRdir,'robustCVR_r2.nii.gz', datatype);
         end
         maps.XCORR.CVR.robustCVR_R = robustIR;
     end
@@ -949,7 +950,7 @@ if opts.glm_model
         %perform regression at all lag times
         
         if isempty(np) || nnz(np) == 0
-            try
+            if opts.gpu
                 regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
                 wb_voxel_ts = gpuArray(wb_voxel_ts);
                 for ii=1:size(regr_matrix,1)
@@ -958,7 +959,7 @@ if opts.glm_model
                     regr_coef(ii,:,:)= gather(C\wb_voxel_ts(:,~isnan(A))');
                 end
                 wb_voxel_ts = gather(wb_voxel_ts);
-            catch
+            else
                 regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
                 parfor ii=1:size(regr_matrix,1)
                     A = regr_matrix(ii,:);
@@ -989,7 +990,7 @@ if opts.glm_model
         else
             regr_coef = zeros([size(lags,2) (size(norm_np,2)+2) length(coordinates)]);
             %run GLM
-            try
+            if opts.gpu
                 wb_voxel_ts = gpuArray(wb_voxel_ts);
                 for ii=1:size(regr_matrix,1)
                     A = gpuArray(regr_matrix(ii,:));
@@ -997,7 +998,7 @@ if opts.glm_model
                     regr_coef(ii,:,:)= gather(C\wb_voxel_ts(:,~isnan(A))');
                 end
                 wb_voxel_ts = gather(wb_voxel_ts);
-            catch
+            else
                 parfor ii=1:size(regr_matrix,1)
                     A = regr_matrix(ii,:);
                     C = [ones([length(A(1,~isnan(A))) 1]) norm_np(~isnan(A),:) A(1,~isnan(A))'];
@@ -1138,7 +1139,7 @@ if opts.glm_model
             end
             
             cCVR(1,coordinates) = regr_coef(end,:); %extract slope
-            cCVR(cCVR > 20) = 0; cCVR(cCVR < -20) = 0; %cleanup base CVR map
+            cCVR(cCVR > 30) = 0; cCVR(cCVR < -30) = 0; %cleanup base CVR map
             cCVR = reshape(cCVR, [xx yy zz]);
             %save lag-adjusted CVR map
             if pp == 1

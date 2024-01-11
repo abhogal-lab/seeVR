@@ -81,6 +81,7 @@ else
 end
 
 mmask(isinf(tNSR)) = 0; mmask(tNSR > opts.LVthresh) = 0; %This step should remove vessels and garbage data
+
 %saves new brain mask excluding voxels
 if opts.niiwrite
     name = fullfile(opts.resultsdir,['mWBmask_',num2str(opts.LVthresh)]);
@@ -94,7 +95,7 @@ end
     disp('saving tSNR map');
     disp('saving 1/tSD map')
     disp('saving tNSR map')
-    disp('updating whole brain mask')
+    disp('saving updated whole brain mask')
     
     % Plot
     figure;

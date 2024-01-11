@@ -1,6 +1,6 @@
 % Copyright (C) Alex A. Bhogal, 2023, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <fitDynamics: fits a convolved hemodynamic response function to extract dynamic (i.e. TAU) CVR information >
+% <fitTau: fits a convolved hemodynamic response function to extract dynamic (i.e. TAU) CVR information >
 %
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 % Measuring cerebrovascular reactivity: the dynamic response to a step hypercapnic stimulus
 % DOI: 10.1038/jcbfm.2015.114
 %
-%
 % data: input timeseries data (i.e. 4D BOLD MRI dataset)
 %
 % mask: binary mask defining voxels of interest
@@ -30,6 +29,8 @@
 %
 function [maps] = fitTau(probe, data, mask, opts)
 global opts
+tic
+
 ty = class(data);
 data = double(data);
 mask = logical(mask);
@@ -40,7 +41,6 @@ if isfield(opts,'refine_tau'); else; opts.refine_tau = 1; end              %defa
 if isfield(opts,'passes'); else; opts.passes = 10; end                     %maximum number of refinement passes
 if isfield(opts,'win_size'); else; opts.win_size = 1; end                  %the number of voxels to consider around the voxel of interest when opts.refine_tau = 1;
 if isfield(opts,'max_tau'); else; opts.max_tau = 300; end                  %maximum exponential dispersion time constant - data dependent
-
 
 opts.dynamicdir = fullfile(opts.resultsdir,'tau'); mkdir(opts.dynamicdir);
 [xx yy zz dyn] = size(data);
@@ -76,29 +76,20 @@ options = optimoptions('lsqcurvefit','Display','none','FunctionTolerance',1.0000
     'StepTolerance', 1.0000e-8, 'MaxIter',150);
 
 nr_params = 3;
-
 b = nan([length(coordinates), nr_params]);
 
 model = (@(a,t) a(1)*rescale(real(ifft(ifftshift(fftinput(input_probe).*fftexponential(a(2),t)))))+a(nr_params));
-a0 = [0 20 0];
-lb = [ 0  0 -10];
-ub = [ 30 opts.max_tau 20];
 
-tic
+% bounds
+lb = [ -20  0 -Inf];
+ub = [ 30 opts.max_tau Inf];
 
 parfor ii=1:length(coordinates)
     try
         b(ii,:) = lsqcurvefit(model,[range(ts(ii,:)) 20 0],t,ts(ii,:),lb,ub,options);
     catch
-        %continue
         printf(['error voxel ',int2str(ii)])
     end
-    %         y_fit = model(b(ii,:),t);
-    %         % Plot the results
-    %         figure
-    %         plot(t,(ts(ii,:)),'r-',t,(y_fit),'b-'); hold on; plot(t,probe)
-    %         legend('Observed Data','Fitted Model');
-    %         pause(0.1)
 end
 
 b1_vec = zeros([1 xx*yy*zz]);
@@ -106,7 +97,7 @@ b2_vec = b1_vec; b3_vec = b1_vec;
 
 b1_vec(1, coordinates) = b(:,1);
 b2_vec(1, coordinates) = b(:,2);
-b3_vec(1, coordinates) = b(:,3); 
+b3_vec(1, coordinates) = b(:,3);
 
 % refined analysis for clipped tau values
 
@@ -144,25 +135,24 @@ if opts.refine_tau
                 tmp =  data(X_rng,Y_rng,Z_rng,:);
                 tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), size(tmp,4)]);
                 tmp(find(tmp(:,1) == 0),:) = [];
-                data(X(kk),Y(kk),Z(kk),:) = mean(tmp); %update data matrix for next iteration
-                newTS(kk,:) = interp(mean(tmp),opts.interp_factor);
+                data(X(kk),Y(kk),Z(kk),:) = nanmean(tmp); %update data matrix for next iteration
+                newTS(kk,:) = interp(nanmean(tmp),opts.interp_factor);
             catch
                 disp('error; skipping voxel')
             end
         end
         
         clear tmp
-        
-        %calculate tau
+        %fit for tau
         parfor ii=1:length(newcoordinates)
             try
                 b(ii,:) = lsqcurvefit(model,[range(ts(ii,:)) 20 0],t,newTS(ii,:),lb,ub,options);
             catch
-                printf(['error voxel ',int2str(ii)])
+                disp(['error voxel ',int2str(ii)])
             end
         end
-        b1_vec(1, newcoordinates) = b(:,1); 
-        b2_vec(1, newcoordinates) = b(:,2); 
+        b1_vec(1, newcoordinates) = b(:,1);
+        b2_vec(1, newcoordinates) = b(:,2);
         b3_vec(1, newcoordinates) = b(:,3);
         
         %make new tau map for check
@@ -171,28 +161,24 @@ if opts.refine_tau
         max_map(ceil(b2_map) == max_tau) = 1;
         perc = 100*(nnz(max_map)/nnz(mask));
         disp([int2str(perc), ' percent of voxels have clipped tau values'])
-            if perc > 2
-                if passes < opts.passes
-                    continue;
-                else; iter = 0;
-                    disp('exceeded the maximum allowed passes')
-                    disp('... to increase passes set opts.passes to a higher value')
-                end
-            else
-                iter = 0;
+        if perc > 2
+            if passes < opts.passes
+                continue;
+            else; iter = 0;
+                disp('exceeded the maximum allowed passes')
+                disp('... to increase passes set opts.passes to a higher value')
             end
+        else
+            iter = 0;
+        end
     end
     
-    
-b1_map = reshape(b1_vec, [xx yy zz]);
-b2_map = reshape(b2_vec, [xx yy zz]);    
-b3_map = reshape(b3_vec, [xx yy zz]);   
-    
-    
+    b1_map = reshape(b1_vec, [xx yy zz]);
+    b2_map = reshape(b2_vec, [xx yy zz]);
+    b3_map = reshape(b3_vec, [xx yy zz]);
 end
+%% save maps and calculate stats
 
-
-%%
 if opts.niiwrite
     cd(opts.dynamicdir);
     niftiwrite(cast(mask.*b1_map,opts.mapDatatype),'exp_scaling',opts.info.map);
@@ -202,29 +188,43 @@ else
     saveImageData(mask.*b1_map, opts.headers.map, opts.dynamicdir, 'exp_scaling.nii.gz', 64);
     saveImageData(mask.*b2_map, opts.headers.map, opts.dynamicdir, 'exp_tau.nii.gz', 64);
     saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'exp_offset.nii.gz', 64);
-    
 end
 
 maps.expHRF.scale = b1_map;
 maps.expHRF.tau = b2_map;
 maps.expHRF.offset = b3_map;
 
-%Working on using tau fit to more accurately estimate CVR
-%rebuild model responses
-%responseFits = zeros(size(ts));
+responseFits = zeros(length(coordinates), length(t));
+b = [];
+b(1,:) = b1_map(coordinates);
+b(2,:) = b2_map(coordinates);
+b(3,:) = b3_map(coordinates);
+SSE = zeros(1,length(coordinates));
+SST = zeros(1,length(coordinates));
+r_corr = zeros(1,length(coordinates));
 
-%     parfor ii=1:length(coordinates)
-%
-%     responseFits(ii,:) = b(ii,1).*rescale(real(ifft(ifftshift(fftinput(probe).*fftshift(fft(exp(-t/b(ii,2))))))))+b(ii,3);
-%
-%     end
+parfor ii=1:length(coordinates)
+    responseFits(ii,:) = b(1,ii)*rescale(real(ifft(ifftshift(fftinput(input_probe).*fftexponential(b(2,ii),t)))))+b(3,ii);
+    SSE(1,ii) = (norm(ts(ii,:) - responseFits(ii,:)))^2;
+    SST(1,ii) = (norm(ts(ii,:)-mean(ts(ii,:))))^2;
+    r_corr(1,ii) = corr(ts(ii,:)', responseFits(ii,:)');
+end
 
-toc
+R2 = 1 - SSE./SST; R2(R2 > 0) = 0;
+cR2 = zeros(1, numel(mask)); r = zeros(1, numel(mask));
+cR2(1, coordinates) = R2; r(1, coordinates) = r_corr;
+cR2 = reshape(cR2, size(mask)); r = reshape(r, size(mask));
 
+if opts.niiwrite
+    niftiwrite(cast(mask.*cR2,opts.mapDatatype),'R2_map',opts.info.map);
+    niftiwrite(cast(mask.*r,opts.mapDatatype),'r_map',opts.info.map);
+    niftiwrite(cast(mask.*(r.^2),opts.mapDatatype),'expVariance_r2_map',opts.info.map);
+else
+    saveImageData(mask.*cR2, opts.headers.map, opts.corrCVRdir,'R2_map.nii.gz', 64);
+    saveImageData(mask.*r, opts.headers.map, opts.corrCVRdir,'r_map.nii.gz', 64);
+    saveImageData(mask.*(r.^2), opts.headers.map, opts.corrCVRdir,'expVariance_r2_map', 64);
+end
 
-maps.GLM.b1_map = b1_map;
-maps.GLM.b2_map = b2_map;
-maps.b3_map = b3_map;
 toc
 
 end

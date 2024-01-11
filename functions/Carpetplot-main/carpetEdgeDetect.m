@@ -109,10 +109,10 @@ if isfield(opts.carpet,'neur_thresh'); else; opts.carpet.neur_thresh = 0.15; end
 if isfield(opts.carpet,'rescale'); else; opts.carpet.rescale = 1; end
 if isfield(opts.carpet,'knots'); else; opts.carpet.knots = 3; end
 if isfield(opts.carpet,'fittype'); else; opts.carpet.fittype = 'spline'; end                    %can be 'spline' or 'linear'
-if isfield(opts.carpet,'old_smooth'); else; opts.carpet.old_smooth = 0'; end                    %added smoothing option
-if isfield(opts.carpet,'invert'); else; opts.carpet.invert = 0'; end                            %inversion can help with certain datasets (i.e. Gd)
-if isfield(opts.carpet,'peak'); else; opts.carpet.peak = 0'; end                                %calculate based on inflections (i.e. Gd)
-if isfield(opts.carpet,'interp_factor'); else; opts.carpet.interp_factor = 1; end                      %factor by which to temporally interpolate data.
+if isfield(opts.carpet,'old_smooth'); else; opts.carpet.old_smooth = 0; end                    %added smoothing option
+if isfield(opts.carpet,'invert'); else; opts.carpet.invert = 0; end                            %inversion can help with certain datasets (i.e. Gd)
+if isfield(opts.carpet,'peak'); else; opts.carpet.peak = 0; end                                %calculate based on inflections (i.e. Gd)
+if isfield(opts.carpet,'interp_factor'); else; opts.carpet.interp_factor = 1; end               %factor by which to temporally interpolate data.
 
 
 %setup savedir
