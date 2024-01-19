@@ -41,6 +41,7 @@ if isfield(opts,'refine_tau'); else; opts.refine_tau = 1; end              %defa
 if isfield(opts,'passes'); else; opts.passes = 10; end                     %maximum number of refinement passes
 if isfield(opts,'win_size'); else; opts.win_size = 1; end                  %the number of voxels to consider around the voxel of interest when opts.refine_tau = 1;
 if isfield(opts,'max_tau'); else; opts.max_tau = 300; end                  %maximum exponential dispersion time constant - data dependent
+if isfield(opts,'save_unrefined'); else; opts.save_unrefined = 0; end          %save maps before refinement step to check effect
 
 opts.dynamicdir = fullfile(opts.resultsdir,'tau'); mkdir(opts.dynamicdir);
 [xx yy zz dyn] = size(data);
@@ -53,7 +54,7 @@ if size(data,4) ~= length(probe) && opts.interp_factor > 1
     disp('interpolating data')
     t = opts.TR/opts.interp_factor:opts.TR/opts.interp_factor:size(data,4)*opts.TR;
     parfor ii = 1:length(coordinates)
-        ts(ii,:) = interp(voxel_ts(ii,:),opts.interp_factor);
+        ts(ii,:) = interp(voxel_ts(ii,:), opts.interp_factor);
     end
     clear voxel_ts;
 elseif size(data,4) == length(probe) && opts.interp_factor > 1
@@ -101,7 +102,26 @@ b3_vec(1, coordinates) = b(:,3);
 
 % refined analysis for clipped tau values
 
+if opts.save_unrefined && opts.refine_tau
+    
+    b1_map = reshape(b1_vec, [xx yy zz]);
+    b2_map = reshape(b2_vec, [xx yy zz]);
+    b3_map = reshape(b3_vec, [xx yy zz]);
+    
+    if opts.niiwrite
+        cd(opts.dynamicdir);
+        niftiwrite(cast(mask.*b1_map,opts.mapDatatype),'exp_scaling_unrefined',opts.info.map);
+        niftiwrite(cast(mask.*b2_map,opts.mapDatatype),'exp_tau_unrefined',opts.info.map);
+        niftiwrite(cast(mask.*b3_map,opts.mapDatatype),'exp_offset_unrefined',opts.info.map);
+    else
+        saveImageData(mask.*b1_map, opts.headers.map, opts.dynamicdir, 'exp_scaling.nii.gz', 64);
+        saveImageData(mask.*b2_map, opts.headers.map, opts.dynamicdir, 'exp_tau.nii.gz', 64);
+        saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'exp_offset.nii.gz', 64);
+    end
+end
+
 if opts.refine_tau
+    
     b2_map = reshape(b2_vec, [xx yy zz]);
     iter = 1;
     passes = 0;
@@ -190,10 +210,6 @@ else
     saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'exp_offset.nii.gz', 64);
 end
 
-maps.expHRF.scale = b1_map;
-maps.expHRF.tau = b2_map;
-maps.expHRF.offset = b3_map;
-
 responseFits = zeros(length(coordinates), length(t));
 b = [];
 b(1,:) = b1_map(coordinates);
@@ -224,6 +240,13 @@ else
     saveImageData(mask.*r, opts.headers.map, opts.corrCVRdir,'r_map.nii.gz', 64);
     saveImageData(mask.*(r.^2), opts.headers.map, opts.corrCVRdir,'expVariance_r2_map', 64);
 end
+
+maps.expHRF.scale = b1_map;
+maps.expHRF.tau = b2_map;
+maps.expHRF.offset = b3_map;
+maps.expHRF.R2 = cR2;
+maps.expHRF.r = r;
+maps.expHRF.explainedVariance = r.^2;
 
 toc
 
