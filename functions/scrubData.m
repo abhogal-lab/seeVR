@@ -14,8 +14,7 @@
 %
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-function [cleanData] = scrubData(data, mask, nuisance, probe, opts)
+%
 % Linear regression of input probes and nuisance regressors is performed on
 % data in regions specified by the mask. Nuisance timeseries defined by
 % nuisance regressors and co-efficients are summed and removed. For a
@@ -35,6 +34,16 @@ function [cleanData] = scrubData(data, mask, nuisance, probe, opts)
 %
 % opts: options structure containing required variables for this specific
 % function; i.e. opts.figdir, opts.headers.ts, opts.resultsdir
+%
+% OUTPUTS
+%
+% cleanData: data scrubbed of nuisance signals
+%
+% np0: nuisance signals used during scrubbing
+%
+% np0: nuisance signals with high correlation to input that are rejected
+%
+function [cleanData, np0, np1] = scrubData(data, mask, nuisance, probe, opts)
 
 warning('off');
 global opts;
@@ -57,7 +66,6 @@ else
     test1 = probe(1,:); test2 = probe(:,1);
     if length(test1) > length(test2); probe = probe'; end; clear test1 test2
     limits = [0 size(probe,1)];
-    probemap = colormap(flip(brewermap(size(probe,2),'Spectral')));
 end
 if isempty(nuisance)
     nuisance = zeros(length(probe));
@@ -67,23 +75,24 @@ else
     limits = [0 size(nuisance,1)];
 end
 
-
 %prepare nuisance probes
-[np0] = prepNuisance(nuisance,probe, opts);
-nuisancemap = colormap(flip(brewermap(size(np0,2),'Spectral')));
+disp('preparing nuisance signals')
+[np0, np1] = prepNuisance(nuisance,probe, opts);
+nuisancemap = flip(brewermap(size(np0,2),'Spectral'));
 
 if opts.disperse_probe
-opts.disp = [5 15 25 35]; %dispersion
-[~,~,probe] = convHRF(probe, opts);
-probe = probe';
+    disp('adding dispersion terms to input probe (i.e. explanatory probe)')
+    opts.disp = 3:3:3*5; %dispersion
+    [~,~,probe] = convHRF(probe, opts);
+    probe = probe';
 end
 
-probemap = colormap(flip(brewermap(size(probe,2),'Spectral')));
+probemap = flip(brewermap(size(probe,2),'Spectral'));
 probesize = size(probe,2);
 
 %perform regression
+disp('running GLM')
 np = [probe np0];
-
 D = [ones([length(np) 1]) np];
 np_coef = D\voxel_ts';
 
@@ -150,4 +159,3 @@ end
 cleanData = cast(cleanData, tf);
 
 end
-

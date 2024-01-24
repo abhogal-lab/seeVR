@@ -50,8 +50,11 @@ mask = logical(mask);
 
 if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.1164]; end  %default frequency band see doi: 10.1148/radiol.2021203568
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data is loaded this can be set to 1 to use native load/save functions
-if isfield(opts,'prepNuisance'); else; opts.prepNuisance = 0; end %filter regressors if applicable
-if isempty(nuisance); np = []; else
+if isfield(opts,'prepNuisance'); else; opts.prepNuisance = 1; end %filter regressors if applicable
+if isempty(nuisance)
+    np = [];
+    opts.prepNuisance = 0
+else
     test1 = nuisance(1,:); test2 = nuisance(:,1);
     if length(test1) > length(test2); nuisance = nuisance';
     end
@@ -61,9 +64,7 @@ end
     %prepare nuisance probes
     if opts.prepNuisance
         reference = meanTimeseries(data, refmask);
-        np = prepNuisance(nuisance,reference, opts);
-        %[norm_np,~]=licols(np);
-       
+        [np, ~] = prepNuisance(nuisance,reference, opts);     
         clear reference;
     else
         np = nuisance;
