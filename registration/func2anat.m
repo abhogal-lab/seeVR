@@ -97,10 +97,10 @@ opts.affineTxParamFile = forward_transform;
 opts.inverseAffineTxParamFile = inverse_transform;
 
 name1 = fullfile(opts.affine_dir,'result.0.nii.gz');
-name2 = [fullfile(opts.affine_dir,'func2anat.nii.gz')];
+name2 = fullfile(opts.affine_dir,'func2anat.nii.gz');
 movefile(name1, name2)
 
-disp('registration of func to anat complete')
+disp('registration of moving to anat complete')
 disp(['transformation file saved as: ',fullfile(opts.affine_dir,'TransformParameters.0.txt')])
 disp(['final image saved as: ',name2])
 opts.affineTxParamFile = fullfile(opts.affine_dir,'TransformParameters.0.txt');
