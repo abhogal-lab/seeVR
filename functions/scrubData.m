@@ -49,12 +49,12 @@ warning('off');
 global opts;
 tf = class(data);
 data = double(data);
+datadims = ndims(data);
 nuisance = double(nuisance);
 probe = double(rescale(probe));
 
 [x,y,z,dyn] = size(data);
 [voxel_ts, coordinates] = grabTimeseries(data, mask);
-
 %function options
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end
 if isfield(opts,'save_cleaned'); else; opts.save_cleaned = 0; end
@@ -105,7 +105,7 @@ parfor ii=1:size(np0,2)
     nuis_TS = nuis_TS+tmp;
 end
 
-switch ndims(data)
+switch datadims
     case 4
         clean_data = voxel_ts - nuis_TS';
         cleanData = zeros([x*y*z,size(clean_data,2)]);
@@ -156,6 +156,38 @@ if opts.save_cleaned
         saveImageData(cleanData, opts.headers.ts, opts.resultsdir, 'cleanBOLD.nii.gz', 64);
     end
 end
+
+clear data;
+[clean_voxel_ts, ~] = grabTimeseries(cleanData, mask);
 cleanData = cast(cleanData, tf);
+
+%calculate Euclidean Distance
+euclidean_distance = sqrt(sum((voxel_ts' - clean_voxel_ts').^2));
+
+euclidean_distance_map = zeros([1 numel(mask)]);
+euclidean_distance_map(coordinates) = euclidean_distance;
+euclidean_distance_map = reshape(euclidean_distance_map, size(mask));
+
+%calculate MAP
+absolute_percentage_errors = abs((clean_voxel_ts' - voxel_ts') ./clean_voxel_ts') * 100;
+mape_value = mean(absolute_percentage_errors);
+
+mape_map = zeros([1 numel(mask)]);
+mape_map(coordinates) = euclidean_distance;
+mape_map = reshape(mape_map, size(mask));
+
+if opts.niiwrite
+    cd(opts.resultsdir);
+    niftiwrite(cast(euclidean_distance_map,opts.mapDatatype),'euclidean_distance',opts.info.map);
+    niftiwrite(cast(mape_map,opts.mapDatatype),'MAPE',opts.info.map);
+else
+    saveImageData(euclidean_distance_map,opts.headers.map,opts.resultsdir,'euclidean_distance.nii.gz',64);
+    saveImageData(mape_map,opts.headers.map,opts.resultsdir,'MAPE.nii.gz',64);
+end
+
+
+
+
+
 
 end
