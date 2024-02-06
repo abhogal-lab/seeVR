@@ -17,7 +17,7 @@
 (Optimizer "AdaptiveStochasticGradientDescent")
 (Transform "BSplineTransform")
 //(Metric "TransformBendingEnergyPenalty")
-(Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
+(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedMattesMutualInformation") 
 (Metric0Weight 0.1)
@@ -28,7 +28,7 @@
 
 // ***************** Transformation **************************
 (NumberOfResolutions 5)
-(FinalGridSpacingInVoxels 8.0)
+(FinalGridSpacingInVoxels 6.0)
 (GridSpacingSchedule 12 8 4 2.0 1)
 (HowToCombineTransforms "Compose")
 
@@ -42,18 +42,19 @@
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 600 1000 2000 2000 4000) 
+(MaximumNumberOfIterations 600 1000 2000 4000 4000) 
 
 // **************** Image sampling **********************
-(AutomaticTransformInitializationMethod "GeometricalCenter")
+(AutomaticTransformInitializationMethod "CenterOfGravity")
 (NumberOfSpatialSamples 8000) 
 (NewSamplesEveryIteration "true")
-(ImageSampler "MultiInputRandomCoordinate")
+(ImageSampler "RandomSparseMask")
+//(ImageSampler "MultiInputRandomCoordinate")
 //(ImageSampler "RandomCoordinate")
 //(SampleRegionSize 40)  
 (UseRandomSampleRegion "true")
-(MaximumNumberOfSamplingAttempts 20)
-(SampleRegionSize 30.0 30.0 30.0)
+//(MaximumNumberOfSamplingAttempts 40)
+(SampleRegionSize 40.0 40.0 40.0)
 
 (UseAdaptiveStepSizes "true")
 // ************* Interpolation and Resampling ****************

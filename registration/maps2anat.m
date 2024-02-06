@@ -116,7 +116,7 @@ opts.affineTxParamFile = forward_transform;
 opts.inverseAffineTxParamFile = inverse_transform;
 
 name1 = fullfile(opts.affine_dir,'result.0.nii.gz');
-name2 = [fullfile(opts.affine_dir,'func2anat.nii.gz')];
+name2 = fullfile(opts.affine_dir,'func2anat.nii.gz');
 movefile(name1, name2)
 
 %apply transforms
