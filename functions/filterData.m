@@ -43,7 +43,7 @@ data(isnan(data)) = 0;
 warning('off');
 global opts;
 type = class(data);
-if isfield(opts,'filter'); else; opts.filter = 'bilateral'; end
+if isfield(opts,'filter'); else; opts.filter = 'gaussian'; end
 if isfield(opts,'spatialdim'); else; opts.spatialdim = 2; end
 if isfield(opts,'FWHM'); else; opts.FWHM = [4 4 4]; end
 if isfield(opts,'sigma_range') 
