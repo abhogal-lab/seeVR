@@ -185,9 +185,4 @@ else
     saveImageData(mape_map,opts.headers.map,opts.resultsdir,'MAPE.nii.gz',64);
 end
 
-
-
-
-
-
 end

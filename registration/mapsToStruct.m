@@ -1,6 +1,7 @@
 % Copyright (C) Alex A. Bhogal, 2023, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <func2anat: uses elastix to register a functional image to an anatomical image >
+% <mapsToStruct: uses elastix to register paramter maps an anatomical image 
+% via the associated functional image >
 %
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -31,20 +32,47 @@
 % refMask: path (i.e. directory AND filename with extention) to fixed, or
 % anatomical mask (binary image)
 %
+% mapdir: path to where parameter files (derived from functional data) are
+% stored. These should have the same dimensions as the functional data
+% (except for -t dimention). All .nii* files in this directory will be
+% transformed to anat space
+%
 % opts: options structure containing required variables for this specific
 % function; i.e. opts.resultsdir and opts.elastixdir
 %
 % opts.elastixdir: !!!Important: This is where the elastix binaries are
 % stored: e.g., /seeVR-main/registration/elastix
 %
-% Parameter files are stored in
+% parameter files are stored in
 % /seeVR-main/registration/elastix/parameter_files and can be optimized as
 % needed. See the elastix manual
 
-function [] = func2anat(moveImg, moveMask, refImg, refMask, opts)
+function [] = mapsToStruct(moveImg, moveMask, refImg, refMask, mapdir, opts)
 global opts
+
 try opts.elastixdir; catch
-    error('elastix directory not specified... specify OS-dependent path to elastix: opts.elastixdir = ADDPATH')
+    error('elastix directory not specified... specify path to elastix: opts.elastixdir = ADDPATH')
+end
+
+elastixroot = opts.elastixdir;
+elastixparam = fullfile(elastixroot, 'parameter_files')
+
+disp('checking for parameter file...')
+
+if exist(fullfile(elastixparam,'ParameterFileAf.txt')) == 2
+    disp('found parameter file')
+    param_af = fullfile(elastixparam,'ParameterFileAf.txt');
+else 
+    error(['check elastix parameter file. Expected: ',fullfile(elastixparam,'ParameterFileAf.txt')])
+end
+
+%setup OS-dependent paths
+if ispc
+elastixrootOS = fullfile(elastixroot,'windows');
+elseif ismac
+elastixrootOS = fullfile(elastixroot,'mac');
+else
+elastixrootOS = fullfile(elastixroot,'linux');
 end
 
 disp(['moving image: ',moveImg])
@@ -81,18 +109,9 @@ disp(['path to reference image: ',refMask])
 opts.affine_dir = fullfile(opts.resultsdir,'affineReg'); mkdir(opts.affine_dir);
 disp(['moving to fixed transform saved in: ',opts.affine_dir]);
 
-disp('checking for parameter file...')
-
-if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')) == 2
-    disp('found parameter file')
-    param_af = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt');
-else 
-    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')])
-end
-
 disp('performing registration of moving to fixed image')
 
-[~] = affineReg(moveImg, moveMask, refImg, refMask, param_af, opts.affine_dir, opts.elastixdir);
+[~, forward_transform, inverse_transform] = affineReg(moveImg, moveMask, refImg, refMask, param_af, opts.affine_dir, elastixrootOS);
 opts.affineTxParamFile = forward_transform;
 opts.inverseAffineTxParamFile = inverse_transform;
 
@@ -100,8 +119,28 @@ name1 = fullfile(opts.affine_dir,'result.0.nii.gz');
 name2 = fullfile(opts.affine_dir,'func2anat.nii.gz');
 movefile(name1, name2)
 
-disp('registration of moving to anat complete')
-disp(['transformation file saved as: ',fullfile(opts.affine_dir,'TransformParameters.0.txt')])
-disp(['final image saved as: ',name2])
-opts.affineTxParamFile = fullfile(opts.affine_dir,'TransformParameters.0.txt');
+%apply transforms
+disp(['path to parameter maps: ',mapdir])
+dirinfo = dir(mapdir);
+
+opts.regOutput = fullfile(mapdir,'regOutput'); mkdir(opts.regOutput);
+disp(['transformed parameter maps will be saved in: ', opts.regOutput])
+
+%apply Tx
+for kk=1:size(dirinfo,1)
+    if dirinfo(kk).isdir
+    else
+        TxImg = fullfile(dirinfo(kk).folder,dirinfo(kk).name);
+        [~] = transformixReg(TxImg, opts.affineTxParamFile, opts.regOutput, elastixrootOS);
+        %rename result image
+        [FILEPATH,NAME,EXT] = fileparts(TxImg);
+        name1 = fullfile(opts.regOutput,'result.nii.gz');
+        name2 = fullfile(opts.regOutput,[NAME,'_anat.nii.gz']);
+        movefile(name1, name2)
+    end
+end
+
+disp('...')
+disp('registration of moving image to fixed image space complete')
+disp('associated parameter maps transformed to fixed image space')
 end
