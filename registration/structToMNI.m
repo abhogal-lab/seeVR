@@ -1,6 +1,6 @@
 % Copyright (C) Alex A. Bhogal, 2023, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <regToMNI: uses elastix to perform registration of input anatomical image
+% <structToMNI: uses elastix to perform registration of input anatomical image
 % to MNI image.
 %
 %
@@ -33,13 +33,13 @@
 % opts.elastixdir: !!!Important: This is where the elastix binaries are
 % stored: e.g., /seeVR-main/registration/elastix
 
-function [image, forward_transform, inverse_transform] = structToMNI(moveImg, moveMask, opts)
+function [trans_params] = structToMNI(moveImg, moveMask, opts)
 global opts
 
 if isfield(opts,'T1'); else; opts.T1 = 1; end
 
 try opts.elastixdir; catch
-    error('elastix directory not specified... specify OS-dependent path to elastix: opts.elastixdir = ADDPATH')
+    error('elastix directory not specified... specify OS-dependent path to elastix: e.g. opts.elastixdir = /.../seeVR/registration/elastix/')
 end
 
 disp(['moving image: ',moveImg])
@@ -56,47 +56,89 @@ else
     error('check moving mask filename and extension')
 end
 
-%perform affine registration of anat to MNI
+opts.bspline_dir = fullfile(opts.resultsdir,'bsplineRegtoMNI');
+if exist(opts.bspline_dir) == 7
+cd(opts.bspline_dir);
+delete *.*
+else
+mkdir(opts.bspline_dir);
+end
+%select MNI image
 
-% affine transformdir
-opts.affine_dir = fullfile(opts.resultsdir,'affineRegtoMNI'); mkdir(opts.affine_dir);
-disp(['moving to fixed transform saved in: ',opts.affine_dir]);
+if opts.T1
+    disp('performing initial affine registration of moving to T1-weighted MNI image')
+    refImg = fullfile(opts.elastixdir,'MNI','t1_1mm_brain.nii.gz')
+else
+    disp('performing initial affine registration of moving to T2-weighted MNI image')
+    refImg = fullfile(opts.elastixdir,'MNI','t2_1mm_brain.nii.gz')
+end
+
+refMask = fullfile(opts.elastixdir,'MNI','brainmask_1mm.nii.gz')
 
 disp('checking for affine parameter file...')
 
 if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')) == 2
     disp('found parameter file')
-    param_af = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt');
+    param_af_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt');
+    param_af = fullfile(opts.bspline_dir,'ParameterFileAf.txt');
+    copyfile(param_af_base, param_af)
+    disp(['copying affine parameter file to: ', opts.bspline_dir])     
 else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')])
 end
 
-%select MNI image
+disp('checking for bspline parameter file...')
 
-if opts.T1
-    disp('using T1-weighted MNI image')
-    refImg = fullfile(opts.elastixdir,'/MNI/t1_1mm_brain.nii.gz')
+if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')) == 2
+    disp('found parameter file')
+    param_bs_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileBS.txt');
+    param_bs = fullfile(opts.bspline_dir,'ParameterFileBs.txt');
+    copyfile(param_bs_base, param_bs)
+    disp(['copying affine parameter file to: ', opts.bspline_dir])     
 else
-    disp('using T2-weighted MNI image')
-    refImg = fullfile(opts.elastixdir,'/MNI/t2_1mm_brain.nii.gz')
+    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')])
 end
 
-refMask = fullfile(opts.elastixdir,'/MNI/brainmask_1mm/nii.gz')
+[trans_params] = nlinReg(moveImg, moveMask, refImg, refMask, param_af, param_bs, opts.bspline_dir, opts.elastixdir)
 
-disp('performing initial affine registration of moving to fixed image')
+% update transform parameters
+outputdir = fullfile(opts.bspline_dir,'Inverse'); 
+mbs = fullfile(outputdir,'mTransformParameters.1.txt');
+adaptElastixTransFile( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
+adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '0')
 
-[~] = affineReg(moveImg, moveMask, refImg, refMask, param_af, opts.affine_dir, opts.elastixdir);
-opts.affineTxParamFile = forward_transform;
-opts.inverseAffineTxParamFile = inverse_transform;
+%% apply transformations to MNI masks
+% to binary masks
+maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
+maskname = dir('*.nii.gz*');
 
-name1 = fullfile(opts.affine_dir,'result.0.nii.gz');
-name2 = fullfile(opts.affine_dir,'func2anat.nii.gz');
+fileToRename = fullfile(outputdir,'result.nii.gz');
+
+for kk=1:size(maskname,1)
+maskImg = maskname(kk).name
+[FILEPATH,NAME,EXT] = fileparts(maskImg);
+trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+dos(trans_command); 
+name1 = fileToRename;
+name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
 movefile(name1, name2)
+end
 
-disp('registration of moving to anat complete')
-disp(['transformation file saved as: ',fullfile(opts.affine_dir,'TransformParameters.0.txt')])
-disp(['final image saved as: ',name2])
-opts.affineTxParamFile = fullfile(opts.affine_dir,'TransformParameters.0.txt');
+clear maskname
+% to probability maps
+adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '3')
 
+probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
+maskname = dir('*.nii.gz*');
+
+for kk=1:size(maskname,1)
+maskImg = maskname(kk).name
+[FILEPATH,NAME,EXT] = fileparts(maskImg);
+trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+dos(trans_command); 
+name1 = fileToRename;
+name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
+movefile(name1, name2)
+end
 end
 
