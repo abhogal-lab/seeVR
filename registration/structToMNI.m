@@ -42,6 +42,18 @@ try opts.elastixdir; catch
     error('elastix directory not specified... specify OS-dependent path to elastix: e.g. opts.elastixdir = /.../seeVR/registration/elastix/')
 end
 
+elastixroot = opts.elastixdir;
+
+%setup OS-dependent paths
+if ispc
+    elastixrootOS = fullfile(elastixroot,'windows');
+elseif ismac
+    elastixrootOS = fullfile(elastixroot,'mac');
+else
+    elastixrootOS = fullfile(elastixroot,'linux');
+end
+
+
 disp(['moving image: ',moveImg])
 if exist(moveImg) == 2
     disp('moving image found')
@@ -58,10 +70,10 @@ end
 
 opts.bspline_dir = fullfile(opts.resultsdir,'bsplineRegtoMNI');
 if exist(opts.bspline_dir) == 7
-cd(opts.bspline_dir);
-delete *.*
+    cd(opts.bspline_dir);
+    delete *.*
 else
-mkdir(opts.bspline_dir);
+    mkdir(opts.bspline_dir);
 end
 %select MNI image
 
@@ -82,7 +94,7 @@ if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')) == 2
     param_af_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt');
     param_af = fullfile(opts.bspline_dir,'ParameterFileAf.txt');
     copyfile(param_af_base, param_af)
-    disp(['copying affine parameter file to: ', opts.bspline_dir])     
+    disp(['copying affine parameter file to: ', opts.bspline_dir])
 else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')])
 end
@@ -94,7 +106,7 @@ if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')) == 2
     param_bs_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileBS.txt');
     param_bs = fullfile(opts.bspline_dir,'ParameterFileBs.txt');
     copyfile(param_bs_base, param_bs)
-    disp(['copying affine parameter file to: ', opts.bspline_dir])     
+    disp(['copying affine parameter file to: ', opts.bspline_dir])
 else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')])
 end
@@ -102,43 +114,50 @@ end
 [trans_params] = nlinReg(moveImg, moveMask, refImg, refMask, param_af, param_bs, opts.bspline_dir, opts.elastixdir)
 
 % update transform parameters
-outputdir = fullfile(opts.bspline_dir,'Inverse'); 
+outputdir = fullfile(opts.bspline_dir,'Inverse');
 mbs = fullfile(outputdir,'mTransformParameters.1.txt');
 adaptElastixTransFile( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
-adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '0')
 
 %% apply transformations to MNI masks
 % to binary masks
+adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
+
 maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
 maskname = dir('*.nii.gz*');
 
 fileToRename = fullfile(outputdir,'result.nii.gz');
 
 for kk=1:size(maskname,1)
-maskImg = maskname(kk).name
-[FILEPATH,NAME,EXT] = fileparts(maskImg);
-trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
-dos(trans_command); 
-name1 = fileToRename;
-name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
-movefile(name1, name2)
+    maskImg = maskname(kk).name
+    [FILEPATH,NAME,EXT] = fileparts(maskImg);
+    trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+    dos(trans_command);
+    name1 = fileToRename;
+    name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
+    movefile(name1, name2);
+    %move labels files
+    name1 = fullfile(maskdir,[maskImg(1:1:end-7),'.txt']);
+    name2 = fullfile(outputdir,[maskImg(1:1:end-7),'_labels.txt']);
+    if exist(name1) == 2
+        copyfile(name1, name2);
+    end
 end
 
 clear maskname
 % to probability maps
-adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '3')
+adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '3') %spline interpolation for probability maps
 
 probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
 maskname = dir('*.nii.gz*');
 
 for kk=1:size(maskname,1)
-maskImg = maskname(kk).name
-[FILEPATH,NAME,EXT] = fileparts(maskImg);
-trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
-dos(trans_command); 
-name1 = fileToRename;
-name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
-movefile(name1, name2)
+    maskImg = maskname(kk).name
+    [FILEPATH,NAME,EXT] = fileparts(maskImg);
+    trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+    dos(trans_command);
+    name1 = fileToRename;
+    name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
+    movefile(name1, name2)
 end
 end
 

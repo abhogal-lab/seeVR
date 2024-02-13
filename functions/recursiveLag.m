@@ -59,7 +59,7 @@ if isfield(opts,'lim_s'); else; opts.lim_s = 1; end                       % rang
 if isfield(opts,'THR'); else; opts.THR = 0.2; end                         % cross-correlation acceptance threshold
 if isfield(opts,'comp'); else; opts.comp = 1; end                         % enabling a comparison between recursive and 'classic' lag mapping if set to 1
 
-opts.recursivedir = fullfile(opts.resultsdir,'recursiveLag'); mkdir(opts.opts.recursivedir);
+opts.recursivedir = fullfile(opts.resultsdir,'recursiveLag'); mkdir(opts.recursivedir);
 
 % important parameters for results
 if isfield(opts,'corr_thresh'); else; opts.corr_thresh = 0.7; end         % threshold by which to accept correlated voxels during the refinement of the BOLD regressor
