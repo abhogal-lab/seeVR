@@ -60,9 +60,9 @@ elastixroot = opts.elastixdir;
 if ispc
     elastixrootOS = fullfile(elastixroot,'windows');
 elseif ismac
-    elastixrootOS = fullfile(elastixroot,'mac');
+    elastixrootOS = fullfile(elastixroot,'mac','bin');
 else
-    elastixrootOS = fullfile(elastixroot,'linux');
+    elastixrootOS = fullfile(elastixroot,'linux','bin');
 end
 
 bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];

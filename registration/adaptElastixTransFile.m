@@ -20,7 +20,7 @@ for n=1:length(parsToAdapt)
     newlines = strfind(stringFileNew,char(10));
     indNewLine = find(newlines>endInd,1);
     stringFileA = stringFileNew(1:endInd-1);
-    stringFileB = stringFileNew(newlines(indNewLine)-2:end);
+    stringFileB = stringFileNew(newlines(indNewLine)-1:end); %used to be
     if isempty(str2num(values{n})) % if it's a character add double quotes
         stringFileA = [stringFileA ' "' values{n} '"'];
     else
@@ -33,4 +33,15 @@ for n=1:length(parsToAdapt)
     fprintf(fileIDtemp,'%s',stringFileNew);
     fclose(fileIDtemp);
 end
+
+% replace any possible double quotes (Linux issue)
+fid  = fopen(filenameIn,'rt');
+X = fread(fid);
+fclose(fid);
+X = char(X.');
+Y = strrep(X, '""', '"');
+
+fid2 = fopen(filenameIn,'wt');
+fwrite(fid2,Y);
+fclose(fid2);
 end

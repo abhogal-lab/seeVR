@@ -68,11 +68,11 @@ end
 
 %setup OS-dependent paths
 if ispc
-elastixrootOS = fullfile(elastixroot,'windows');
+    elastixrootOS = fullfile(elastixroot,'windows');
 elseif ismac
-elastixrootOS = fullfile(elastixroot,'mac');
+    elastixrootOS = fullfile(elastixroot,'mac','bin');
 else
-elastixrootOS = fullfile(elastixroot,'linux');
+    elastixrootOS = fullfile(elastixroot,'linux','bin');
 end
 
 disp(['moving image: ',moveImg])
