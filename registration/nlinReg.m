@@ -66,7 +66,9 @@ else
 end
 
 bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
- 
+%bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -fMask ',refMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+
+
 dos(bspline_command);
 
 opts.affineTxParamFileToTarget = fullfile(regdir,'TransformParameters.0.txt')
@@ -92,15 +94,27 @@ end
 
 input_img = fullfile(opts.bspline_dir,'InputToTarget_nLin.nii.gz');
 
-try
-param_af_rev = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt');
-param_bs_rev = fullfile(opts.elastixdir,'parameter_files','ParameterFileBS_rev.txt');
-catch
-param_af_rev = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt');
-param_bs_rev = fullfile(opts.elastixdir,'parameter_files','ParameterFileBS.txt');    
+if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')) == 2
+    disp('found parameter file')
+    param_af_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt');
+    param_af_rev = fullfile(outputdir,'ParameterFileAf_rev.txt');
+    copyfile(param_af_base, param_af_rev)
+    disp(['copying affine parameter file for reverse transform to: ', outputdir])
+else
+    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')])
 end
 
-reverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -fMask ',moveMask,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
+if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt')) == 2
+    disp('found parameter file')
+    param_bs_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt');
+    param_bs_rev = fullfile(outputdir,'ParameterFileBs_rev.txt');
+    copyfile(param_bs_base, param_bs_rev)
+    disp(['copying affine parameter file for reverse transform to: ', outputdir])
+else
+    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt')])
+end
+
+reverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
 
 dos(reverse_command);
 

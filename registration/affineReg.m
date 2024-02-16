@@ -59,14 +59,16 @@ elastixroot = opts.elastixdir;
 %setup OS-dependent paths
 if ispc
     elastixrootOS = fullfile(elastixroot,'windows');
+    affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
 elseif ismac
-    elastixrootOS = fullfile(elastixroot,'mac','bin');
+    elastixrootOS = fullfile(elastixroot,'mac','bin'); %not tested - may be buggy
+    affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
 else
     elastixrootOS = fullfile(elastixroot,'linux','bin');
+    affine_command = ['elastix -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
 end
 
-affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
-dos(affine_command);
+ system(affine_command);
 
 
 forward_transform = fullfile(regdir,'TransformParameters.0.txt')
@@ -75,7 +77,13 @@ disp(['transformation parameter file saved as: ',forward_transform])
 % calculate inverse
 invdir = fullfile(regdir, 'inverse'); mkdir(invdir);
 moveImg_new = fullfile(regdir, 'result.0.nii.gz');
+
+if ispc
 inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -fMask ',moveMask, ' -m ',moveImg_new,' -mMask ',refMask,' -t0 ',forward_transform,' -p ',param_af,' -out ',invdir ];
+else
+inverse_command = ['elastix -f ',moveImg,' -fMask ',moveMask, ' -m ',moveImg_new,' -mMask ',refMask,' -t0 ',forward_transform,' -p ',param_af,' -out ',invdir ];
+end
+
 system(inverse_command);
 
 inverse_transform = fullfile(invdir,'TransformParameters.0.txt')

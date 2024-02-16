@@ -20,16 +20,16 @@
 (Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedMattesMutualInformation") 
-(Metric0Weight 0.1)
-(Metric1Weight 0.9) // OPTIMIZED BY QUANTITATIVE MEASURES
+(Metric0Weight 0.5)
+(Metric1Weight 0.8) // OPTIMIZED BY QUANTITATIVE MEASURES
 
 
 (MaximumStepLength 1)
 
 // ***************** Transformation **************************
 (NumberOfResolutions 5)
-(FinalGridSpacingInVoxels 6.0)
-(GridSpacingSchedule 12 8 4 2.0 1)
+(FinalGridSpacingInVoxels 12)
+(GridSpacingSchedule 16 12 8 4 2)
 (HowToCombineTransforms "Compose")
 
 // ******************* Similarity measure *********************
@@ -42,18 +42,17 @@
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 600 1000 1600 1600 3000) 
+(MaximumNumberOfIterations 1000 2000 3000 4000 5000) 
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "CenterOfGravity")
-(NumberOfSpatialSamples 8000) 
+(NumberOfSpatialSamples 6000) 
 (NewSamplesEveryIteration "true")
-(ImageSampler "RandomSparseMask")
-//(ImageSampler "MultiInputRandomCoordinate")
+//(ImageSampler "RandomSparseMask")
+(ImageSampler "MultiInputRandomCoordinate")
 //(ImageSampler "RandomCoordinate")
-//(SampleRegionSize 40)  
-(UseRandomSampleRegion "true")
-//(MaximumNumberOfSamplingAttempts 40)
+//(UseRandomSampleRegion "true")
+//(MaximumNumberOfSamplingAttempts 20)
 (SampleRegionSize 40.0 40.0 40.0)
 
 (UseAdaptiveStepSizes "true")

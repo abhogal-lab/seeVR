@@ -20,7 +20,7 @@ for n=1:length(parsToAdapt)
     newlines = strfind(stringFileNew,char(10));
     indNewLine = find(newlines>endInd,1);
     stringFileA = stringFileNew(1:endInd-1);
-    stringFileB = stringFileNew(newlines(indNewLine)-1:end); %used to be
+    stringFileB = stringFileNew(newlines(indNewLine)-2:end); %used to be
     if isempty(str2num(values{n})) % if it's a character add double quotes
         stringFileA = [stringFileA ' "' values{n} '"'];
     else
