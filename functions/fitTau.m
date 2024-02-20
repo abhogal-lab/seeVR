@@ -103,11 +103,11 @@ b3_vec(1, coordinates) = b(:,3);
 % refined analysis for clipped tau values
 
 if opts.save_unrefined && opts.refine_tau
-    
+
     b1_map = reshape(b1_vec, [xx yy zz]);
     b2_map = reshape(b2_vec, [xx yy zz]);
     b3_map = reshape(b3_vec, [xx yy zz]);
-    
+
     if opts.niiwrite
         cd(opts.dynamicdir);
         niftiwrite(cast(mask.*b1_map,opts.mapDatatype),'exp_scaling_unrefined',opts.info.map);
@@ -121,17 +121,17 @@ if opts.save_unrefined && opts.refine_tau
 end
 
 if opts.refine_tau
-    
+
     b2_map = reshape(b2_vec, [xx yy zz]);
     iter = 1;
     passes = 0;
     max_tau = max(ceil(b2_map(:)));
-    
+
     while iter
         passes = passes + 1
         max_map = zeros(size(mask));
         max_map(ceil(b2_map) == max_tau) = 1;
-        
+
         %get new coordinates
         [~, newcoordinates] = grabTimeseries(data, max_map);
         clear b
@@ -139,7 +139,7 @@ if opts.refine_tau
         i = find(max_map); % find nonzero values in M
         [X,Y,Z] = ind2sub(size(max_map), i); clear i
         newTS = zeros([length(X) size(data,4)*opts.interp_factor]);
-        
+
         for kk=1:length(X)
             try
                 %extract timeseries and neighboring timeseries
@@ -150,7 +150,7 @@ if opts.refine_tau
                 X_rng(X_rng > size(data,1)) = []; X_rng(X_rng < 1) = [];
                 Y_rng(Y_rng > size(data,2)) = []; Y_rng(Y_rng < 1) = [];
                 Z_rng(Z_rng > size(data,3)) = []; Z_rng(Z_rng < 1) = [];
-                
+
                 %extract timeseries
                 tmp =  data(X_rng,Y_rng,Z_rng,:);
                 tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), size(tmp,4)]);
@@ -161,7 +161,7 @@ if opts.refine_tau
                 disp('error; skipping voxel')
             end
         end
-        
+
         clear tmp
         %fit for tau
         parfor ii=1:length(newcoordinates)
@@ -174,7 +174,7 @@ if opts.refine_tau
         b1_vec(1, newcoordinates) = b(:,1);
         b2_vec(1, newcoordinates) = b(:,2);
         b3_vec(1, newcoordinates) = b(:,3);
-        
+
         %make new tau map for check
         b2_map = reshape(b2_vec, [xx yy zz]);
         max_map = zeros(size(b2_map));
@@ -192,7 +192,7 @@ if opts.refine_tau
             iter = 0;
         end
     end
-    
+
     b1_map = reshape(b1_vec, [xx yy zz]);
     b2_map = reshape(b2_vec, [xx yy zz]);
     b3_map = reshape(b3_vec, [xx yy zz]);
@@ -236,18 +236,30 @@ if opts.niiwrite
     niftiwrite(cast(mask.*r,opts.mapDatatype),'r_map',opts.info.map);
     niftiwrite(cast(mask.*(r.^2),opts.mapDatatype),'expVariance_r2_map',opts.info.map);
 else
-    saveImageData(mask.*cR2, opts.headers.map, opts.corrCVRdir,'R2_map.nii.gz', 64);
-    saveImageData(mask.*r, opts.headers.map, opts.corrCVRdir,'r_map.nii.gz', 64);
-    saveImageData(mask.*(r.^2), opts.headers.map, opts.corrCVRdir,'expVariance_r2_map', 64);
+    saveImageData(mask.*cR2, opts.headers.map, opts.dynamicdir,'R2_map.nii.gz', 64);
+    saveImageData(mask.*r, opts.headers.map, opts.dynamicdir,'r_map.nii.gz', 64);
+    saveImageData(mask.*(r.^2), opts.headers.map, opts.dynamicdir,'expVariance_r2_map', 64);
 end
 
-maps.expHRF.scale = b1_map;
-maps.expHRF.tau = b2_map;
-maps.expHRF.offset = b3_map;
-maps.expHRF.R2 = cR2;
-maps.expHRF.r = r;
-maps.expHRF.explainedVariance = r.^2;
+if opts.save_fit
+    tau_fits = zeros(numel(mask), size(data,4));
+    tau_fits(coordinates) = responseFits;
 
-toc
+    tau_fits = reshape(tau_fits(size(data)));
+
+    if opts.niiwrite
+        niftiwrite(cast(tau_fits,opts.tsDatatype),'tau_fits',opts.info.ts);
+    else
+        saveImageData(tau_fits, opts.headers.ts, opts.dynamicdir,'tau_fits.nii.gz', 64);
+    end
+
+    maps.expHRF.scale = b1_map;
+    maps.expHRF.tau = b2_map;
+    maps.expHRF.offset = b3_map;
+    maps.expHRF.R2 = cR2;
+    maps.expHRF.r = r;
+    maps.expHRF.explainedVariance = r.^2;
+
+    toc
 
 end
