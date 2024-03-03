@@ -41,7 +41,8 @@ if isfield(opts,'refine_tau'); else; opts.refine_tau = 1; end              %defa
 if isfield(opts,'passes'); else; opts.passes = 10; end                     %maximum number of refinement passes
 if isfield(opts,'win_size'); else; opts.win_size = 1; end                  %the number of voxels to consider around the voxel of interest when opts.refine_tau = 1;
 if isfield(opts,'max_tau'); else; opts.max_tau = 300; end                  %maximum exponential dispersion time constant - data dependent
-if isfield(opts,'save_unrefined'); else; opts.save_unrefined = 0; end          %save maps before refinement step to check effect
+if isfield(opts,'save_unrefined'); else; opts.save_unrefined = 0; end      %save maps before refinement step to check effect
+if isfield(opts,'save_responses'); else; opts.save_responses = 0; end      %save tau fits; good for checking fit quality
 
 opts.dynamicdir = fullfile(opts.resultsdir,'tau'); mkdir(opts.dynamicdir);
 [xx yy zz dyn] = size(data);
@@ -241,7 +242,7 @@ else
     saveImageData(mask.*(r.^2), opts.headers.map, opts.dynamicdir,'expVariance_r2_map', 64);
 end
 
-if opts.save_fit
+if opts.save_responses
     tau_fits = zeros(numel(mask), size(data,4));
     tau_fits(coordinates) = responseFits;
 
@@ -252,7 +253,7 @@ if opts.save_fit
     else
         saveImageData(tau_fits, opts.headers.ts, opts.dynamicdir,'tau_fits.nii.gz', 64);
     end
-
+end
     maps.expHRF.scale = b1_map;
     maps.expHRF.tau = b2_map;
     maps.expHRF.offset = b3_map;
