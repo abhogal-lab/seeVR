@@ -116,7 +116,7 @@ opts.affineTxParamFile = forward_transform;
 opts.inverseAffineTxParamFile = inverse_transform;
 
 name1 = fullfile(opts.affine_dir,'result.0.nii.gz');
-name2 = fullfile(opts.affine_dir,'func2anat.nii.gz');
+name2 = fullfile(opts.affine_dir,'move2rf.nii.gz');
 movefile(name1, name2)
 
 %apply transforms
@@ -135,7 +135,7 @@ for kk=1:size(dirinfo,1)
         %rename result image
         [FILEPATH,NAME,EXT] = fileparts(TxImg);
         name1 = fullfile(opts.regOutput,'result.nii.gz');
-        name2 = fullfile(opts.regOutput,[NAME,'_anat.nii.gz']);
+        name2 = fullfile(opts.regOutput,[NAME,'_ref.nii.gz']);
         movefile(name1, name2)
     end
 end

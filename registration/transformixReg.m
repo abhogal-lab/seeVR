@@ -47,15 +47,24 @@ elastixroot = opts.elastixdir;
 if ispc
     elastixrootOS = fullfile(elastixroot,'windows');
 elseif ismac
-    elastixrootOS = fullfile(elastixroot,'mac');
+    elastixrootOS = fullfile(elastixroot,'mac','bin');
 else
-    elastixrootOS = fullfile(elastixroot,'linux');
+    elastixrootOS = fullfile(elastixroot,'linux','bin');
 end
 
-transform_command = [fullfile(elastixrootOS, 'transformix'),' -in ',inputImg,' -out ',transformdir, ' -tp ', transformfile];
+if ispc
+    transform_command = [fullfile(elastixrootOS, 'transformix'),' -in ',inputImg,' -out ',transformdir, ' -tp ', transformfile];
+else
+    transform_command = ['transformix -in ',inputImg,' -out ',transformdir, ' -tp ', transformfile];
+end
 dos(transform_command);
 
+%rename image
+
+name1 = fullfile(transformdir,'result.nii.gz');
+name2 = fullfile(transformdir,['tr_',inputImg]);
+movefile(name1, name2);
 % load registered image
-[image,~] = loadImage(transformdir, 'result.nii.gz');
+[image,~] = loadImage(transformdir, ['tr_',inputImg]);
 
 end

@@ -51,7 +51,7 @@ function [image, forward_transform, inverse_transform] = affineReg(moveImg, move
 global opts;
 
 try opts.elastixdir; catch
-    error('elastix directory not specified fir affineReg function... specify path to elastix: opts.elastixdir = ADDPATH')
+    error('elastix directory not specified for affineReg function... specify path to elastix: opts.elastixdir = ADDPATH')
 end
 
 elastixroot = opts.elastixdir;
@@ -68,7 +68,7 @@ else
     affine_command = ['elastix -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
 end
 
- system(affine_command);
+system(affine_command);
 
 
 forward_transform = fullfile(regdir,'TransformParameters.0.txt')
@@ -79,9 +79,9 @@ invdir = fullfile(regdir, 'inverse'); mkdir(invdir);
 moveImg_new = fullfile(regdir, 'result.0.nii.gz');
 
 if ispc
-inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -fMask ',moveMask, ' -m ',moveImg_new,' -mMask ',refMask,' -t0 ',forward_transform,' -p ',param_af,' -out ',invdir ];
+    inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -fMask ',moveMask, ' -m ',moveImg_new,' -mMask ',refMask,' -t0 ',forward_transform,' -p ',param_af,' -out ',invdir ];
 else
-inverse_command = ['elastix -f ',moveImg,' -fMask ',moveMask, ' -m ',moveImg_new,' -mMask ',refMask,' -t0 ',forward_transform,' -p ',param_af,' -out ',invdir ];
+    inverse_command = ['elastix -f ',moveImg,' -fMask ',moveMask, ' -m ',moveImg_new,' -mMask ',refMask,' -t0 ',forward_transform,' -p ',param_af,' -out ',invdir ];
 end
 
 system(inverse_command);

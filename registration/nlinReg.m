@@ -65,9 +65,11 @@ else
     elastixrootOS = fullfile(elastixroot,'linux','bin');
 end
 
+if ispc
 bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
-%bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -fMask ',refMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
-
+else
+bspline_command = ['elastix -f ',refImg,' -m ',moveImg,' -fMask ',refMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+end
 
 dos(bspline_command);
 
