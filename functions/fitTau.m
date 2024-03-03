@@ -246,7 +246,7 @@ if opts.save_responses
     tau_fits = zeros(numel(mask), size(data,4));
     tau_fits(coordinates) = responseFits;
     
-    tau_fits = reshape(tau_fits(size(data)));
+    tau_fits = reshape(tau_fits, (size(data)));
     
     if opts.niiwrite
         niftiwrite(cast(tau_fits,opts.tsDatatype),'tau_fits',opts.info.ts);
