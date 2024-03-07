@@ -132,11 +132,6 @@ for kk=1:size(dirinfo,1)
     else
         TxImg = fullfile(dirinfo(kk).folder,dirinfo(kk).name);
         [~] = transformixReg(TxImg, opts.affineTxParamFile, opts.regOutput, elastixrootOS);
-        %rename result image
-        [FILEPATH,NAME,EXT] = fileparts(TxImg);
-        name1 = fullfile(opts.regOutput,'result.nii.gz');
-        name2 = fullfile(opts.regOutput,[NAME,'_ref.nii.gz']);
-        movefile(name1, name2)
     end
 end
 

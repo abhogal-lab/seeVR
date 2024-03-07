@@ -61,10 +61,12 @@ dos(transform_command);
 
 %rename image
 
+[~, name, ~] = fileparts(inputImg)
+
 name1 = fullfile(transformdir,'result.nii.gz');
-name2 = fullfile(transformdir,['tr_',inputImg]);
+name2 = fullfile(transformdir,['tr_',name,'.nii.gz']);
 movefile(name1, name2);
 % load registered image
-[image,~] = loadImage(transformdir, ['tr_',inputImg]);
+[image,~] = loadImage(transformdir, ['tr_',name,'.nii.gz']);
 
 end
