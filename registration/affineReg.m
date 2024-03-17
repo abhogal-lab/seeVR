@@ -70,7 +70,6 @@ end
 
 system(affine_command);
 
-
 forward_transform = fullfile(regdir,'TransformParameters.0.txt')
 disp(['transformation parameter file saved as: ',forward_transform])
 
@@ -78,16 +77,29 @@ disp(['transformation parameter file saved as: ',forward_transform])
 invdir = fullfile(regdir, 'inverse'); mkdir(invdir);
 moveImg_new = fullfile(regdir, 'result.0.nii.gz');
 
-if ispc
-    inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -fMask ',moveMask, ' -m ',moveImg_new,' -mMask ',refMask,' -t0 ',forward_transform,' -p ',param_af,' -out ',invdir ];
+if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')) == 2
+    disp('found parameter file')
+    param_af_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt');
+    param_af_rev = fullfile(invdir,'ParameterFileAf_rev.txt');
+    copyfile(param_af_base, param_af_rev)
+    disp(['copying affine parameter file for reverse transform to: ', invdir])
 else
-    inverse_command = ['elastix -f ',moveImg,' -fMask ',moveMask, ' -m ',moveImg_new,' -mMask ',refMask,' -t0 ',forward_transform,' -p ',param_af,' -out ',invdir ];
+    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')])
+end
+
+if ispc
+    inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg, ' -m ',moveImg_new,' -t0 ',forward_transform,' -p ',param_af_rev,' -out ',invdir ];
+else
+    inverse_command = ['elastix -f ',moveImg,' -m ',moveImg_new,' -t0 ',forward_transform,' -p ',param_af_rev,' -out ',invdir ];
 end
 
 system(inverse_command);
 
 inverse_transform = fullfile(invdir,'TransformParameters.0.txt')
 disp(['inverse transformation parameter file saved as: ',inverse_transform])
+disp('applying inverse transformation to reference image')
+
+[~] = transformixReg(refImg, inverse_transform, invdir, elastixrootOS);
 
 % load registered image
 [image,~] = loadImage(regdir, 'result.0.nii.gz');

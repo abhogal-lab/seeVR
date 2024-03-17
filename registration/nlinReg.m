@@ -66,9 +66,9 @@ else
 end
 
 if ispc
-bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+    bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
 else
-bspline_command = ['elastix -f ',refImg,' -m ',moveImg,' -fMask ',refMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+    bspline_command = ['elastix -f ',refImg,' -m ',moveImg,' -fMask ',refMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
 end
 
 dos(bspline_command);
@@ -81,17 +81,17 @@ disp(['bsplinetransformation file saved as: ',fullfile(regdir,'TransformParamete
 
 %rename output files
 if exist(fullfile(opts.bspline_dir,'result.1.nii.gz')) == 2
-name1 = fullfile(opts.bspline_dir,'result.1.nii.gz');
-name2 = fullfile(opts.bspline_dir,'InputToTarget_nLin.nii.gz');
-movefile(name1, name2)
+    name1 = fullfile(opts.bspline_dir,'result.1.nii.gz');
+    name2 = fullfile(opts.bspline_dir,'InputToTarget_nLin.nii.gz');
+    movefile(name1, name2)
 end
 
-outputdir = fullfile(regdir,'Inverse'); 
+outputdir = fullfile(regdir,'Inverse');
 if exist(outputdir) == 7
-cd(outputdir);
-delete *.*
+    cd(outputdir);
+    delete *.*
 else
-mkdir(outputdir);
+    mkdir(outputdir);
 end
 
 input_img = fullfile(opts.bspline_dir,'InputToTarget_nLin.nii.gz');
@@ -125,9 +125,9 @@ opts.bsplineTxParamFileToInput = fullfile(outputdir,'TransformParameters.1.txt')
 
 %rename output files
 if exist(fullfile(outputdir,'result.1.nii.gz')) == 2
-name1 = fullfile(outputdir,'result.1.nii.gz');
-name2 = fullfile(outputdir,'TargetToInput_nLin.nii.gz');
-movefile(name1, name2)
+    name1 = fullfile(outputdir,'result.1.nii.gz');
+    name2 = fullfile(outputdir,'TargetToInput_nLin.nii.gz');
+    movefile(name1, name2)
 end
 
 trans_params = struct();

@@ -48,33 +48,33 @@ try opts.elastixdir; catch
 end
 
 disp(['moving image: ',moveImg])
-    if exist(moveImg) == 2
-        disp('moving image found')
-    else
-        error('check moving image filename and extension')
-    end
-        
+if exist(moveImg) == 2
+    disp('moving image found')
+else
+    error('check moving image filename and extension')
+end
+
 disp(['moving mask: ',moveMask])
-    if exist(moveMask) == 2
-        disp('moving mask found')
-    else
-        error('check moving mask filename and extension')
-    end
-    
+if exist(moveMask) == 2
+    disp('moving mask found')
+else
+    error('check moving mask filename and extension')
+end
+
 disp(['path to reference image: ',refImg])
-    if exist(refImg) == 2
-        disp('fixed/reference image found')
-    else
-        error('check fixed/reference image filename and extension')
-    end
-    
+if exist(refImg) == 2
+    disp('fixed/reference image found')
+else
+    error('check fixed/reference image filename and extension')
+end
+
 disp(['path to reference image: ',refMask])
-    if exist(refMask) == 2
-        disp('fixed/reference mask found')
-    else
-        error('check fixed/reference mask filename and extension')
-    end
-    
+if exist(refMask) == 2
+    disp('fixed/reference mask found')
+else
+    error('check fixed/reference mask filename and extension')
+end
+
 %perform affine registration of func to anat
 
 % affine transformdir
@@ -86,7 +86,7 @@ disp('checking for parameter file...')
 if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')) == 2
     disp('found parameter file')
     param_af = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt');
-else 
+else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')])
 end
 

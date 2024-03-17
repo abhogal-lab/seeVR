@@ -61,7 +61,7 @@ dos(transform_command);
 
 %rename image
 
-[~, name, ~] = fileparts(inputImg)
+[~, name, ext] = fileparts(inputImg);
 
 name1 = fullfile(transformdir,'result.nii.gz');
 name2 = fullfile(transformdir,['tr_',name,'.nii.gz']);

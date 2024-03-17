@@ -1,6 +1,6 @@
 % Copyright (C) Alex A. Bhogal, 2023, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <structToMNI: uses elastix to perform registration of input anatomical image
+% <structToMNI: uses elastix to perform registration of structural image
 % to MNI image.
 %
 %
@@ -32,6 +32,10 @@
 %
 % opts.elastixdir: !!!Important: This is where the elastix binaries are
 % stored: e.g., /seeVR-main/registration/elastix
+%
+% parameter files are stored in
+% /seeVR-main/registration/elastix/parameter_files and can be optimized as
+% needed. See the elastix manual
 
 function [trans_params] = structToMNI(moveImg, moveMask, opts)
 global opts
@@ -68,7 +72,7 @@ else
     error('check moving mask filename and extension')
 end
 
-opts.bspline_dir = fullfile(opts.resultsdir,'bsplineRegtoMNI');
+opts.bspline_dir = fullfile(opts.resultsdir,'structToMNI');
 if exist(opts.bspline_dir) == 7
     cd(opts.bspline_dir);
     delete *.*
@@ -118,11 +122,11 @@ outputdir = fullfile(opts.bspline_dir,'Inverse');
 mbs = fullfile(outputdir,'mTransformParameters.1.txt');
 
 if ispc
-adaptElastixTransFile( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
-adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
+    adaptElastixTransFile( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
+    adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
 else
-adaptElastixTransFile_linux( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
-adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
+    adaptElastixTransFile_linux( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
+    adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
 end
 
 %% apply transformations to MNI masks
@@ -136,9 +140,9 @@ for kk=1:size(maskname,1)
     maskImg = maskname(kk).name
     [FILEPATH,NAME,EXT] = fileparts(maskImg);
     if ispc
-    trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+        trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
     else
-    trans_command = ['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];     
+        trans_command = ['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
     end
     system(trans_command);
     name1 = fileToRename;
@@ -155,11 +159,11 @@ end
 clear maskname
 % to probability maps
 if ispc
-adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '3') %spline interpolation for probability maps
+    adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '1') 
 else
-adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '3') %spline interpolation for probability maps
+    adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '1') 
 end
-    
+
 probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
 maskname = dir('*.nii.gz*');
 
@@ -167,9 +171,9 @@ for kk=1:size(maskname,1)
     maskImg = maskname(kk).name
     [FILEPATH,NAME,EXT] = fileparts(maskImg);
     if ispc
-    trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+        trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
     else
-    trans_command = ['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];  
+        trans_command = ['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
     end
     system(trans_command);
     name1 = fileToRename;

@@ -15,7 +15,7 @@ stringFile = stringFile{1}{1};
 fclose(fileIDorig);
 stringFileNew = stringFile;
 for n=1:length(parsToAdapt)
-    % Find location of the parameter to adapt and change 
+    % Find location of the parameter to adapt and change
     [~,endInd] = regexp(stringFileNew,['(' parsToAdapt{n} ' ']);
     newlines = strfind(stringFileNew,char(10));
     indNewLine = find(newlines>endInd,1);
@@ -27,7 +27,7 @@ for n=1:length(parsToAdapt)
         stringFileA = [stringFileA ' ' values{n}];
     end
     stringFileNew =[stringFileA stringFileB];
-%     stringFileNew = strrep(stringFileNew,'\','\\');
+    %     stringFileNew = strrep(stringFileNew,'\','\\');
     % Save file with adapted parameter
     fileIDtemp  = fopen(filenameOut,'w');
     fprintf(fileIDtemp,'%s',stringFileNew);
