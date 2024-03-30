@@ -58,7 +58,9 @@ probe = double(rescale(probe));
 %function options
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end
 if isfield(opts,'save_cleaned'); else; opts.save_cleaned = 0; end
-if isfield(opts,'disperse_probe'); else; opts.disperse_probe = 1; end %convolves the input probe with a few exponentials to create additional EVs
+if isfield(opts,'disperse_probe'); else; opts.disperse_probe = 0; end %convolves the input probe with a few exponentials to create additional EVs
+if isfield(opts,'prep_nuisance'); else; opts.prep_nuisance = 0; end %filters nuisance params
+
 
 if isempty(probe)
     probe = zeros(length(nuisance));
@@ -76,9 +78,13 @@ else
 end
 
 %prepare nuisance probes
+if opts.prep_nuisance
 disp('preparing nuisance signals')
 [np0, np1] = prepNuisance(nuisance,probe, opts);
 nuisancemap = flip(brewermap(size(np0,2),'Spectral'));
+else
+    np0 = nuisance;
+end
 
 if opts.disperse_probe
     disp('adding dispersion terms to input probe (i.e. explanatory probe)')

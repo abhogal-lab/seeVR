@@ -39,6 +39,7 @@ function[ fSpec, meanSpec, freq ] = freqSpec(data, mask, opts)
 warning('off')
 global opts
 if isfield(opts,'powerspec'); else; opts.powerspec = 0; end
+if isfield(opts,'showplots'); else; opts.showplots = 0; end
 
 Fs = 1/opts.TR;
 %form frequency graphs
@@ -53,20 +54,23 @@ else
     r_psdx = (1/(Fs*N))*abs(r_xdft);% amplitude
 end
 r_psdx(2:end-1) = 2*r_psdx(2:end-1);
-figure; set(gcf,'color','w');
-plot(freq,log(mean(r_psdx,1)));
-if opts.powerspec
-    title('log of power spectrum');
-else
-    title('log of amplitude spectrum');
+if opts.showplots
+    figure; set(gcf,'color','w');
+    
+    plot(freq,log(mean(r_psdx,1)));
+    if opts.powerspec
+        title('log of power spectrum');
+    else
+        title('log of amplitude spectrum');
+    end
+    hold on;
+    xline(0.01,'k--');
+    xline(0.027,'k--');
+    xline(0.073,'k--');
+    xline(0.17,'k--');
+    xline(0.23,'k--');
+    hold off
 end
-hold on;
-xline(0.01,'k--');
-xline(0.027,'k--');
-xline(0.073,'k--');
-xline(0.17,'k--');
-xline(0.23,'k--');
-hold off
 meanSpec = mean(r_psdx,1);
 fSpec = zeros([x*y*z,size(r_psdx,2)]);
 fSpec(coordinates,:) = r_psdx;

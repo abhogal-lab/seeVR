@@ -51,6 +51,7 @@ data = double(data);
 
 %get voxels
 [voxels_ts coordinates] = grabTimeseries(data, mask);
+[ref_voxels_ts refcoordinates] = grabTimeseries(data, refmask);
 
 Fs = 1/opts.TR;
 t = 0:1/Fs:1-1/Fs;

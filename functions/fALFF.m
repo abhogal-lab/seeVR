@@ -45,7 +45,7 @@ data = double(data);
 temp_info = opts.info.map;
 temp_info.Datatype = 'double';
 
-if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                  %depending on how data is loaded this can be set to 1 to use native load/save functions
+if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                
 if isfield(opts,'fpass'); else; opts.fpass = [0.0000001 0.15]; end
 opts.ALFFdir = fullfile(opts.resultsdir,'ALFF'); mkdir(opts.ALFFdir);
 
