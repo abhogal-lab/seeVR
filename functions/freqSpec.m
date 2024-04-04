@@ -40,6 +40,7 @@ warning('off')
 global opts
 if isfield(opts,'powerspec'); else; opts.powerspec = 0; end
 if isfield(opts,'showplots'); else; opts.showplots = 0; end
+if isfield(opts,'logtransform '); else; opts.logtransform  = 0; end
 
 Fs = 1/opts.TR;
 %form frequency graphs
@@ -56,13 +57,21 @@ end
 r_psdx(2:end-1) = 2*r_psdx(2:end-1);
 if opts.showplots
     figure; set(gcf,'color','w');
-    
+  if opts.logtransform  
     plot(freq,log(mean(r_psdx,1)));
     if opts.powerspec
         title('log of power spectrum');
     else
         title('log of amplitude spectrum');
     end
+  else
+    plot(freq,mean(r_psdx,1));
+    if opts.powerspec
+        title('power spectrum');
+    else
+        title('amplitude spectrum');
+    end        
+  end
     hold on;
     xline(0.01,'k--');
     xline(0.027,'k--');
