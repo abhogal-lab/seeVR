@@ -83,10 +83,10 @@ end
 
 if opts.T1
     disp('performing initial affine registration of moving to T1-weighted MNI image')
-    refImg = fullfile(opts.elastixdir,'MNI','t1_1mm_brain.nii.gz')
+    refImg = fullfile(opts.elastixdir,'MNI','T1_1mm_brain.nii.gz')
 else
     disp('performing initial affine registration of moving to T2-weighted MNI image')
-    refImg = fullfile(opts.elastixdir,'MNI','t2_1mm_brain.nii.gz')
+    refImg = fullfile(opts.elastixdir,'MNI','T2_1mm_brain.nii.gz')
 end
 
 refMask = fullfile(opts.elastixdir,'MNI','brain_mask_1mm.nii.gz')
@@ -107,12 +107,12 @@ disp('checking for bspline parameter file...')
 
 if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')) == 2
     disp('found parameter file')
-    param_bs_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileBS.txt');
+    param_bs_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt');
     param_bs = fullfile(opts.bspline_dir,'ParameterFileBs.txt');
     copyfile(param_bs_base, param_bs)
     disp(['copying affine parameter file to: ', opts.bspline_dir])
 else
-    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')])
+    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')])
 end
 
 [trans_params] = nlinReg(moveImg, moveMask, refImg, refMask, param_af, param_bs, opts.bspline_dir, opts.elastixdir)
