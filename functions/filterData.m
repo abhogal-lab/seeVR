@@ -51,7 +51,7 @@ if isfield(opts,'sigma_range')
 %do nothing
 else 
     if ndims(data) > 3
-    opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:10),4),mask); 
+    opts.sigma_range = 10*ROIstd(mean(data(:,:,:,1:8),4),mask); 
     else
         tmp = data.*mask;
         tmp = tmp(:);

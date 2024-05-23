@@ -92,9 +92,7 @@ end
 
 disp('performing registration of moving to fixed image')
 
-[~] = affineReg(moveImg, moveMask, refImg, refMask, param_af, opts.affine_dir, opts.elastixdir);
-opts.affineTxParamFile = forward_transform;
-opts.inverseAffineTxParamFile = inverse_transform;
+[~, forward_transform, ~] = affineReg(moveImg, moveMask, refImg, refMask, param_af, opts.affine_dir, opts.elastixdir);
 
 name1 = fullfile(opts.affine_dir,'result.0.nii.gz');
 name2 = fullfile(opts.affine_dir,'func2anat.nii.gz');
@@ -104,4 +102,5 @@ disp('registration of moving to anat complete')
 disp(['transformation file saved as: ',fullfile(opts.affine_dir,'TransformParameters.0.txt')])
 disp(['final image saved as: ',name2])
 opts.affineTxParamFile = fullfile(opts.affine_dir,'TransformParameters.0.txt');
+
 end
