@@ -116,8 +116,11 @@ else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt')])
 end
 
-reverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
-
+if ispc
+    reverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
+else
+    reverse_command = ['elastix -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
+end
 dos(reverse_command);
 
 opts.affineTxParamFileToInput = fullfile(outputdir,'TransformParameters.0.txt')
