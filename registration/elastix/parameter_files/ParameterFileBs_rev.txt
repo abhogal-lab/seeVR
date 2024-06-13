@@ -11,45 +11,43 @@
 (ResampleInterpolator "FinalBSplineInterpolator")
 (Resampler "DefaultResampler")
 
-(FixedImagePyramid "FixedSmoothingImagePyramid")
-(MovingImagePyramid "MovingSmoothingImagePyramid")
+(FixedImagePyramid "FixedSmoothingImagePyramid" "FixedSmoothingImagePyramid")
+(MovingImagePyramid "MovingSmoothingImagePyramid" "MovingSmoothingImagePyramid")
 
 (Optimizer "AdaptiveStochasticGradientDescent")
-(Transform "BSplineTransform")
-//(Metric "TransformBendingEnergyPenalty")
-(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
+(Transform "BSplineTransform" "BSplineTransform")
+(Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
-//(Metric "AdvancedMattesMutualInformation") 
 (Metric0Weight 0.5)
-(Metric1Weight 0.8) // OPTIMIZED BY QUANTITATIVE MEASURES
+(Metric1Weight 0.6)
 
 
 (MaximumStepLength 1)
 
 // ***************** Transformation **************************
 (NumberOfResolutions 5)
-(FinalGridSpacingInVoxels 12)
-(GridSpacingSchedule 16 12 8 4 2)
+(FinalGridSpacingInVoxels 10)
+(GridSpacingSchedule 24 16 8 4 2)
 (HowToCombineTransforms "Compose")
 
 // ******************* Similarity measure *********************
 
-(NumberOfHistogramBins 16) 
+(NumberOfHistogramBins 32) 
 
 // ******************** Multiresolution **********************
 
-(ImagePyramidSchedule 6 6 6  4 4 4  2 2 2  1 1 1  1 1 1)
+(ImagePyramidSchedule 12 12 12  8 8 8  4 4 4  2 2 2  1 1 1)
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 1000 2000 3000 4000 5000) 
+(MaximumNumberOfIterations 500 500 1000 1000 2000)  
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "CenterOfGravity")
 (NumberOfSpatialSamples 6000) 
 (NewSamplesEveryIteration "true")
 //(ImageSampler "RandomSparseMask")
-(ImageSampler "MultiInputRandomCoordinate")
+(ImageSampler "MultiInputRandomCoordinate" "MultiInputRandomCoordinate")
 //(ImageSampler "RandomCoordinate")
 //(UseRandomSampleRegion "true")
 //(MaximumNumberOfSamplingAttempts 20)

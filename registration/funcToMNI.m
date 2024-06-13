@@ -47,7 +47,7 @@
 % /seeVR-main/registration/elastix/parameter_files and can be optimized as
 % needed. See the elastix manual
 
-function [] = funcToMNI(moveImg, moveMask, refImg, refMask, mapdir, opts)
+function [] = funcToMNI(moveImg, moveMask, refImg, refMask, opts)
 global opts
 tic
 try opts.elastixdir; catch
@@ -118,64 +118,120 @@ name1 = fullfile(opts.affine_dir,'result.0.nii.gz');
 name2 = fullfile(opts.affine_dir,'funcToStruct.nii.gz');
 movefile(name1, name2)
 
-%apply transforms
-disp(['path to parameter maps: ',mapdir])
-dirinfo = dir(mapdir);
-
-opts.regOutput = fullfile(mapdir,'funcToStruct'); mkdir(opts.regOutput);
-disp(['transformed parameter maps will be saved in: ', opts.regOutput])
-
-%apply Tx
-for kk=1:size(dirinfo,1)
-    if dirinfo(kk).isdir
-    else
-        TxImg = fullfile(dirinfo(kk).folder,dirinfo(kk).name);
-        [~] = transformixReg(TxImg, opts.affineTxParamFile, opts.regOutput, elastixrootOS);
-    end
-end
 
 disp('...')
 disp('Registration of functional image to structural image space complete')
-disp('Associated parameter maps transformed to structural image space')
 disp('Registering structural image to MNI space')
 
+%path to CSF segmentation
+
+
+tic
 [trans_params] = structToMNI(refImg, refMask, opts);
+toc
+opts.regFuncOutputMNI = fullfile(opts.resultsdir,'funcToMNI'); mkdir(opts.regFuncOutputMNI);
 
-opts.regOutputMNI = fullfile(mapdir,'funcToMNI'); mkdir(opts.regOutputMNI);
+opts.affineTxParamFile2 = trans_params.affine_to_target;
+opts.bsplineTxParamFile = trans_params.bspline_to_target;
+opts.inverseBsplineTxParamFile = trans_params.bspline_to_input;
+opts.inverseAffineTxParamFile2 = trans_params.affine_to_input;
 
-trans1 = opts.affineTxParamFile;
-trans2 = trans_params.affine_to_target;
-trans3 = trans_params.bspline_to_target;
+
 mtrans1 = fullfile(opts.affine_dir, 'mTransformParameters.0.txt');
 mtrans2 = fullfile(opts.resultsdir,'structToMNI','mTransformParameters.0.txt');
 mtrans3 = fullfile(opts.resultsdir,'structToMNI','mTransformParameters.1.txt');
 
+mInvtrans1 = fullfile(opts.regFuncOutputMNI,'mInverseBSTransformParameters.1.txt');
+mInvtrans2 = fullfile(opts.regFuncOutputMNI,'mInverseAFTransformParameters.0.txt');
+mInvtrans3 = fullfile(opts.regFuncOutputMNI,'mInverseAFTransformParameters.1.txt');
+
+
 if ispc
-    adaptElastixTransFile( trans1, mtrans1, 'FinalBSplineInterpolationOrder', '0');
-    adaptElastixTransFile( trans2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
+    adaptElastixTransFile( opts.affineTxParamFile, mtrans1, 'FinalBSplineInterpolationOrder', '0');
+    adaptElastixTransFile( opts.affineTxParamFile2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
     adaptElastixTransFile( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '0');
-    adaptElastixTransFile( trans3, mtrans3, 'InitialTransformParametersFileName', mtrans2);
-    adaptElastixTransFile( mtrans3, mtrans3, 'FinalBSplineInterpolationOrder', '1');
+    adaptElastixTransFile( opts.bsplineTxParamFile, mtrans3, 'InitialTransformParametersFileName', mtrans2);
+    adaptElastixTransFile( mtrans3, mtrans3, 'FinalBSplineInterpolationOrder', '0');
+    %inverse
+    adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '0');
+    adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'InitialTransformParametersFileName', 'NoInitialTransform');
+    adaptElastixTransFile( opts.inverseAffineTxParamFile2, mInvtrans2, 'FinalBSplineInterpolationOrder', '0');
+
+    adaptElastixTransFile( opts.inverseAffineTxParamFile, mInvtrans3, 'InitialTransformParametersFileName', mInvtrans2);
+    adaptElastixTransFile( mInvtrans2, mInvtrans2, 'InitialTransformParametersFileName', mInvtrans1);
+
+
 else
-    adaptElastixTransFile_linux( trans1, mtrans1, 'FinalBSplineInterpolationOrder', '0');
-    adaptElastixTransFile_linux( trans2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
-    adaptElastixTransFile_linux( trans2, mtrans2, 'FinalBSplineInterpolationOrder', '0');
-    adaptElastixTransFile_linux( trans3, mtrans3, 'InitialTransformParametersFileName', mtrans2);
-    adaptElastixTransFile_linux( mtrans3, mtrans3, 'FinalBSplineInterpolationOrder', '1');
+    adaptElastixTransFile_linux( opts.affineTxParamFile, mtrans1, 'FinalBSplineInterpolationOrder', '0');
+    adaptElastixTransFile_linux( opts.affineTxParamFile2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
+    adaptElastixTransFile_linux( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '0');
+    adaptElastixTransFile_linux( opts.bsplineTxParamFile, mtrans3, 'InitialTransformParametersFileName', mtrans2);
+    adaptElastixTransFile_linux( mtrans3, mInvtrans1, 'FinalBSplineInterpolationOrder', '0');
+
+    %inverse
+    adaptElastixTransFile_linux( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '0');
+    adaptElastixTransFile_linux( opts.inverseAffineTxParamFile2, mInvtrans2, 'FinalBSplineInterpolationOrder', '0');
+    adaptElastixTransFile_linux( opts.inverseBsplineTxParamFile, mInvtrans1, 'InitialTransformParametersFileName', 'NoInitialTransform');
+
+    adaptElastixTransFile_linux( opts.inverseAffineTxParamFile, mInvtrans3, 'InitialTransformParametersFileName', mInvtrans2);
+    adaptElastixTransFile_linux( mInvtrans2, mInvtrans2, 'InitialTransformParametersFileName', mInvtrans1);
 end
 
-%apply Tx
-for kk=1:size(dirinfo,1)
-    if dirinfo(kk).isdir
+%% transform functional image to MNI space
+
+
+
+%% inverse transform MNI images to functional space
+
+maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
+maskname = dir('*.nii.gz*');
+
+fileToRename = fullfile(opts.regFuncOutputMNI,'result.nii.gz');
+
+for kk=1:size(maskname,1)
+    maskImg = maskname(kk).name
+    [FILEPATH,NAME,EXT] = fileparts(maskImg);
+    if ispc
+        trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
     else
-        TxImg = fullfile(dirinfo(kk).folder,dirinfo(kk).name);
-        [~] = transformixReg(TxImg, mtrans3, opts.regOutputMNI, elastixrootOS);
+        trans_command = ['transformix -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+    end
+    system(trans_command);
+    name1 = fileToRename;
+    name2 = fullfile(opts.regFuncOutputMNI,[NAME(1:1:end-4),'_toFunc.nii.gz']);
+    movefile(name1, name2);
+    %move labels files
+    name1 = fullfile(maskdir,[maskImg(1:1:end-7),'.txt']);
+    name2 = fullfile(opts.regFuncOutputMNI,[maskImg(1:1:end-7),'_labels.txt']);
+    if exist(name1) == 2
+        copyfile(name1, name2);
     end
 end
 
-disp('...')
-disp('Registration of functional image to MNI space complete')
-disp('Associated parameter maps transformed to MNI space')
+clear maskname
+% to probability maps
+if ispc
+    adaptElastixTransFile( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '2')
+else
+    adaptElastixTransFile_linux( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '2')
+end
+
+probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
+maskname = dir('*.nii.gz*');
+
+for kk=1:size(maskname,1)
+    maskImg = maskname(kk).name
+    [FILEPATH,NAME,EXT] = fileparts(maskImg);
+    if ispc
+        trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+    else
+        trans_command = ['transformix -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+    end
+    system(trans_command);
+    name1 = fileToRename;
+    name2 = fullfile(opts.regFuncOutputMNI,[NAME(1:1:end-4),'_toFunc.nii.gz']);
+    movefile(name1, name2)
+end
 
 toc
 end

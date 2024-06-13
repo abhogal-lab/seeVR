@@ -18,7 +18,7 @@
 (NumberOfHistogramBins 32)
 (NumberOfResolutions 5)
 (ImagePyramidSchedule 12 12 12  8 8 8  4 4 4  2 2 2  1 1 1)
-(MaximumNumberOfIterations 8000)
+(MaximumNumberOfIterations 1000)
 (MaximumStepLength 1)
 (NumberOfSpatialSamples 8000)
 (NewSamplesEveryIteration "true")

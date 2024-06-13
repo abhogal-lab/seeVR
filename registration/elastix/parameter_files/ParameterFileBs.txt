@@ -3,53 +3,51 @@
 (FixedImageDimension 3)
 (MovingImageDimension 3)
 (UseDirectionCosines "true")
-
+//(ErodeFixedMask "true")
 // **************** Main Components **************************
 
 (Registration "MultiMetricMultiResolutionRegistration")
-(Interpolator "BSplineInterpolator")
+(Interpolator "BSplineInterpolator" "BSplineInterpolator")
 (ResampleInterpolator "FinalBSplineInterpolator")
 (Resampler "DefaultResampler")
 
-(FixedImagePyramid "FixedSmoothingImagePyramid")
-(MovingImagePyramid "MovingSmoothingImagePyramid")
+(FixedImagePyramid "FixedSmoothingImagePyramid" "FixedSmoothingImagePyramid")
+(MovingImagePyramid "MovingSmoothingImagePyramid" "MovingSmoothingImagePyramid")
 
 (Optimizer "AdaptiveStochasticGradientDescent")
 (Transform "BSplineTransform")
-//(Metric "TransformBendingEnergyPenalty")
 (Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
-//(Metric "AdvancedMattesMutualInformation") 
-(Metric0Weight 0.5)
-(Metric1Weight 0.8) // OPTIMIZED BY QUANTITATIVE MEASURES
+(Metric0Weight 0.8)
+(Metric1Weight 0.6)
 
-
-(MaximumStepLength 1)
+//(MaximumStepLength 2)
 
 // ***************** Transformation **************************
-(NumberOfResolutions 5)
-(FinalGridSpacingInVoxels 10)
-(GridSpacingSchedule 16 12 6 2 1)
+(NumberOfResolutions 4)
+(FinalGridSpacingInVoxels 8)
+(GridSpacingSchedule  6 4 2 1)
 (HowToCombineTransforms "Compose")
 
 // ******************* Similarity measure *********************
 
-(NumberOfHistogramBins 16) 
+(NumberOfHistogramBins 32) 
 
 // ******************** Multiresolution **********************
 
-(ImagePyramidSchedule 6 6 6  4 4 4  2 2 2  1 1 1  1 1 1)
+
+(ImagePyramidSchedule 6 6 6  4 4 4  2 2 2  1 1 1)
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 1000 2000 3000 4000 5000) 
+(MaximumNumberOfIterations 500 10000 1000 2000)  
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "GeometricalCenter")
 (NumberOfSpatialSamples 6000) 
 (NewSamplesEveryIteration "true")
-//(ImageSampler "MultiInputRandomCoordinate")
-(ImageSampler "RandomCoordinate")
+//(ImageSampler "MultiInputRandomCoordinate" "MultiInputRandomCoordinate")
+(ImageSampler "RandomCoordinate" "RandomCoordinate")
 //(ImageSampler "RandomSparseMask")
 //(UseRandomSampleRegion "true")
 (MaximumNumberOfSamplingAttempts 5)
@@ -62,7 +60,7 @@
 (FinalBSplineInterpolationOrder 1)
 (ShowExactMetricValue "false") 
 (WriteTransformParametersEachResolution "false")
-(WriteResultImageAfterEachResolution "false")
+(WriteResultImageAfterEachResolution "true")
 (WritePyramidImagesAfterEachResolution "false")
 (DefaultPixelValue 0)
 (WriteResultImage "true")

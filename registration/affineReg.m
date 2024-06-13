@@ -75,7 +75,6 @@ system(affine_command);
 forward_transform = fullfile(regdir,'TransformParameters.0.txt')
 disp(['transformation parameter file saved as: ',forward_transform])
 
-
 if opts.invert_affine
     
     % calculate inverse

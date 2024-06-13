@@ -62,6 +62,8 @@ dos(transform_command);
 %rename image
 
 [~, name, ext] = fileparts(inputImg);
+% again to remove possible double.nii
+[~, name, ext2] = fileparts(name);
 
 name1 = fullfile(transformdir,'result.nii.gz');
 name2 = fullfile(transformdir,['tr_',name,'.nii.gz']);

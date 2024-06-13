@@ -84,6 +84,7 @@ end
 if opts.T1
     disp('performing initial affine registration of moving to T1-weighted MNI image')
     refImg = fullfile(opts.elastixdir,'MNI','T1_1mm_brain.nii.gz')
+
 else
     disp('performing initial affine registration of moving to T2-weighted MNI image')
     refImg = fullfile(opts.elastixdir,'MNI','T2_1mm_brain.nii.gz')
@@ -159,9 +160,9 @@ end
 clear maskname
 % to probability maps
 if ispc
-    adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '1') 
+    adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '2') 
 else
-    adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '1') 
+    adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '2') 
 end
 
 probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
