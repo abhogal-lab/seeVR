@@ -7,8 +7,8 @@
 // **************** Main Components **************************
 
 (Registration "MultiMetricMultiResolutionRegistration")
-(Interpolator "BSplineInterpolator")
-(ResampleInterpolator "FinalBSplineInterpolator")
+(Interpolator "BSplineInterpolator" "BSplineInterpolator")
+(ResampleInterpolator "FinalBSplineInterpolator" "FinalBSplineInterpolator")
 (Resampler "DefaultResampler")
 
 (FixedImagePyramid "FixedSmoothingImagePyramid" "FixedSmoothingImagePyramid")
