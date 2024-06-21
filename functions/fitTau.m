@@ -90,7 +90,7 @@ parfor ii=1:length(coordinates)
     try
         b(ii,:) = lsqcurvefit(model,[range(ts(ii,:)) 20 0],t,ts(ii,:),lb,ub,options);
     catch
-        printf(['error voxel ',int2str(ii)])
+        disp(['error voxel ',int2str(ii)])
     end
 end
 

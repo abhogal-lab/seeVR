@@ -22,7 +22,7 @@
 % hompage at: https://elastix.lumc.nl/
 %
 % moveImg: path (i.e. directory AND filename with extention) to moving, or
-% anatomical image
+% anatomical image. 
 %
 % moveMask: path (i.e. directory AND filename with extention) to moving, or
 % anatomical mask (binary image)
@@ -57,7 +57,6 @@ else
     elastixrootOS = fullfile(elastixroot,'linux','bin');
 end
 
-
 disp(['moving image: ',moveImg])
 if exist(moveImg) == 2
     disp('moving image found')
@@ -82,12 +81,13 @@ end
 %select MNI image
 
 if opts.T1
-    disp('performing initial affine registration of moving to T1-weighted MNI image')
-    refImg = fullfile(opts.elastixdir,'MNI','T1_1mm_brain.nii.gz')
-
+    disp('performing initial affine registration of brain extracted moving to brain extracted T1-weighted MNI image')
+    refImg_BET = fullfile(opts.elastixdir,'MNI','T1_1mm_brain.nii.gz')
+    refImg = fullfile(opts.elastixdir,'MNI','T1_1mm.nii.gz') 
 else
-    disp('performing initial affine registration of moving to T2-weighted MNI image')
-    refImg = fullfile(opts.elastixdir,'MNI','T2_1mm_brain.nii.gz')
+    disp('performing initial affine registration of brain extracted moving to brain extracted T2-weighted MNI image')
+    refImg_BET = fullfile(opts.elastixdir,'MNI','T2_1mm_brain.nii.gz')
+    refImg = fullfile(opts.elastixdir,'MNI','T2_1mm.nii.gz')
 end
 
 refMask = fullfile(opts.elastixdir,'MNI','brain_mask_1mm.nii.gz')
