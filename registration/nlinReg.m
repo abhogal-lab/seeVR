@@ -69,7 +69,7 @@ if ispc
     bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
 
 else
-    bspline_command = ['elastix -f ',refImg,' -m0 ',moveImg,' -fMask ',refMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+    bspline_command = ['elastix -f ',refImg,' -m0 ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
 
 end
 
