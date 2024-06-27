@@ -61,7 +61,12 @@ for ii=1:size(data,4)
     data_mcf(:,:,:,ii) = img;
 
     %%
+    if ispc
     rename_command = ['copy ',affine_transmat,' ',outputdir_tr,'\TransformParameters.',int2str(ii),'.txt'];
+    else
+    rename_command = ['cp ',affine_transmat,' ',outputdir_tr,'\TransformParameters.',int2str(ii),'.txt'];
+    end
+
     dos(rename_command);
 
 end

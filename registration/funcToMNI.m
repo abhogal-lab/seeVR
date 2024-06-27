@@ -168,7 +168,7 @@ if ispc
     adaptElastixTransFile( opts.affineTxParamFile2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
     adaptElastixTransFile( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile( opts.bsplineTxParamFile, mtrans3, 'InitialTransformParametersFileName', mtrans2);
-    adaptElastixTransFile( mtrans3, mtrans3, 'FinalBSplineInterpolationOrder', '3');
+    adaptElastixTransFile( mtrans3, mtrans3, 'FinalBSplineInterpolationOrder', '1');
     %inverse
     adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '0');
     adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'InitialTransformParametersFileName', 'NoInitialTransform');
@@ -180,9 +180,9 @@ if ispc
 else
     adaptElastixTransFile_linux( opts.affineTxParamFile, mtrans1, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile_linux( opts.affineTxParamFile2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
-    adaptElastixTransFile_linux( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '1');
+    adaptElastixTransFile_linux( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '0');
     adaptElastixTransFile_linux( opts.bsplineTxParamFile, mtrans3, 'InitialTransformParametersFileName', mtrans2);
-    adaptElastixTransFile_linux( mtrans3, mInvtrans1, 'FinalBSplineInterpolationOrder', '3');
+    adaptElastixTransFile_linux( mtrans3, mInvtrans1, 'FinalBSplineInterpolationOrder', '0');
 
     %inverse
     adaptElastixTransFile_linux( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '0');
