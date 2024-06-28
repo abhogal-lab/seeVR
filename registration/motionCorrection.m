@@ -5,6 +5,9 @@ try opts.elastixdir; catch
     error('elastix directory not specified... specify OS-dependent path to elastix: opts.elastixdir = ADDPATH')
 end
 
+if isfield(opts,'use_mean'); else; opts.use_mean = 1; end
+
+
 elastixroot = opts.elastixdir;
 
 %setup OS-dependent paths
@@ -25,7 +28,11 @@ end
 opts.outputdir_mc = fullfile(opts.savedir,'motion_corrected');
 mkdir(opts.outputdir_mc);
 
-reference = squeeze(data(:,:,:,1));
+if opts.use_mean
+    reference = mean(data,4); %use mean image
+else
+    reference = squeeze(data(:,:,:,1)); %use first image
+end
 
 cd(opts.outputdir_mc)
 niftiwrite(cast(reference, opts.mapDatatype),'reference_image',opts.info.map);
@@ -62,9 +69,9 @@ for ii=1:size(data,4)
 
     %%
     if ispc
-    rename_command = ['copy ',affine_transmat,' ',outputdir_tr,'\TransformParameters.',int2str(ii),'.txt'];
+        rename_command = ['copy ',affine_transmat,' ',outputdir_tr,'\TransformParameters.',int2str(ii),'.txt'];
     else
-    rename_command = ['cp ',affine_transmat,' ',outputdir_tr,'\TransformParameters.',int2str(ii),'.txt'];
+        rename_command = ['cp ',affine_transmat,' ',outputdir_tr,'\TransformParameters.',int2str(ii),'.txt'];
     end
 
     dos(rename_command);

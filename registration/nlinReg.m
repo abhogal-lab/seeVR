@@ -47,12 +47,14 @@
 % opts.elastixdir: !!!Important: This is where the elastix binaries are
 % stored: e.g., /seeVR-main/registration/elastix
 
-function [trans_params] = nlinReg(moveImg, moveMask, refImg, refMask, param_af, param_bs, regdir, elastixDir)
+function [trans_params] = nlinReg(moveImg, moveMask, refImg, refMask, regdir, opts)
 global opts;
 
 try opts.elastixdir; catch
     error('elastix directory not specified for affineReg function... specify path to elastix: opts.elastixdir = ADDPATH')
 end
+
+if isfield(opts,'invert_bspline'); else; opts.invert_bspline = 1; end
 
 elastixroot = opts.elastixdir;
 
@@ -63,6 +65,26 @@ elseif ismac
     elastixrootOS = fullfile(elastixroot,'mac','bin');
 else
     elastixrootOS = fullfile(elastixroot,'linux','bin');
+end
+
+if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')) == 2
+    disp('found parameter file')
+    param_af_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt');
+    param_af = fullfile(regdir,'ParameterFileAf_rev.txt');
+    copyfile(param_af_base, param_af)
+    disp(['copying affine parameter file for forward transform to: ', regdir])
+else
+    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')])
+end
+
+if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt')) == 2
+    disp('found parameter file')
+    param_bs_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt');
+    param_bs = fullfile(regdir,'ParameterFileBs_rev.txt');
+    copyfile(param_bs_base, param_bs)
+    disp(['copying affine parameter file for forward transform to: ', regdir])
+else
+    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')])
 end
 
 if ispc
@@ -88,58 +110,65 @@ if exist(fullfile(opts.bspline_dir,'result.1.nii.gz')) == 2
     movefile(name1, name2)
 end
 
-outputdir = fullfile(regdir,'Inverse');
-if exist(outputdir) == 7
-    cd(outputdir);
-    delete *.*
-else
-    mkdir(outputdir);
-end
-
-input_img = fullfile(opts.bspline_dir,'InputToTarget_nLin.nii.gz');
-
-if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')) == 2
-    disp('found parameter file')
-    param_af_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt');
-    param_af_rev = fullfile(outputdir,'ParameterFileAf_rev.txt');
-    copyfile(param_af_base, param_af_rev)
-    disp(['copying affine parameter file for reverse transform to: ', outputdir])
-else
-    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')])
-end
-
-if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt')) == 2
-    disp('found parameter file')
-    param_bs_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt');
-    param_bs_rev = fullfile(outputdir,'ParameterFileBs_rev.txt');
-    copyfile(param_bs_base, param_bs_rev)
-    disp(['copying affine parameter file for reverse transform to: ', outputdir])
-else
-    error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt')])
-end
-
-if ispc
-    reverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
-else
-    reverse_command = ['elastix -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
-end
-dos(reverse_command);
-
-opts.affineTxParamFileToInput = fullfile(outputdir,'TransformParameters.0.txt')
-opts.bsplineTxParamFileToInput = fullfile(outputdir,'TransformParameters.1.txt')
-
-%rename output files
-if exist(fullfile(outputdir,'result.1.nii.gz')) == 2
-    name1 = fullfile(outputdir,'result.1.nii.gz');
-    name2 = fullfile(outputdir,'TargetToInput_nLin.nii.gz');
-    movefile(name1, name2)
-end
-
 trans_params = struct();
+
 trans_params.affine_to_target = opts.affineTxParamFileToTarget;
 trans_params.bspline_to_target = opts.bsplineTxParamFileToTarget;
-trans_params.affine_to_input = opts.affineTxParamFileToInput;
-trans_params.bspline_to_input = opts.bsplineTxParamFileToInput;
+
+if opts.invert_bspline
+
+    outputdir = fullfile(regdir,'Inverse');
+    if exist(outputdir) == 7
+        cd(outputdir);
+        delete *.*
+    else
+        mkdir(outputdir);
+    end
+
+    input_img = fullfile(opts.bspline_dir,'InputToTarget_nLin.nii.gz');
+
+    if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')) == 2
+        disp('found parameter file')
+        param_af_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt');
+        param_af_rev = fullfile(outputdir,'ParameterFileAf_rev.txt');
+        copyfile(param_af_base, param_af_rev)
+        disp(['copying affine parameter file for reverse transform to: ', outputdir])
+    else
+        error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')])
+    end
+
+    if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt')) == 2
+        disp('found parameter file')
+        param_bs_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt');
+        param_bs_rev = fullfile(outputdir,'ParameterFileBs_rev.txt');
+        copyfile(param_bs_base, param_bs_rev)
+        disp(['copying affine parameter file for reverse transform to: ', outputdir])
+    else
+        error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt')])
+    end
+
+    if ispc
+        reverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
+    else
+        reverse_command = ['elastix -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
+    end
+    dos(reverse_command);
+
+    opts.affineTxParamFileToInput = fullfile(outputdir,'TransformParameters.0.txt')
+    opts.bsplineTxParamFileToInput = fullfile(outputdir,'TransformParameters.1.txt')
+
+    %rename output files
+    if exist(fullfile(outputdir,'result.1.nii.gz')) == 2
+        name1 = fullfile(outputdir,'result.1.nii.gz');
+        name2 = fullfile(outputdir,'TargetToInput_nLin.nii.gz');
+        movefile(name1, name2)
+    end
+
+    trans_params.affine_to_input = opts.affineTxParamFileToInput;
+    trans_params.bspline_to_input = opts.bsplineTxParamFileToInput;
+end
+
+
 
 end
 
