@@ -32,7 +32,7 @@
 % ROI defined by refmask
 %
 % bpData: a bandpassed version of the input data%
-function [bpData] = bandpassfilt(data, mask, refmask, opts)
+function [bpData] = bandpassfilt(data, mask, opts)
 warning('off');
 global opts;
 t = cputime;
@@ -51,13 +51,11 @@ data = double(data);
 
 %get voxels
 [voxels_ts coordinates] = grabTimeseries(data, mask);
-[ref_voxels_ts refcoordinates] = grabTimeseries(data, refmask);
 
 Fs = 1/opts.TR;
 t = 0:1/Fs:1-1/Fs;
 N = size(voxels_ts,2);
 dF = Fs/N;
-mean_ts = detrend(mean(ref_voxels_ts,1)); % detrend reference time-series
 freq = 0:Fs/length(mean_ts):Fs/2;
 Lowf = opts.fpass(1); Highf = opts.fpass(2); %Hz
 
