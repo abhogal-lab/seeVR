@@ -28,7 +28,6 @@
 % function; i.e. opts.fpass opts.headers.map, opts.info.map, opts,niiwrite, opts.resultsdir
 %
 %
-% BP_ref: the bandpassed reference signal (defined by opts.fpass) from the
 % ROI defined by refmask
 %
 % bpData: a bandpassed version of the input data%
@@ -41,7 +40,6 @@ t = cputime;
 mean_image = mean(data, 4);
 data = demeanData(data, mask);
 
-refmask = logical(refmask); 
 mask = logical(mask);
 
 if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.1164]; end  %default frequency band see doi: 10.1148/radiol.2021203568

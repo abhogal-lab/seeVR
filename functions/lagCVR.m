@@ -25,8 +25,15 @@ function [newprobe, maps] = lagCVR(refmask, mask, data, probe, nuisance, opts)
 refmask = logical(refmask); mask = logical(mask);
 probe = double(probe);
 data = double(data);
+try
+    warning('off');
+    warning('off', 'MATLAB:rankDeficientMatrix');
 
-warning('off');
+    spmd
+        warning('off', 'MATLAB:rankDeficientMatrix');
+    end
+catch
+end
 global opts;
 data(isnan(data)) = 0; data(isinf(data)) = 0;
 
@@ -40,6 +47,8 @@ if isempty(nuisance); np = []; else
     test1 = nuisance(1,:); test2 = nuisance(:,1);
     if length(test1) > length(test2); nuisance = nuisance'; end
     for ii=1:size(nuisance,2); np(:,ii) = rescale(interp(nuisance(:,ii),opts.interp_factor),-1,1); end
+    opts.motioncorr = 0.3;
+    [np, ~] = prepNuisance(nuisance,probe, opts);
     %removes linearly dependent components
     %norm_np = np;
     [norm_np,idx]=licols(np);
@@ -67,7 +76,7 @@ if isfield(opts,'norm_regr'); else; opts.norm_regr = 0; end               %norma
 if isfield(opts,'robust'); else; opts.robust = 0; end                     %calculate robust lag and CVR
 if isfield(opts,'refine_lag'); else; opts.refine_lag = 1; end             %When set to 1, lag calculation will reprocess voxels with clipped values by creating a new mean time series that averages data from neighboring voxels
 if isfield(opts,'win_size'); else; opts.win_size = 1; end                 %the number of voxels to consider around the voxel of interest when opts.refine_lag = 1;
-if isfield(opts,'passes'); else; opts.passes = 10; end                     %how many iterations for lag_map refinement 
+if isfield(opts,'passes'); else; opts.passes = 10; end                     %how many iterations for lag_map refinement
 
 if opts.niiwrite
     if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end
@@ -154,12 +163,12 @@ if opts.refine_regressor
         newprobe = load(probename); newprobe = newprobe.newprobe;
         disp('found existing probe; skipping generation of BOLD regressor')
     else
-        
+
         %%
-        
+
         disp('Creating optimized regressor')
         %grab GM timeseries to generate probe
-        
+
         keep_probes = [];
         %keeps looping until RSME between probe is very small = therefore, reach
         %convergence!
@@ -168,7 +177,7 @@ if opts.refine_regressor
         while stop==0
             tic
             roundprobe=roundprobe+1;
-            
+
             if roundprobe == 1 %rescaling probe may be helpful for initial iteration
                 if opts.rescale_probe
                     newprobe = rescale(probe);
@@ -176,27 +185,27 @@ if opts.refine_regressor
                     newprobe = probe;
                 end
             end
-            
+
             disp(['Correlating TS voxelwise to probe ',num2str(roundprobe)]);disp(' . ');disp(' . ');disp(' . ');
             % voxelwise corrrelation with probe
-            
+
             [~,lags] = xcorr(newprobe,gm_voxel_ts_nonan(1,:)','coeff');
             %matrix cross correlation with probe
-            
+
             a=gm_voxel_ts_nonan;
             a2=mat2cell(a,ones(1,size(a,1)),size(a,2)); %turn into cells so treat all rows independently
-            
+
             % the order here matters because of the SIGN of the lag
             % this way we slide the probe to the ts
             b2=cellfun(@(a2) xcorr(a2,newprobe,'coeff'),a2,'uniformoutput',false);
             corr_probe=cell2mat(b2); %reformat into correlation matrix
             corr_probe = corr_probe' ;
-            
+
             %remove low and high lags ignoring unreasonable and long lag times
             idx = find(lags<=opts.adjlowerthresh | lags>=opts.adjupperthresh);
             lags(idx)=[];
             corr_probe(idx,:)=[];      clear idx
-            
+
             % estimate peak
             % delay and correlation over specified time lag range with fit parameters
             maxcorr = max(corr_probe,[],1);
@@ -206,28 +215,28 @@ if opts.refine_regressor
             yes(yes==0)=NaN;
             tmp = repmat(lags',1,length(corr_probe(1,:)));
             ts_lag = nanmean(tmp.*yes); %clean things up
-            
+
             checkcorr=maxcorr;
             %creating a filter to remove the timeseries before the PCA
             checkcorr(maxcorr>=opts.corr_thresh)=0;  % if good, put 0 because will be kept
             checkcorr(maxcorr<opts.corr_thresh)=1;  % to be removed
-            
+
             checklag=ts_lag;
             checklag(ts_lag>=opts.adjlowerthresh & ts_lag<=opts.adjupperthresh)=0;
             checklag(ts_lag<opts.adjlowerthresh | ts_lag>opts.adjupperthresh)=1;
-            
+
             resultant_filter = zeros(size(checklag));
             resultant_filter(checklag==1 | checkcorr==1)=1;
             remove = find(resultant_filter==1);
-            
+
             % removing timeseries and lags outside of range
             gm_voxel_ts_nonan_filt=gm_voxel_ts_nonan';
             gm_voxel_ts_nonan_filt(:,remove)=[];
             ts_lag_filt=ts_lag;
             ts_lag_filt(remove)=[];
-            
+
             % re-aligning all timeseries based on lag for PCA
-            
+
             new_shifted_ts = zeros(length(ts_lag_filt), length(probe));
             for hh = 1:length(ts_lag_filt)
                 new_shifted_ts(hh,:) = circshift(gm_voxel_ts_nonan_filt(:,hh),ts_lag_filt(hh));
@@ -238,19 +247,19 @@ if opts.refine_regressor
                 else
                     new_shifted_ts(hh,:) = gm_voxel_ts_nonan_filt(:,hh);
                 end
-            end         
-            
+            end
+
             disp('finished correlation, estimating new probe')
-            
+
             if opts.pca_analysis
-                
+
                 %%% PCA on significant shifted timeseries to get single timecourse that explains
                 %the highest shared variance
                 % score = how much pattern from each component is in the voxel
                 % coeff = actual component pattern
-                
+
                 [coeff,score,latent,~,explained] = pca(new_shifted_ts,'VariableWeights','variance','Row','Complete'); % complete option ignores NaN
-                
+
                 %loop until have enough components to explain 85% of the
                 %variability
                 total_components = 3;jj=total_components-1;  % minimum 3 components
@@ -263,7 +272,7 @@ if opts.refine_regressor
                         total_components = total_components+1; % see explained, usually explains ~ 75-85% with first 10 components
                     end
                 end
-                
+
                 try
                     pca_components = score(:,1:total_components)*coeff(:,1:total_components)';
                 catch
@@ -274,7 +283,7 @@ if opts.refine_regressor
                     return
                 end
                 pca_components = pca_components(~any(isnan(pca_components),2),:); %removing rows with NaN
-                
+
                 % components can be flipped so doing a pearson correlation with the
                 % probe gas trace; if flipped, will have a - correlation so
                 % just multiply by -1
@@ -283,15 +292,15 @@ if opts.refine_regressor
                 pearsR = zeros([1 length(pca_components(:,1))]);
                 parfor dd = 1:length(pca_components(:,1))
                     pearsR(dd) = corr(newprobe,pca_components(dd,:)');
-                    
+
                     if pearsR(dd) > 0
                         outputpca(dd,:) = 1 * pca_components(dd,:);
                     else
                         outputpca(dd,:) = -1 * pca_components(dd,:);
                     end
-                    
+
                 end
-                
+
                 % weigthed average of refined regressor
                 newprobe=[];
                 newprobe = nanmean(outputpca,1)';
@@ -300,24 +309,24 @@ if opts.refine_regressor
                 newprobe=[];
                 newprobe = (nanmean(new_shifted_ts,1))';
             end
-            
+
             % averaging all targeted components for new probe
             keep_probes(roundprobe,:) = newprobe;
             clear max_corr_voxel   pca_components  outputpca   new_shifted_ts pearsR
-            
+
             rmse=[];
             if roundprobe==1
                 rmse = immse(probe(:),newprobe(:))
             else
                 rmse = immse(newprobe',(keep_probes(roundprobe-1,:)))
             end
-            
+
             if rmse>0 & rmse<0.005
                 stop = 1;
             elseif roundprobe==10 %maximum number of iterations to find probe
                 stop = 1;
             end
-            
+
         end
         figure(15);
         for ii=1:size(keep_probes,1); legendInfo{ii} = ['probe ',int2str(ii)]; end
@@ -331,9 +340,9 @@ if opts.refine_regressor
         saveas(gcf,fullfile(opts.resultsdir,'all_probes.fig'));
         %save the final probe
         save(fullfile(opts.resultsdir,'final_probe.mat'), 'newprobe');
-        
+
         disp('Finished creating optimized regressor')
-        
+
         clear a GMmask yes score coeff gm_voxel_ts gm_voxel_ts_nonan_filt
     end
 else
@@ -355,14 +364,14 @@ wb_voxel_ts=zeros([length(coordinates) opts.interp_factor*dyn]);
 %maps always regress original regressor with clean timeseries
 
 if opts.cvr_maps && opts.prewhite
-    opts.prewhite = 0; 
+    opts.prewhite = 0;
     disp('prewhitening is not compatible with CVR mapping')
     disp('CVR option takes priotity... for lag mapping using prewhitening, set opts.cvr_maps = 1 + opts.prewhite = 1')
 end
 
 if opts.prewhite
     parfor ii = 1:length(coordinates)
-                wb_voxel_ts(ii,:) = interp(pw_voxel_ts(ii,:),opts.interp_factor);
+        wb_voxel_ts(ii,:) = interp(pw_voxel_ts(ii,:),opts.interp_factor);
     end
 else
     parfor ii = 1:length(coordinates)
@@ -372,9 +381,9 @@ end; clear ip
 
 
 if opts.corr_model
-    
+
     if opts.trace_corr; qq = [1 2]; else; qq = 1; end %correlate probe y/n
-    
+
     switch numel(qq)
         case 1
             index_map = zeros([1 numel(mask)]);  %setup the index mask to properly keep track of replaced lag voxels
@@ -385,164 +394,164 @@ if opts.corr_model
             rvec = zeros([2, length(coordinates)]);
             index = zeros([2 size(wb_voxel_ts,1)]);
     end
-    
+
     for pp = qq
         switch pp
             case 1
                 %setup regression  using optimized regressor
                 regr = newprobe;
                 disp('performing correlation based lag analysis using optimized regressor')
-                
+
             case 2
                 %setup regression using input probe
                 disp('performing correlation based lag analysis using input probe')
                 regr = probe;
         end
-        
+
         % find lag between probe and timeseries
         corr_probe=[];a2=[];
         %matrix cross correlation with probe
         a2=mat2cell(wb_voxel_ts,ones(1,size(wb_voxel_ts,1)),size(wb_voxel_ts,2)); %turn into cells so treat all rows independently
-        
+
         b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'coeff'),a2,'uniformoutput',false);
         corr_probe=cell2mat(b2); %reformat into correlation matrix
         corr_probe = corr_probe';
         %use highlag to restrict the number of correlations that need to be done
         [~,lags] = xcorr(gm_voxel_ts_nonan(1,:),regr,opts.adjhighlag,'coeff');  %%%%%%
-        
+
         %save correlations over time only if this map is to be saved (saves
-        
+
         if opts.save_rts
             corr_ts = zeros([xx*yy*zz size(corr_probe,1)]);
             corr_ts(coordinates,:) = corr_probe';
             corr_ts(isnan(corr_ts)) = 0;
             corr_ts = reshape(corr_ts, [xx yy zz size(corr_probe,1)]);
         end
-        
+
         % trim correlation probe
         idx = find(lags<=opts.adjlowlag | lags>=opts.adjhighlag);
         %remove lag values lower that what is possible
         lags(idx)=[];
         corr_probe(idx,:)=[];
-        
+
         if opts.uni
             [~, index_map(pp,coordinates)] = max(corr_probe); %negative correlations will not weigh more than positive ones
             [~, index(pp,:)] = max(corr_probe); %negative correlations will not weigh more than positive ones
         else
             [~, index_map(pp,coordinates)] = max(abs(corr_probe)); %Absolute max to take care of negative correlation
             [~, index(pp,:)] = max(abs(corr_probe)); %Absolute max to take care of negative correlation
-            
+
         end
         %fill correlation map
         parfor ii = 1:length(coordinates)
             rvec(pp,ii) = corr_probe(index(pp,ii),ii);
         end
-        
+
         r_map = zeros([xx*yy*zz 1]); lag_map = zeros([1 xx*yy*zz]);
         r_map(coordinates) = rvec(pp,:);
         r_map = reshape(r_map,[xx yy zz]);
-        
+
         %fill lag map
         lag_map(1,coordinates) = lags(1,index_map(pp,coordinates));
-%        tmpLag = opts.TR*(lag_map/opts.interp_factor); tmpLag(1,coordinates) = tmpLag(1,coordinates) + abs(min(tmpLag(:))); %puts lag maps back into seconds
+        %        tmpLag = opts.TR*(lag_map/opts.interp_factor); tmpLag(1,coordinates) = tmpLag(1,coordinates) + abs(min(tmpLag(:))); %puts lag maps back into seconds
         lag_map = reshape(lag_map,[xx yy zz]);
- %       tmpLag = reshape(tmpLag,[xx yy zz]);
-        
+        %       tmpLag = reshape(tmpLag,[xx yy zz]);
+
         %identify clipped lag values and use neighboring information to
         %improve correlation
         if opts.refine_lag
             iter = 1;
             passes = 0;
             maxlag = max(lag_map(:));
-           
+
             while iter
-            passes = passes + 1
-            max_map = zeros(size(lag_map));
-            max_map(lag_map == maxlag) = 1;
-                      
-            %get new coordinates
-            [~, newcoordinates] = grabTimeseries(data, max_map);
-            
-            i = find(max_map); % find nonzero values in M
-            [X,Y,Z] = ind2sub(size(max_map), i); clear i
-            newTS = zeros([length(X) length(regr)]);
-            
-            for kk=1:length(X)
-                try
-                %extract timeseries and neighboring timeseries
-                X_rng = X(kk)-opts.win_size:X(kk)+opts.win_size;
-                Y_rng = Y(kk)-opts.win_size:Y(kk)+opts.win_size;
-                Z_rng = Z(kk)-opts.win_size:Z(kk)+opts.win_size;
-                %remove possiblity to have slices outside FOV
-                X_rng(X_rng > size(data,1)) = []; X_rng(X_rng < 1) = [];
-                Y_rng(Y_rng > size(data,2)) = []; Y_rng(Y_rng < 1) = [];
-                Z_rng(Z_rng > size(data,3)) = []; Z_rng(Z_rng < 1) = [];
-                
-                %extract timeseries
-                tmp =  data(X_rng,Y_rng,Z_rng,:);
-                tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), size(tmp,4)]);
-                tmp(find(tmp(:,1) == 0),:) = [];
-                data(X(kk),Y(kk),Z(kk),:) = mean(tmp); %update data matrix for next iteration
-                newTS(kk,:) = interp(mean(tmp),opts.interp_factor);
-                catch
-                    disp('error; skipping voxel')
+                passes = passes + 1
+                max_map = zeros(size(lag_map));
+                max_map(lag_map == maxlag) = 1;
+
+                %get new coordinates
+                [~, newcoordinates] = grabTimeseries(data, max_map);
+
+                i = find(max_map); % find nonzero values in M
+                [X,Y,Z] = ind2sub(size(max_map), i); clear i
+                newTS = zeros([length(X) length(regr)]);
+
+                for kk=1:length(X)
+                    try
+                        %extract timeseries and neighboring timeseries
+                        X_rng = X(kk)-opts.win_size:X(kk)+opts.win_size;
+                        Y_rng = Y(kk)-opts.win_size:Y(kk)+opts.win_size;
+                        Z_rng = Z(kk)-opts.win_size:Z(kk)+opts.win_size;
+                        %remove possiblity to have slices outside FOV
+                        X_rng(X_rng > size(data,1)) = []; X_rng(X_rng < 1) = [];
+                        Y_rng(Y_rng > size(data,2)) = []; Y_rng(Y_rng < 1) = [];
+                        Z_rng(Z_rng > size(data,3)) = []; Z_rng(Z_rng < 1) = [];
+
+                        %extract timeseries
+                        tmp =  data(X_rng,Y_rng,Z_rng,:);
+                        tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), size(tmp,4)]);
+                        tmp(find(tmp(:,1) == 0),:) = [];
+                        data(X(kk),Y(kk),Z(kk),:) = mean(tmp); %update data matrix for next iteration
+                        newTS(kk,:) = interp(mean(tmp),opts.interp_factor);
+                    catch
+                        disp('error; skipping voxel')
+                    end
                 end
-            end
-            
-            clear tmp
-            corr_probe2=[];a2=[];b2=[];
-            
-            %matrix cross correlation with probe
-            a2=mat2cell(newTS,ones(1,size(newTS,1)),size(newTS,2)); %turn into cells so treat all rows independently
-            b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'coeff'),a2,'uniformoutput',false);
-            corr_probe=cell2mat(b2); %reformat into correlation matrix
-            corr_probe = corr_probe';
-            corr_probe(idx,:)=[];
-            
-            %create lag maps
-            rvec2 = zeros([1, length(X)]);
-            index2 = zeros([1 size(newTS,1)]);
-            
-            if opts.uni
-                [~, index2] = max(corr_probe); %negative correlations will not weigh more than positive ones
-            else
-                [~, index2] = max(abs(corr_probe)); %Absolute max to take care of negative correlation
-            end
-            
-            parfor ii = 1:length(X)
-                rvec2(1,ii) = corr_probe(index2(1,ii),ii);
-            end
-            
-            lag_map = lag_map(:);
-            r_map = r_map(:);
-            r_map(newcoordinates) = rvec2;
-            r_map = reshape(r_map,[xx yy zz]);
-            lag_map(newcoordinates) = lags(1,index2);
-            lag_map = reshape(lag_map,[xx yy zz]);
-            
-            %update the index for the corrected map
-            index_map(pp,newcoordinates) = index2;
-            perc = 100*(length(index2)/length(coordinates))
-            disp([int2str(perc), ' percent of voxels have clipped lag values'])
-            if perc > 2 
-                if passes < opts.passes
-                continue; 
-                else; iter = 0;
-                disp('exceeded the maximum allowed passes')
-                disp('... to increase passes set opts.passes to a higher value')
+
+                clear tmp
+                corr_probe2=[];a2=[];b2=[];
+
+                %matrix cross correlation with probe
+                a2=mat2cell(newTS,ones(1,size(newTS,1)),size(newTS,2)); %turn into cells so treat all rows independently
+                b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'coeff'),a2,'uniformoutput',false);
+                corr_probe=cell2mat(b2); %reformat into correlation matrix
+                corr_probe = corr_probe';
+                corr_probe(idx,:)=[];
+
+                %create lag maps
+                rvec2 = zeros([1, length(X)]);
+                index2 = zeros([1 size(newTS,1)]);
+
+                if opts.uni
+                    [~, index2] = max(corr_probe); %negative correlations will not weigh more than positive ones
+                else
+                    [~, index2] = max(abs(corr_probe)); %Absolute max to take care of negative correlation
                 end
-            else
-                iter = 0;
-            end
-                          
-            clear rvec2 index2;
+
+                parfor ii = 1:length(X)
+                    rvec2(1,ii) = corr_probe(index2(1,ii),ii);
+                end
+
+                lag_map = lag_map(:);
+                r_map = r_map(:);
+                r_map(newcoordinates) = rvec2;
+                r_map = reshape(r_map,[xx yy zz]);
+                lag_map(newcoordinates) = lags(1,index2);
+                lag_map = reshape(lag_map,[xx yy zz]);
+
+                %update the index for the corrected map
+                index_map(pp,newcoordinates) = index2;
+                perc = 100*(length(index2)/length(coordinates))
+                disp([int2str(perc), ' percent of voxels have clipped lag values'])
+                if perc > 2
+                    if passes < opts.passes
+                        continue;
+                    else; iter = 0;
+                        disp('exceeded the maximum allowed passes')
+                        disp('... to increase passes set opts.passes to a higher value')
+                    end
+                else
+                    iter = 0;
+                end
+
+                clear rvec2 index2;
             end
         end
-    
-        %save lag and r maps        
+
+        %save lag and r maps
         tmpLag = opts.TR*(lag_map/opts.interp_factor).*mask;
         if min(tmpLag(:)) < 0; tmpLag = tmpLag + abs(min(tmpLag(:))); end
-        
+
         switch pp
             case 1
                 if opts.niiwrite
@@ -558,7 +567,7 @@ if opts.corr_model
                 maps.XCORR.lag_opti = tmpLag;
                 maps.XCORR.uncorrlag_opti = lag_map;
                 maps.XCORR.r_opti = r_map;
-                
+
                 if opts.save_rts
                     if opts.niiwrite
                         cd(opts.corrlagdir);
@@ -590,7 +599,7 @@ if opts.corr_model
                 maps.XCORR.lag_input = tmpLag;
                 maps.XCORR.uncorrlag_input = lag_map;
                 maps.XCORR.r_input = r_map;
-                
+
                 if opts.save_rts
                     if opts.niiwrite
                         cd(opts.corrlagdir);
@@ -611,10 +620,10 @@ if opts.corr_model
         end
         clear Trcorr_ts orig_voxel_ts newTS a2 b2 corr_probe;
     end
-    
+
     index = index_map(:, coordinates);
     disp(['Lag, regressor and r_maps were created in: ',int2str((cputime-t)/60),' minutes'])
-    
+
     clear gm_voxel_ts_nonan m corr_ts regr index_map;
 end
 
@@ -662,7 +671,7 @@ if opts.cvr_maps
                 rs_newprobe = rescale(newprobe, 0.0001,1 );
                 coef = glmfit(rs_newprobe, probe);
                 eff_probe = coef(2,1)*rs_newprobe + coef(1,1);
-                
+
                 figure; subplot(3,1,1); plot(probe,'b'); title('initial probe probe'); ylabel('mmHg')
                 subplot(3,1,2); plot(newprobe); title('BOLD regressor'); ylabel('% BOLD change')
                 subplot(3,1,3); plot(probe,'b'); hold on; plot(eff_probe, 'r'); title('effective probe'); ylabel('mmHg')
@@ -670,14 +679,14 @@ if opts.cvr_maps
                 disp('Generating base maps using effective probe trace')
                 regr = eff_probe;
         end
-        
+
         bCVR = zeros([1 xx*yy*zz]); bR2 = zeros([1 xx*yy*zz]); bSSE = zeros([1 xx*yy*zz]); bTstat = zeros([1 xx*yy*zz]);
-        
+
         %create base CVR map
         A = regr;
         C = [ones([length(A) 1]) A]; clear A
         regr_coef = C\wb_voxel_ts';
-        
+
         bCVR(1,coordinates) = regr_coef(2,:); %extract slope
         bCVR(bCVR > 30) = 0; bCVR(bCVR < -30) = 0; %cleanup base CVR map
         bCVR = reshape(bCVR, [xx yy zz]);
@@ -685,14 +694,14 @@ if opts.cvr_maps
         X = wb_voxel_ts;
         %fitted values
         Y = regr_coef(2,:).*repmat(regr,[1 size(X,1)]) + ones([1 length(regr_coef)]).*regr_coef(1,:);
-        
+
         SSE = zeros([1 size(X,1)]); SST = zeros([1 size(X,1)]); STDEVr = zeros([1 size(X,1)]);
         parfor ii=1:size(X,1)
             STDEVr(1,ii) = nanstd(X(ii,:)-Y(:,ii)'); %standard deviation of residuals (t = beta/STDEVr)
             SSE(1,ii) = (norm(X(ii,:) - Y(:,ii)'))^2;
             SST(1,ii) = (norm(X(ii,:)-mean(X(ii,:))))^2;
         end
-        
+
         bT = regr_coef(2,:)./STDEVr(1,:);
         R2 = 1 - SSE./SST;
         bR2(1, coordinates) = R2; bR2 = reshape(bR2, [xx yy zz]);
@@ -714,13 +723,13 @@ if opts.cvr_maps
                 maps.XCORR.CVR.bR2 = bR2;
                 maps.XCORR.CVR.bSSE = bSSE;
                 maps.XCORR.CVR.bTstat = bSSE;
-                
+
                 disp('Base CVR, r2, Tstat and SSE maps were created using endtidal regressor')
                 CVR(1,:,:,:) = mask.*bCVR;
                 TSTAT(1,:,:,:) = mask.*bTstat;
                 RC(1,:,:,:) = mask.*bR2;
                 clear bCVR bR2 bT bTstat bSSE SSE SST R2 X Y r regr_coef A C s
-                
+
             case 2 %effective probe
                 if opts.niiwrite
                     opts.corrCVRdir
@@ -736,22 +745,22 @@ if opts.cvr_maps
                 maps.XCORR.CVR.bR2_eff = bR2;
                 maps.XCORR.CVR.bSSE_eff = bSSE;
                 maps.XCORR.CVR.bTstat_eff = bSSE;
-                
+
                 disp('Base CVR, r2, Tstat and SSE maps were created using effective endtidal regressor')
                 CVR(2,:,:,:) = mask.*bCVR;
                 TSTAT(2,:,:,:) = mask.*bTstat;
                 RC(2,:,:,:) = mask.*bR2;
                 clear bCVR bR2 bT bTstat bSSE SSE SST R2 X Y r regr_coef A C s
         end
-        
+
         %% generate lag-corrected CVR maps
-        
+
         disp('Generating lag-adjusted maps')
-        
+
         cCVR = zeros([1 xx*yy*zz]); cR2 = zeros([1 xx*yy*zz]); cSSE = zeros([1 xx*yy*zz]); cTstat = zeros([1 xx*yy*zz]);
-        
+
         shifted_regr = NaN([length(coordinates) dyn*opts.interp_factor]);
-        
+
         for ii = 1:length(coordinates)
             corr_regr = circshift(regr',index(ii));
             if index(ii) > 0
@@ -763,7 +772,7 @@ if opts.cvr_maps
             end
             shifted_regr(ii,:) = corr_regr;
         end
-        
+
         regr_coef = zeros([2 length(coordinates)]);
         parfor ii=1:length(coordinates)
             A = shifted_regr(ii,:);
@@ -771,13 +780,13 @@ if opts.cvr_maps
             C = [ones([length(A) 1]) A'];
             regr_coef(:,ii)= C\B';
         end
-        
+
         cCVR(1,coordinates) = regr_coef(2,:); %extract slope
         cCVR(cCVR > 30) = 0; cCVR(cCVR < -30) = 0; %cleanup base CVR map
         cCVR = reshape(cCVR, [xx yy zz]);
-        
+
         %calculate statistics
-        
+
         SSE = zeros([1 size(wb_voxel_ts,1)]); SST = zeros([1 size(wb_voxel_ts,1)]); cT = zeros([1 size(wb_voxel_ts,1)]);
         parfor ii=1:size(wb_voxel_ts,1)
             A = shifted_regr(ii,:);
@@ -787,13 +796,13 @@ if opts.cvr_maps
             SSE(1,ii) = (norm(X - Y'))^2;
             SST(1,ii) = (norm(X-mean(X)))^2;
         end
-        
+
         R2 = 1 - SSE./SST;
         cR2 = zeros([1 xx*yy*zz]); cSSE = zeros([1 xx*yy*zz]);
         cR2(1, coordinates) = R2; cR2 = reshape(cR2, [xx yy zz]);
         cSSE(1, coordinates) = SSE; cSSE = reshape(cSSE, [xx yy zz]);
         cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);
-        
+
         switch pp
             case 1 %endtidal
                 if opts.niiwrite
@@ -810,7 +819,7 @@ if opts.cvr_maps
                 maps.XCORR.CVR.cR2 = cR2;
                 maps.XCORR.CVR.cSSE = cSSE;
                 maps.XCORR.CVR.cTstat = cTstat;
-                
+
                 %save lagregressor maps
                 lagregressor = zeros([xx*yy*zz dyn*opts.interp_factor]);
                 lagregressor(coordinates,:) = shifted_regr;
@@ -843,8 +852,8 @@ if opts.cvr_maps
                 maps.XCORR.CVR.cR2_eff = cR2;
                 maps.XCORR.CVR.cSSE_eff = cSSE;
                 maps.XCORR.CVR.cTstat_eff = cTstat;
-                
-                
+
+
                 %save lagregressor maps
                 lagregressor = zeros([xx*yy*zz dyn*opts.interp_factor]);
                 lagregressor(coordinates,:) = shifted_regr;
@@ -907,7 +916,7 @@ if opts.cvr_maps && opts.eff_probe && opts.trace_corr && opts.robust
     end
     clear TSTAT RC CVR robustIT robustIR
     disp('Calculating robust lag maps')
-    
+
 else
     clear TSTAT RC CVR
 end
@@ -920,7 +929,7 @@ if opts.glm_model
     idx = find(lags<=opts.adjlowlag | lags>=opts.adjhighlag);
     %remove lag values lower that what is possible
     lags(idx)=[];
-    
+
     q = cputime;
     if opts.trace_corr; qq = [1 2]; else; qq = 1; end %regress with probe y/n
     for pp = qq
@@ -934,7 +943,7 @@ if opts.glm_model
                 disp('performing GLM based lag analysis using INPUT regressor')
                 regr = probe;
         end
-        
+
         %setup regression matrix
         for ii = 1:size(lags,2)
             corr_regr = circshift(regr,lags(ii));
@@ -948,7 +957,7 @@ if opts.glm_model
             regr_matrix(ii,:) = corr_regr;
         end
         %perform regression at all lag times
-        
+
         if isempty(np) || nnz(np) == 0
             if opts.gpu
                 regr_coef = zeros([size(lags,2) 2 length(coordinates)]);
@@ -968,12 +977,12 @@ if opts.glm_model
                 end
             end
             %reconstruct signals to calculate R2
-            
+
             R2 = zeros([1 size(regr_matrix,1)]);
             maxindex = zeros([1 size(wb_voxel_ts,1)]);
             beta = zeros([1 size(wb_voxel_ts,1)]);
             rsquared = zeros([1 size(wb_voxel_ts,1)]);
-            
+
             for ii = 1:size(wb_voxel_ts,1)
                 tcoef = regr_coef(:,:,ii);
                 X =  wb_voxel_ts(ii,:);
@@ -986,7 +995,7 @@ if opts.glm_model
                 rsquared(1,ii) = M;
                 beta(1,ii) = regr_coef(I,2,ii);
             end
-            beta(beta > 30) = 0; beta(beta < -30) = 0;
+            %beta(beta > 30) = 0; beta(beta < -30) = 0;
         else
             regr_coef = zeros([size(lags,2) (size(norm_np,2)+2) length(coordinates)]);
             %run GLM
@@ -1006,13 +1015,13 @@ if opts.glm_model
                 end
             end
             %reconstruct signals to calculate R2
-            
+
             R2 = zeros([1 size(regr_matrix,1)]);
             maxindex = zeros([1 size(wb_voxel_ts,1)]);
             beta = zeros([1 size(wb_voxel_ts,1)]);
             rsquared = zeros([1 size(wb_voxel_ts,1)]);
             nuis = zeros([size(norm_np,1) 1]);
-            
+
             for ii = 1:size(wb_voxel_ts,1)
                 tcoef = regr_coef(:,:,ii);
                 X =  wb_voxel_ts(ii,:);
@@ -1026,25 +1035,25 @@ if opts.glm_model
                 rsquared(1,ii) = M;
                 beta(1,ii) = regr_coef(I,2,ii);
             end
-            beta(beta > 30) = 0; beta(beta < -30) = 0;
+            %beta(beta > 30) = 0; beta(beta < -30) = 0;
         end
-        
+
         lagmatrix = lags(maxindex);
         GLM_Estimate = zeros([xx*yy*zz,1]); GLM_Estimate(coordinates,:) = beta;
         GLM_lags = zeros([xx*yy*zz,1]); GLM_lags(coordinates,:) = lagmatrix;
         GLM_lags = reshape(GLM_lags,[xx yy zz]);
         GLM_Estimate = reshape(GLM_Estimate,[xx yy zz]);
-        
+
         tmp = opts.TR*(lagmatrix/opts.interp_factor);
-        if min(tmp(:)) < 0; tmp = tmp + abs(min(tmp(:))); end       
+        if min(tmp(:)) < 0; tmp = tmp + abs(min(tmp(:))); end
         tmpLag = zeros([xx*yy*zz,1]);  tmpLag(coordinates,:) = tmp; clear tmp
         tmpLag = reshape(tmpLag,[xx yy zz]);
-        
+
         %calculate statistics
-        
+
         SSE = zeros([1 size(wb_voxel_ts,1)]); SST = zeros([1 size(wb_voxel_ts,1)]);  T = zeros([1 size(wb_voxel_ts,1)]);
         cR2 = zeros([1 xx*yy*zz]); cSSE = zeros([1 xx*yy*zz]); cTstat = zeros([1 xx*yy*zz]);
-        
+
         parfor ii=1:size(wb_voxel_ts,1)
             A = regr_matrix(maxindex(ii),:)
             X = wb_voxel_ts(ii,:); X(isnan(A)) = []; A(isnan(A)) = [];
@@ -1053,14 +1062,14 @@ if opts.glm_model
             SSE(1,ii) = (norm(X - Y'))^2;
             SST(1,ii) = (norm(X-mean(X)))^2;
         end
-        
+
         R2 = 1 - SSE./SST;
         cR2 = zeros([1 xx*yy*zz]); cSSE = zeros([1 xx*yy*zz]);
         cR2(1, coordinates) = R2; cR2 = reshape(cR2, [xx yy zz]);
         cSSE(1, coordinates) = SSE; cSSE = reshape(cSSE, [xx yy zz]);
-        cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);       
-       
-            
+        cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);
+
+
         switch pp
             case 1
                 if opts.niiwrite
@@ -1077,7 +1086,7 @@ if opts.glm_model
                     saveImageData(mask.*cR2, opts.headers.map, opts.glmlagdir, 'optiReg_R2.nii.gz', datatype);
                     saveImageData(mask.*cTstat, opts.headers.map, opts.glmlagdir, 'optiReg_Tstat.nii.gz', datatype);
                 end
-                
+
                 maps.GLM.optiReg_ES = GLM_Estimate;
                 maps.GLM.optiReg_lags = tmpLag;
                 maps.GLM.uncor_optiReg_lags = GLM_lags;
@@ -1085,7 +1094,7 @@ if opts.glm_model
                 maps.GLM.optiReg_SSE = cSSE;
                 maps.GLM.optiReg_Tstat = cTstat;
                 %if opts.plot; saveas(gcf,[opts.glmlagdir,'regression_optiReg.fig']); end
-                
+
             case 2 %save maps using CO2 regressor
                 if opts.niiwrite
                     cd(opts.glmlagdir);
@@ -1107,16 +1116,16 @@ if opts.glm_model
                 maps.GLM.inputReg_R2 = cR2;
                 maps.GLM.inputReg_SSE = cSSE;
                 maps.GLM.inputReg_Tstat = cTstat;
-                
+
                 %if opts.verbose; saveas(gcf,[opts.glmlagdir,'regression_inputReg.fig']); end
         end
-        
+
         %%%%% generate lag-corrected CVR maps %%%%
         if opts.cvr_maps
             disp('Generating lag-adjusted CVR maps based on GLM analysis')
             cCVR = zeros([1 xx*yy*zz]);
             shifted_regr = NaN([length(coordinates) dyn*opts.interp_factor]);
-            
+
             regr = probe;
             for ii = 1:length(coordinates)
                 corr_regr = circshift(regr',maxindex(ii));
@@ -1129,7 +1138,7 @@ if opts.glm_model
                 end
                 shifted_regr(ii,:) = corr_regr;
             end
-            
+
             regr_coef = zeros([2 length(coordinates)]);
             parfor ii=1:length(coordinates)
                 A = shifted_regr(ii,:);
@@ -1137,7 +1146,7 @@ if opts.glm_model
                 C = [ones([length(A) 1]) A'];
                 regr_coef(:,ii)= C\B';
             end
-            
+
             cCVR(1,coordinates) = regr_coef(end,:); %extract slope
             cCVR(cCVR > 30) = 0; cCVR(cCVR < -30) = 0; %cleanup base CVR map
             cCVR = reshape(cCVR, [xx yy zz]);
@@ -1168,7 +1177,7 @@ if opts.glm_model
                 SSE(1,ii) = (norm(X - Y'))^2;
                 SST(1,ii) = (norm(X-mean(X)))^2;
             end
-            
+
             R2 = 1 - SSE./SST;
             cR2 = zeros([1 xx*yy*zz]); cSSE = zeros([1 xx*yy*zz]);  cTstat = zeros([1 xx*yy*zz]);
             cR2(1, coordinates) = R2'; cR2 = reshape(cR2, [xx yy zz]);
@@ -1187,7 +1196,7 @@ if opts.glm_model
                 maps.GLM.CVR.optiReg_cR2 = cR2;
                 maps.GLM.CVR.optiReg_cSSE = cSSE;
                 maps.GLM.CVR.optiReg_cTstat = cTstat;
-                
+
             else
                 if opts.niiwrite
                     cd(opts.glmCVRdir)
@@ -1207,6 +1216,15 @@ if opts.glm_model
     disp('saving maps in .mat file' )
     maps.newprobe = newprobe;
     save(fullfile(opts.resultsdir,'result_maps.mat'), 'maps');
-    %   close all
+    try
+        warning('on');
+        warning('on', 'MATLAB:rankDeficientMatrix');
+
+        spmd
+            warning('on', 'MATLAB:rankDeficientMatrix');
+        end
+    catch
+    end
+
 end
 
