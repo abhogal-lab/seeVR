@@ -153,8 +153,6 @@ xlabel('image volumes')
 ylabel('a.u.')
 legend('mean reference time-series', 'BP reference mean-timeseries')
 
-
-
 % prep data: s_0 = (s - mean(s))/(2|s - mean(s)|/sqrt(N)
 % reported in https://doi.org/10.1371/journal.pone.0274220
 %BP_V = (BP_V-mean(BP_V))/(2*norm(BP_V-mean(BP_V))/sqrt(N));
@@ -186,6 +184,27 @@ else % include nuisance regressors
     end
 end
 
+%fitted values
+Y = gather(coef(end,:).*repmat(BP_ref',[1 size(voxels,1)]) + ones([1 length(coef)]).*coef(end-1,:));
+
+vSSE = zeros([1 size(voxels,1)]); vSST = zeros([1 size(voxels,1)]); vSTDEVr = zeros([1 size(voxels,1)]);
+tmp1 = (voxels - Y');
+tmp2 = (voxels-mean(voxels,2));
+
+parfor ii=1:size(voxels,1)
+    vSSE(1,ii) = (norm(tmp1(ii,:)))^2;
+    vSST(1,ii) = (norm(tmp2(ii,:)))^2;
+end
+vSTDEVr = nanstd((voxels-Y')'); %standard deviation of residuals (t = beta/STDEVr)
+
+R2 = zeros([1 xx*yy*zz]); SSE = zeros([1 xx*yy*zz]); Tstat = zeros([1 xx*yy*zz]);
+
+vT = coef(end,:)./vSTDEVr(1,:);
+vR2 = 1 - vSSE./vSST;
+R2(1, coordinates) = vR2; R2 = reshape(R2, [xx yy zz]);
+SSE(1, coordinates) = vSSE; SSE = reshape(SSE, [xx yy zz]);
+Tstat(1, coordinates) = vT; Tstat = reshape(Tstat, [xx yy zz]);
+
 CVRidx = coef(end,:);
 bpData = zeros(size(data));
 bpData = reshape(bpData,[xx*yy*zz N]);
@@ -207,21 +226,23 @@ nCVRidx_map(nCVRidx_map > 100) = 0; nCVRidx_map(nCVRidx_map < -100) = 0;
 if opts.niiwrite
     cd(opts.CVRidxdir);
     niftiwrite(cast(nCVRidx_map, opts.mapDatatype),'relativeCVRidx_map',opts.info.map);
+    niftiwrite(cast(CVRidx_map, opts.mapDatatype),'CVRidx_map',opts.info.map);
+    niftiwrite(cast(mask.*R2,opts.mapDatatype),'bR2_map',opts.info.map);
+    niftiwrite(cast(mask.*Tstat,opts.mapDatatype),'bTstat_map',opts.info.map);
 else
     saveImageData(nCVRidx_map,opts.headers.map,opts.CVRidxdir,'relativeCVRidx_map.nii.gz',64);
-end
-
-if opts.niiwrite
-    cd(opts.CVRidxdir);
-    niftiwrite(cast(CVRidx_map, opts.mapDatatype),'CVRidx_map',opts.info.map);
-else
     saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
+    saveImageData(mask.*R2, opts.headers.map, opts.corrCVRdir,'bR2_map.nii.gz', datatype);
+    saveImageData(mask.*Tstat, opts.headers.map, opts.corrCVRdir,'bTstat_map.nii.gz', datatype);
 end
 
 nCVRidx_map(nCVRidx_map == 0) = NaN;
 CVRidx_map(CVRidx_map == 0) = NaN;
 maps.nCVRidx = nCVRidx_map;
 maps.CVRidx = CVRidx_map;
+maps.R2 = R2;
+maps.Tstat = Tstat;
+
 try
     warning('on');
     warning('on', 'MATLAB:rankDeficientMatrix');
