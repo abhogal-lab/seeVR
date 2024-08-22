@@ -80,9 +80,9 @@ else
 end
 
 if isempty(np) || nnz(np) == 0
-    opts.CVRidxdir = fullfile(opts.resultsdir,'CVRidx_inclNuisance'); mkdir(opts.CVRidxdir);
-else
     opts.CVRidxdir = fullfile(opts.resultsdir,'CVRidx'); mkdir(opts.CVRidxdir);
+else
+    opts.CVRidxdir = fullfile(opts.resultsdir,'CVRidx_inclNuisance'); mkdir(opts.CVRidxdir);
 end
 
 if isfield(opts,'figdir'); else; opts.figdir = opts.CVRidxdir; end % check for seperate figure directory
