@@ -18,14 +18,14 @@
 (Transform "BSplineTransform")
 (Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
-(Metric0Weight 0.8)
-(Metric1Weight 0.6)
+(Metric0Weight 0.5)
+(Metric1Weight 1)
 
 (MaximumStepLength 1)
 
 // ***************** Transformation **************************
 (NumberOfResolutions 4)
-(FinalGridSpacingInVoxels 12)
+(FinalGridSpacingInVoxels 20)
 (GridSpacingSchedule  12 8 6 4)
 (HowToCombineTransforms "Compose")
 
@@ -36,11 +36,11 @@
 // ******************** Multiresolution **********************
 
 
-(ImagePyramidSchedule  12 12 12 6 6 6  4 4 4  2 2 2)
+(ImagePyramidSchedule  20 20 20  10 10 10  6 6 6  4 4 4)
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 500 1000 1000 2000)  
+(MaximumNumberOfIterations 500 1000 1000 1000)  
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "GeometricalCenter")

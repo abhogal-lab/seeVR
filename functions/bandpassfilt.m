@@ -49,12 +49,12 @@ data = double(data);
 
 %get voxels
 [voxels_ts coordinates] = grabTimeseries(data, mask);
-
+mean_ts = mean(voxels_ts,1);
 Fs = 1/opts.TR;
 t = 0:1/Fs:1-1/Fs;
 N = size(voxels_ts,2);
 dF = Fs/N;
-freq = 0:Fs/length(mean_ts):Fs/2;
+freq = 0:Fs/N:Fs/2;
 Lowf = opts.fpass(1); Highf = opts.fpass(2); %Hz
 
 %check whether signal processing toolbox is available
@@ -68,7 +68,7 @@ if license('test','signal_toolbox') == 1
         SSres = []; BP = [];
         for forder = 1:4
             [b,a] = butter(forder,2*[Lowf, Highf]/Fs);
-            BP(forder,:) = filtfilt(b,a,(mean_ts));
+            BP(forder,:) = filtfilt(b,a,mean_ts);
             SSres(forder,:)= sum((mean_ts - BP(forder,:).^2),2);
         end
         %select closest filter

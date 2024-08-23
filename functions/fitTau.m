@@ -43,6 +43,7 @@ if isfield(opts,'win_size'); else; opts.win_size = 1; end                  %the 
 if isfield(opts,'max_tau'); else; opts.max_tau = 300; end                  %maximum exponential dispersion time constant - data dependent
 if isfield(opts,'save_unrefined'); else; opts.save_unrefined = 0; end      %save maps before refinement step to check effect
 if isfield(opts,'save_responses'); else; opts.save_responses = 0; end      %save tau fits; good for checking fit quality
+if isfield(opts,'calc_TTP'); else; opts.calc_TTP = 1; end                  %calculate time to peak
 
 opts.dynamicdir = fullfile(opts.resultsdir,'tau'); mkdir(opts.dynamicdir);
 [xx yy zz dyn] = size(data);
@@ -225,6 +226,27 @@ parfor ii=1:length(coordinates)
     SSE(1,ii) = (norm(ts(ii,:) - responseFits(ii,:)))^2;
     SST(1,ii) = (norm(ts(ii,:)-mean(ts(ii,:))))^2;
     r_corr(1,ii) = corr(ts(ii,:)', responseFits(ii,:)');
+end
+
+if opts.calc_TTP
+    disp('fitting time to peak')
+    [ttp_map] = calcTTP(responseFits, probe, mask, opts);
+    maps.ttp_taufits = ttp_map;
+    
+    if opts.niiwrite
+    niftiwrite(cast(ttp_map, opts.mapDatatype), fullfile(opts.dynamicdir, 'TTP_fits'), opts.info.map);
+    else
+    saveImageData(ttp_map, opts.headers.map, opts.dynamicdir, 'TTP_fits.nii.gz', 64);
+    end
+
+    [ttp_map] = calcTTP(ts, probe, mask, opts);
+    maps.ttp_data = ttp_map;
+
+    if opts.niiwrite
+    niftiwrite(cast(ttp_map, opts.mapDatatype), fullfile(opts.dynamicdir, 'TTP_data'), opts.info.map);
+    else
+    saveImageData(ttp_map, opts.headers.map, opts.dynamicdir, 'TTP_data.nii.gz', 64);
+    end
 end
 
 R2 = 1 - SSE./SST; %R2(R2 > 0) = 0;
