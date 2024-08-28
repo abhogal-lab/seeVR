@@ -34,7 +34,7 @@ global opts
 
 if isfield(opts,'filter_regressors'); else; opts.filter_regressors = 1; end
 if isfield(opts,'add_drift'); else; opts.add_drift = 1; end % add a linear drift term
-if isfield(opts,'legendre_order'); else; opts.legendre_order = 0; end % increasing this adds additional legendre polynomials
+if isfield(opts,'legendre_order'); else; opts.legendre_order = 1; end % increasing this adds additional legendre polynomials
 if isfield(opts,'add_derivatives'); else; opts.add_derivatives = 2; end % if = 1 motion trans/rot, if = 2 or 3 then add time derivative and square, respectively
 if isfield(opts,'motioncorr'); else; opts.motioncorr  = 0.3; end %exclude traces with higher correlation values
 if opts.motioncorr > 1 || opts.motioncorr < 0
@@ -63,6 +63,7 @@ end
 
 if opts.add_drift ~= 0
     disp('adding drift term')
+    if opts.legendre_order == 0; opts.legendre_order = 1; end
     for ii=1:opts.legendre_order
     drift_term(ii,:) = LegendreN(ii, 1:1:length(nuisance));
     end

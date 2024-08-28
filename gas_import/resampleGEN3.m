@@ -21,7 +21,7 @@ cd(seqpath);
 traceFile =  ls('*bbb_mod*')
 
 %import BBB
-fileToRead = [seqpath,traceFile];
+fileToRead = fullfile(seqpath,traceFile);
 DELIMITER = '\t';
 HEADERLINES = 1;
 BBBdata = import_respfiles(fileToRead, DELIMITER, HEADERLINES);

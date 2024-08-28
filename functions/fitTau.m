@@ -43,7 +43,7 @@ if isfield(opts,'win_size'); else; opts.win_size = 1; end                  %the 
 if isfield(opts,'max_tau'); else; opts.max_tau = 300; end                  %maximum exponential dispersion time constant - data dependent
 if isfield(opts,'save_unrefined'); else; opts.save_unrefined = 0; end      %save maps before refinement step to check effect
 if isfield(opts,'save_responses'); else; opts.save_responses = 0; end      %save tau fits; good for checking fit quality
-if isfield(opts,'calc_TTP'); else; opts.calc_TTP = 1; end                  %calculate time to peak
+if isfield(opts,'calc_TTP'); else; opts.calc_TTP = 0; end                  %calculate time to peak
 
 opts.dynamicdir = fullfile(opts.resultsdir,'tau'); mkdir(opts.dynamicdir);
 [xx yy zz dyn] = size(data);

@@ -90,7 +90,7 @@ else
 end
 
 disp(['path to reference image: ',refImg_BET])
-if exist(refImg) == 2
+if exist(refImg_BET) == 2
     disp('brain extracted fixed/reference image found')
 else
     error('check brain extracted fixed/reference image filename and extension')
@@ -166,9 +166,9 @@ mInvtrans3 = fullfile(opts.regFuncOutputMNI,'mInverseAFTransformParameters.1.txt
 if ispc
     adaptElastixTransFile( opts.affineTxParamFile, mtrans1, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile( opts.affineTxParamFile2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
-    adaptElastixTransFile( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '1');
+    adaptElastixTransFile( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '0');
     adaptElastixTransFile( opts.bsplineTxParamFile, mtrans3, 'InitialTransformParametersFileName', mtrans2);
-    adaptElastixTransFile( mtrans3, mtrans3, 'FinalBSplineInterpolationOrder', '1');
+    adaptElastixTransFile( mtrans3, mtrans3, 'FinalBSplineInterpolationOrder', '0');
     %inverse
     adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '0');
     adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'InitialTransformParametersFileName', 'NoInitialTransform');
@@ -176,7 +176,7 @@ if ispc
 
     adaptElastixTransFile( opts.inverseAffineTxParamFile, mInvtrans3, 'InitialTransformParametersFileName', mInvtrans2);
     adaptElastixTransFile( mInvtrans2, mInvtrans2, 'InitialTransformParametersFileName', mInvtrans1);
-
+    
 else
     adaptElastixTransFile_linux( opts.affineTxParamFile, mtrans1, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile_linux( opts.affineTxParamFile2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
@@ -208,6 +208,12 @@ system(trans_command);
  movefile(name1, name2);
 
 %% inverse transform MNI images to functional space
+% to mask maps
+if ispc
+    adaptElastixTransFile( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '0')
+else
+    adaptElastixTransFile_linux( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '0')
+end
 
 maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
 maskname = dir('*.nii.gz*');
