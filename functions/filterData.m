@@ -91,87 +91,75 @@ else
     if isfield(opts,'sigma_range'); else
         opts.sigma_range = ROIstd(guideim,mask);
     end
-        %run specified filter
-        opts.sigma_spatial = double(opts.sigma_spatial);
-        opts.sigma_range = double(opts.sigma_range);
-        switch opts.filter
+    %run specified filter
+    opts.sigma_spatial = double(opts.sigma_spatial);
+    opts.sigma_range = double(opts.sigma_range);
+    switch opts.filter
 
-            case 'imguided'
-                if isfield(opts,'nHood'); else; opts.nHood = [3 3]; end
-                opts.spatialdim = 2;
-                disp('This is a 2D implementation; opts.spatialdim updated to 2')
+        case 'imguided'
+            if isfield(opts,'nHood'); else; opts.nHood = [3 3]; end
+            opts.spatialdim = 2;
+            disp('This is a 2D implementation; opts.spatialdim updated to 2')
 
-                for ii=1:size(data,4)
-                    filtered_data(:,:,:,ii) = imguidedfilter(squeeze(data(:,:,:,ii)), guideim, 'NeighborhoodSize', opts.nHood);
-                end
+            for ii=1:size(data,4)
+                filtered_data(:,:,:,ii) = imguidedfilter(squeeze(data(:,:,:,ii)), guideim, 'NeighborhoodSize', opts.nHood);
+            end
 
-            case 'bilateral'
+        case 'bilateral'
 
-                mask = uint8(mask);
-                %setup CPUs
-                n_cpu = java.lang.Runtime.getRuntime().availableProcessors();
-                n_threads = max(n_cpu - 1, 1);
-                setenv('OMP_NUM_THREADS', num2str(n_threads));
+            mask = uint8(mask);
+            %setup CPUs
+            n_cpu = java.lang.Runtime.getRuntime().availableProcessors();
+            n_threads = max(n_cpu - 1, 1);
+            setenv('OMP_NUM_THREADS', num2str(n_threads));
 
-                tdata = single(permute(data,[4 1 2 3]));
+            tdata = single(permute(data,[4 1 2 3]));
 
-                if ispc
-                    filtered_data = winbilatFilter(tdata, single(guideim), double(opts.sigma_spatial), opts.sigma_range, mask);
-                else
-                    if ismac
-                        filtered_data = macbilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
-                    else
-                        filtered_data = bilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
-                    end
-                end
-                filtered_data = permute(filtered_data, [2 3 4 1]);
+            if ispc
+                filtered_data = winbilatFilter(tdata, single(guideim), double(opts.sigma_spatial), opts.sigma_range, mask);
+            else
+                filtered_data = bilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
+            end
+            filtered_data = permute(filtered_data, [2 3 4 1]);
 
-            case 'tips'
+        case 'tips'
 
-                mask = uint8(mask);
-                %setup CPUs
-                n_cpu = java.lang.Runtime.getRuntime().availableProcessors();
-                n_threads = max(n_cpu - 1, 1);
-                setenv('OMP_NUM_THREADS', num2str(n_threads));
+            mask = uint8(mask);
+            %setup CPUs
+            n_cpu = java.lang.Runtime.getRuntime().availableProcessors();
+            n_threads = max(n_cpu - 1, 1);
+            setenv('OMP_NUM_THREADS', num2str(n_threads));
 
-                tdata = single(permute(data,[4 1 2 3]));
+            tdata = single(permute(data,[4 1 2 3]));
 
-                if ispc
-                    filtered_data = wintipsFilter(tdata,opts.sigma_spatial, opts.sigma_range, uint8(mask));
-                else
-                    if ismac
-                        filtered_data = mactipsFilter(tdata,opts.sigma_spatial, opts.sigma_range, mask);
-                    else
-                        filtered_data = tipsFilter(tdata,opts.sigma_spatial, opts.sigma_range, mask);
-                    end
-                end
-                filtered_data = permute(filtered_data, [2 3 4 1]);
+            if ispc
+                filtered_data = wintipsFilter(tdata,opts.sigma_spatial, opts.sigma_range, uint8(mask));
+            else
+                filtered_data = tipsFilter(tdata,opts.sigma_spatial, opts.sigma_range, mask);
+            end
+            filtered_data = permute(filtered_data, [2 3 4 1]);
 
-            case 'gaussian'
+        case 'gaussian'
 
-                %to emulate gaussian smoothing, set very high range
-                opts.sigma_range = 1000000000;
+            %to emulate gaussian smoothing, set very high range
+            opts.sigma_range = 1000000000;
 
-                mask = uint8(mask);
-                %setup CPUs
-                n_cpu = java.lang.Runtime.getRuntime().availableProcessors();
-                n_threads = max(n_cpu - 1, 1);
-                setenv('OMP_NUM_THREADS', num2str(n_threads));
+            mask = uint8(mask);
+            %setup CPUs
+            n_cpu = java.lang.Runtime.getRuntime().availableProcessors();
+            n_threads = max(n_cpu - 1, 1);
+            setenv('OMP_NUM_THREADS', num2str(n_threads));
 
-                tdata = single(permute(data,[4 1 2 3]));
+            tdata = single(permute(data,[4 1 2 3]));
 
-                if ispc
-                    filtered_data = winbilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
-                else
-                    if ismac
-                        filtered_data = macbilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
-                    else
-                        filtered_data = bilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
-                    end
-                end
-                filtered_data = permute(filtered_data, [2 3 4 1]);
+            if ispc
+                filtered_data = winbilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
+            else
+                filtered_data = bilatFilter(tdata,single(guideim),opts.sigma_spatial, opts.sigma_range, mask);
+            end
+            filtered_data = permute(filtered_data, [2 3 4 1]);
 
-        end
     end
-    filtered_data = eval([type,'(filtered_data)']);
+end
+filtered_data = eval([type,'(filtered_data)']);
 end

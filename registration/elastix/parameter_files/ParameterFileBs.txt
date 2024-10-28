@@ -56,8 +56,8 @@
 (UseAdaptiveStepSizes "true")
 // ************* Interpolation and Resampling ****************
 
-(BSplineInterpolationOrder 1)
-(FinalBSplineInterpolationOrder 1)
+(BSplineInterpolationOrder 2)
+(FinalBSplineInterpolationOrder 2)
 (ShowExactMetricValue "false") 
 (WriteTransformParametersEachResolution "false")
 (WriteResultImageAfterEachResolution "true")

@@ -58,8 +58,8 @@ probe = double(rescale(probe));
 %function options
 if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end
 if isfield(opts,'save_cleaned'); else; opts.save_cleaned = 0; end
-if isfield(opts,'disperse_probe'); else; opts.disperse_probe = 1; end %convolves the input probe with a few exponentials to create additional EVs
-if isfield(opts,'prep_nuisance'); else; opts.prep_nuisance = 0; end %filters nuisance params
+if isfield(opts,'disperse_probe'); else; opts.disperse_probe = 0; end %convolves the input probe with a few exponentials to create additional EVs
+if isfield(opts,'prep_nuisance'); else; opts.prep_nuisance = 1; end %filters nuisance params
 
 
 if isempty(probe)

@@ -76,7 +76,8 @@ if isfield(opts,'norm_regr'); else; opts.norm_regr = 0; end               %norma
 if isfield(opts,'robust'); else; opts.robust = 0; end                     %calculate robust lag and CVR
 if isfield(opts,'refine_lag'); else; opts.refine_lag = 1; end             %When set to 1, lag calculation will reprocess voxels with clipped values by creating a new mean time series that averages data from neighboring voxels
 if isfield(opts,'win_size'); else; opts.win_size = 1; end                 %the number of voxels to consider around the voxel of interest when opts.refine_lag = 1;
-if isfield(opts,'passes'); else; opts.passes = 10; end                     %how many iterations for lag_map refinement
+if isfield(opts,'passes'); else; opts.passes = 10; end                    %how many iterations for lag_map refinement
+if isfield(opts,'medfilt_lag'); else; opts.medfilt_lag = 1; end           %cleans up lag map with median filter but does not change statistical maps. May improve lag-corrected CVR
 
 if opts.niiwrite
     if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end
@@ -197,7 +198,7 @@ if opts.refine_regressor
 
             % the order here matters because of the SIGN of the lag
             % this way we slide the probe to the ts
-            b2=cellfun(@(a2) xcorr(a2,newprobe,'coeff'),a2,'uniformoutput',false);
+            b2=cellfun(@(a2) xcorr(a2,newprobe,'none'),a2,'uniformoutput',false);
             corr_probe=cell2mat(b2); %reformat into correlation matrix
             corr_probe = corr_probe' ;
 
@@ -413,11 +414,11 @@ if opts.corr_model
         %matrix cross correlation with probe
         a2=mat2cell(wb_voxel_ts,ones(1,size(wb_voxel_ts,1)),size(wb_voxel_ts,2)); %turn into cells so treat all rows independently
 
-        b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'coeff'),a2,'uniformoutput',false);
+        b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'none'),a2,'uniformoutput',false);
         corr_probe=cell2mat(b2); %reformat into correlation matrix
         corr_probe = corr_probe';
         %use highlag to restrict the number of correlations that need to be done
-        [~,lags] = xcorr(gm_voxel_ts_nonan(1,:),regr,opts.adjhighlag,'coeff');  %%%%%%
+        [~,lags] = xcorr(gm_voxel_ts_nonan(1,:),regr,opts.adjhighlag,'none');  %%%%%%
 
         %save correlations over time only if this map is to be saved (saves
 
@@ -434,13 +435,12 @@ if opts.corr_model
         lags(idx)=[];
         corr_probe(idx,:)=[];
 
-        if opts.uni
+        if opts.uni %add option to pick closest probe to zero-lag
             [~, index_map(pp,coordinates)] = max(corr_probe); %negative correlations will not weigh more than positive ones
             [~, index(pp,:)] = max(corr_probe); %negative correlations will not weigh more than positive ones
         else
             [~, index_map(pp,coordinates)] = max(abs(corr_probe)); %Absolute max to take care of negative correlation
             [~, index(pp,:)] = max(abs(corr_probe)); %Absolute max to take care of negative correlation
-
         end
         %fill correlation map
         parfor ii = 1:length(coordinates)
@@ -503,7 +503,7 @@ if opts.corr_model
 
                 %matrix cross correlation with probe
                 a2=mat2cell(newTS,ones(1,size(newTS,1)),size(newTS,2)); %turn into cells so treat all rows independently
-                b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'coeff'),a2,'uniformoutput',false);
+                b2=cellfun(@(a2) xcorr(a2,regr,opts.adjhighlag,'none'),a2,'uniformoutput',false);
                 corr_probe=cell2mat(b2); %reformat into correlation matrix
                 corr_probe = corr_probe';
                 corr_probe(idx,:)=[];
@@ -551,6 +551,11 @@ if opts.corr_model
         %save lag and r maps
         tmpLag = opts.TR*(lag_map/opts.interp_factor).*mask;
         if min(tmpLag(:)) < 0; tmpLag = tmpLag + abs(min(tmpLag(:))); end
+
+        if opts.medfilt_lag
+            tmpLag = medfilt3(tmpLag);
+            lag_map = medfilt3(lag_map);
+        end
 
         switch pp
             case 1
@@ -1068,7 +1073,11 @@ if opts.glm_model
         cR2(1, coordinates) = R2; cR2 = reshape(cR2, [xx yy zz]);
         cSSE(1, coordinates) = SSE; cSSE = reshape(cSSE, [xx yy zz]);
         cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);
-
+   
+        if opts.medfilt_lag
+            tmpLag = medfilt3(tmpLag);
+            GLM_lags = medfilt3(GLM_lags);
+        end
 
         switch pp
             case 1

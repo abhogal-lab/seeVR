@@ -48,7 +48,7 @@ autoCorr = abs(corr(probe,nuisance));
 autoCorr(autoCorr < opts.motioncorr) = 0; autoCorr(autoCorr > 0) = 1; %removes anything with more than weak correlation
 %remove highly correlated nuisance regressors to preserve signal response
 index = ([1:1:size(nuisance,2)]).*autoCorr;
-keep = index; keep(keep == 0) = [];
+keep = index; keep(keep == 0) = []; keep(isnan(keep)) = [];
 leave = index; leave = find(index == 0);
 
 innuisance = nuisance; outnuisance = nuisance;
