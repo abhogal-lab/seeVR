@@ -249,7 +249,7 @@ if opts.calc_TTP
     end
 end
 
-R2 = 1 - SSE./SST; %R2(R2 > 0) = 0;
+R2 = 1 - SSE./SST; 
 cR2 = zeros(1, numel(mask)); r = zeros(1, numel(mask));
 cR2(1, coordinates) = R2; r(1, coordinates) = r_corr;
 cR2 = reshape(cR2, size(mask)); r = reshape(r, size(mask));
