@@ -115,6 +115,7 @@
 % a.bhogal@umcutrecht.nl for use with seeVR toolbox (www.seeVR.nl)
 %
 % Added several additional colormap options for overlay
+% example
 % 					'gray_hot' - first channel is plotted as hot colormap, second
 %                   channel as gray, and third channel as alpha between the
 %                   two.
@@ -130,29 +131,9 @@
 % 					'gray_viridis' - first channel is plotted as viridis colormap, second
 %                   channel as gray, and third channel as alpha between the
 %                   two.
-% 					'gray_inferno' - first channel is plotted as inferno colormap, second
-%                   channel as gray, and third channel as alpha between the
-%                   two.
-% 					'gray_parula' - first channel is plotted as parula colormap, second
-%                   channel as gray, and third channel as alpha between the
-%                   two.
-% 					'gray_spectral' - first channel is plotted as spectral brewer colormap, second
-%                   channel as gray, and third channel as alpha between the
-%                   two.
-% 					'gray_ryb' - first channel is plotted as RedYellowBlue brewer colormap, second
-%                   channel as gray, and third channel as alpha between the
-%                   two.
-% 					'gray_ryg' - first channel is plotted as RedYellowGreen brewer colormap, second
-%                   channel as gray, and third channel as alpha between the
-%                   two.
-%                   'gray_op' - first channel is plotted as OpPu brewer colormap, second
-%                   channel as gray, and third channel as alpha between the
-%                   two (purple --> orange).
-%                   'gray_special' - This is a double map where the first
-%                   component is blue to yellow nad the second yellow to
-%                   red. By manualy modyfying the length of each below you can
-%                   weight contributions.
-%                
+%                   .... etc.
+% 					
+%       !!!SCROLL DOWN TO SEE OR ADD MORE OPTIONS
 %
 % Also renamed the rescale.m function to rescale2.m located in the /private/ folder.
 % This function sometimes cused issues with Matlabs own rescale function. Associated
@@ -437,6 +418,21 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         cmap2((1:4)+reverseMap) = 'bled';
         [I, limits] = real2rgb(I, cmap2, limits);
         I = rescale(A + I, [-0.1 1.3]);
+        %% Gray_Special
+    case 'gray_special'
+        % Plot first channel as 'custom', second channel as 'spectral', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_special requires a 3 channel image');
+        end
+        map1 = colormap(flip(brewermap(32,'YlGnBu')));
+        map2 = colormap(brewermap(128,'YlOrRd'));
+        map = [map1' map2']';
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
         %% Prob_jet
     case 'prob_jet'
         % Plot first channel as 'jet' and modulate according to other
@@ -468,7 +464,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_parula
     case 'gray_parula'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'parula', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_parula requires a 3 channel image');
@@ -494,7 +490,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_viridis
     case 'gray_viridis'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'viridis', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_viridis requires a 3 channel image');
@@ -507,7 +503,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_inferno
     case 'gray_inferno'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'inferno', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_inferno requires a 3 channel image');
@@ -520,7 +516,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_plasma
     case 'gray_plasma'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'plasma', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_plasma requires a 3 channel image');
@@ -533,7 +529,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_magma
     case 'gray_magma'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'magma', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_magma requires a 3 channel image');
@@ -546,7 +542,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_devon
     case 'gray_devon'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'devon', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_devon requires a 3 channel image');
@@ -559,7 +555,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_hot
     case 'gray_hot'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'hot', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_hot requires a 3 channel image');
@@ -572,7 +568,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_spectral
     case 'gray_spectral'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'spectral', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_spectral requires a 3 channel image');
@@ -585,7 +581,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_BuYlRd
     case 'gray_byr'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'blue-yellow-red', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_byr requires a 3 channel image');
@@ -598,7 +594,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_GrYlRd
     case 'gray_gyr'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'green-yellow-red', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_gyr requires a 3 channel image');
@@ -611,7 +607,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_RdYlBu
     case 'gray_ryb'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'red-yellow-blue', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_ryb requires a 3 channel image');
@@ -624,7 +620,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_RdYlBu
     case 'gray_ryg'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'red-yellow-green', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_ryg requires a 3 channel image');
@@ -637,34 +633,19 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         limits = [];
         %% Gray_PuOr
     case 'gray_op'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'orange-purple', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_op requires a 3 channel image');
         end
         map = colormap(flip(brewermap(256,'PuOr')));
-        J = real2rgb(I(:,:,1), map, limits);
-        G = real2rgb(I(:,:,2), 'gray');
-        A = real2rgb(I(:,:,3), 'gray');
-        I = J .* A + G .* (1 - A);
-        limits = [];
-        %% Gray_Special
-    case 'gray_special'
-        % Plot first channel as 'jet', second channel as 'gray', and third
-        % channel as alpha between the two.
-        if c ~= 3
-            error('gray_special requires a 3 channel image');
-        end
-        map1 = colormap(flip(brewermap(32,'YlGnBu')));
-        map2 = colormap(brewermap(128,'YlOrRd'));
-        map = [map1' map2']';
         J = real2rgb(I(:,:,1), map, limits);
         G = real2rgb(I(:,:,2), 'gray');
         A = real2rgb(I(:,:,3), 'gray');
         I = J .* A + G .* (1 - A);
         limits = [];
         %% Gray_OrPu
-    case 'gray_po'
+    case 'gray_orange-purple'
         % Plot first channel as 'jet', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
@@ -676,14 +657,14 @@ switch lower(cmap(1+reverseMap:end-grayMap))
         A = real2rgb(I(:,:,3), 'gray');
         I = J .* A + G .* (1 - A);
         limits = [];
-         %% Gray_vik
+        %% Gray_vik
     case 'gray_vik'
-        % Plot first channel as 'jet', second channel as 'gray', and third
+        % Plot first channel as 'vik', second channel as 'gray', and third
         % channel as alpha between the two.
         if c ~= 3
             error('gray_op requires a 3 channel image');
         end
-        map = crameri('vik') 
+        map = crameri('vik')
         J = real2rgb(I(:,:,1), map, limits);
         G = real2rgb(I(:,:,2), 'gray');
         A = real2rgb(I(:,:,3), 'gray');
