@@ -656,7 +656,7 @@ switch lower(cmap(1+reverseMap:end-grayMap))
             error('gray_special requires a 3 channel image');
         end
         map1 = colormap(flip(brewermap(32,'YlGnBu')));
-        map2 = colormap(brewermap(192,'YlOrRd'));
+        map2 = colormap(brewermap(128,'YlOrRd'));
         map = [map1' map2']';
         J = real2rgb(I(:,:,1), map, limits);
         G = real2rgb(I(:,:,2), 'gray');
@@ -671,6 +671,19 @@ switch lower(cmap(1+reverseMap:end-grayMap))
             error('gray_op requires a 3 channel image');
         end
         map = colormap(flip(brewermap(256,'PuOr')));
+        J = real2rgb(I(:,:,1), map, limits);
+        G = real2rgb(I(:,:,2), 'gray');
+        A = real2rgb(I(:,:,3), 'gray');
+        I = J .* A + G .* (1 - A);
+        limits = [];
+         %% Gray_vik
+    case 'gray_vik'
+        % Plot first channel as 'jet', second channel as 'gray', and third
+        % channel as alpha between the two.
+        if c ~= 3
+            error('gray_op requires a 3 channel image');
+        end
+        map = crameri('vik') 
         J = real2rgb(I(:,:,1), map, limits);
         G = real2rgb(I(:,:,2), 'gray');
         A = real2rgb(I(:,:,3), 'gray');
