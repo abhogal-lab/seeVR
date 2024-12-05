@@ -18,46 +18,61 @@
 %
 % *************************************************************************
 %
-% probe: usually PetCO2/O2 trace
-% 
 % ts: input timeseries data (i.e. average BOLD signal calculated over an ROI using meanTimeseries)
+% 
+% probe: usually PetCO2/O2 trace
+%
+% weighting: Added a weighting such that when input data contains volumes
+% (or timeseries) with zero values, those values are weighted less in the
+% fit. This means that rising or training edges can be isolated
+% independently
 %
 
 function [y_fit, b] = fitTau1D(probe, ts, opts)
-global opts
-ts = double(ts);
-if iscolumn(probe); probe = probe'; end
-if iscolumn(ts); ts = ts'; end
+    global opts
+    ts = double(ts);
+    if iscolumn(probe); probe = probe'; end
+    if iscolumn(ts); ts = ts'; end
 
-if isfield(opts,'maxTau'); else; opts.maxTau = 300; end                   %maximum exponential dispersion time constant - data dependent
+    if isfield(opts, 'maxTau'); else; opts.maxTau = 300; end % Max exponential dispersion time constant
 
-t = double(opts.TR:opts.TR:length(probe)*opts.TR);
+    %t = double(opts.TR:opts.TR:length(probe) * opts.TR);
+    t = 1:1:length(probe);
 
-options = optimoptions('lsqcurvefit','Display','none','FunctionTolerance',1.0000e-8,...
-    'StepTolerance', 1.0000e-8, 'MaxIter',150);
+    options = optimoptions('lsqcurvefit', 'Display', 'none', 'FunctionTolerance', 1.0000e-8, ...
+        'StepTolerance', 1.0000e-8, 'MaxIter', 150);
 
-nr_params = 3;
+    nr_params = 3;
 
-b = nan([length(probe), nr_params]);
+    % Initialize weights: zero weight for zero values in ts, otherwise weight = 1
+    weights = ts ~= 0;
 
-model = (@(a,t) a(1)*rescale(real(ifft(ifftshift(fftinput(probe).*fftexponential(a(2),t)))))+a(nr_params));
-a0 = [mean(ts)/mean(probe) 1 mean(ts)];
-lb = [ 0  0 -Inf];
-ub = [ Inf opts.maxTau Inf];
+    model = @(a, t) a(1) * rescale(real(ifft(ifftshift(fftinput(probe) .* fftexponential(a(2), t))))) + a(nr_params);
+    a0 = [mean(ts(weights)) / mean(probe), 1, mean(ts(weights))];
+    lb = [0, 0, -Inf];
+    ub = [Inf, opts.maxTau, Inf];
 
-tic
-try
-    b = lsqcurvefit(model,[range(ts) 20 0],t,ts,lb,ub,options)
-catch
-    %continue
-    disp('error; please check inputs')
+    % Weighted least squares residual function
+    weighted_residual = @(a) weights .* (ts - model(a, t));
+
+    tic
+    try
+        % Use lsqnonlin for custom residual calculation
+        b = lsqnonlin(weighted_residual, a0, lb, ub, options);
+    catch
+        % Continue on errors
+        disp('Error: please check inputs');
+    end
+
+    % Generate fitted values
+    y_fit = model(b, t);
+
+    % Plot the results
+    figure;
+    plot(t, ts, 'r-', t, y_fit, 'b-');
+    legend('Observed Data', 'Fitted Model');
+    title('Observed vs. Fitted Model');
 end
-y_fit = model(b,t);
-% Plot the results
-figure
-plot(t,(ts),'r-',t,(y_fit),'b-');
-legend('Observed Data','Fitted Model');
 
-end
 
 
