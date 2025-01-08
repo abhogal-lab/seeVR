@@ -20,13 +20,16 @@
 % Registration relies on elastix. For more information see the Elastix
 % hompage at: https://elastix.lumc.nl/
 %
-% moveImg: path (i.e. directory AND filename with extention) to moving, or
+% moveImg_BET: path (i.e. directory AND filename with extention) to brain extracted moving, or
 % functional image
 %
 % moveMask: path (i.e. directory AND filename with extention) to moving, or
 % functional mask (binary image)
 %
 % refImg: path (i.e. directory AND filename with extention) to fixed, or
+% anatomical image
+%
+% refImg_BET: path (i.e. directory AND filename with extention) to brain extracted fixed, or
 % anatomical image
 %
 % refMask: path (i.e. directory AND filename with extention) to fixed, or
