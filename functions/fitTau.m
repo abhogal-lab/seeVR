@@ -49,12 +49,21 @@ if isfield(opts,'win_size'); else; opts.win_size = 1; end                  %the 
 if isfield(opts,'max_tau'); else; opts.max_tau = 300; end                  %maximum exponential dispersion time constant - data dependent
 if isfield(opts,'save_unrefined'); else; opts.save_unrefined = 0; end      %save maps before refinement step to check effect
 if isfield(opts,'save_responses'); else; opts.save_responses = 0; end      %save tau fits; good for checking fit quality
+if isfield(opts,'filloutliers'); else; opts.filloutliers = 1; end          %spike removal
+if isfield(opts,'medfilt_maps'); else; opts.medfilt_maps = 1; end          %cleans up tau maps with median filter but does not change statistical maps.
 
 opts.dynamicdir = fullfile(opts.resultsdir,'tau'); mkdir(opts.dynamicdir);
 [xx yy zz dyn] = size(data);
 
-[voxel_ts, coordinates] = grabTimeseries(data, mask);
-
+if opts.filloutliers
+    disp('removing outliers...')
+    [voxel_ts, coordinates] = grabTimeseries(data, mask);
+    voxel_ts = filloutliers(voxel_ts', 'spline', 'mean');
+    voxel_ts = voxel_ts';
+else
+    % WB coordinates
+    [voxel_ts, coordinates] = grabTimeseries(data, mask);
+end
 ts = zeros([length(coordinates),opts.interp_factor*dyn]);
 
 if size(data,4) ~= length(probe) && opts.interp_factor > 1
@@ -228,6 +237,12 @@ if opts.refine_tau
     b3_map = reshape(b3_vec, [xx yy zz]);
 end
 %% save maps and calculate stats
+
+if opts.medfilt_maps
+    b1_map = medfilt3(b1_map);
+    b2_map = medfilt3(b2_map);
+    b3_map = medfilt3(b3_map);
+end
 
 if opts.niiwrite
     cd(opts.dynamicdir);

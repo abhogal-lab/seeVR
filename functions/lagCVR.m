@@ -77,8 +77,8 @@ if isfield(opts,'robust'); else; opts.robust = 0; end                     %calcu
 if isfield(opts,'refine_lag'); else; opts.refine_lag = 1; end             %When set to 1, lag calculation will reprocess voxels with clipped values by creating a new mean time series that averages data from neighboring voxels
 if isfield(opts,'win_size'); else; opts.win_size = 1; end                 %the number of voxels to consider around the voxel of interest when opts.refine_lag = 1;
 if isfield(opts,'passes'); else; opts.passes = 10; end                    %how many iterations for lag_map refinement
-if isfield(opts,'medfilt_lag'); else; opts.medfilt_lag = 1; end           %cleans up lag map with median filter but does not change statistical maps. May improve lag-corrected CVR
-
+if isfield(opts,'medfilt_maps'); else; opts.medfilt_maps = 1; end         %cleans up lag map with median filter but does not change statistical maps. May improve lag-corrected CVR
+if isfield(opts,'filloutliers'); else; opts.filloutliers = 1; end         %spike removal
 if opts.niiwrite
     if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end
 end
@@ -136,11 +136,22 @@ orig_regr = probe;
 t = cputime;
 
 %% grab coordinates
-% WB coordinates
-[orig_voxel_ts, coordinates] = grabTimeseries(data, mask);
+if opts.filloutliers
+    disp('removing outliers...')
+    [orig_voxel_ts, coords] = grabTimeseries(data, mask);
+    B = filloutliers(voxels', 'spline', 'mean');
+    B = B';
+    figure; plot(mean(B,1)); hold on; plot(mean(orig_voxel_ts' ,2)); title('check outlier removal: global signal');
+    temp = zeros([numel(mask) size(BOLD,4)]);
+    temp(coords,:) = B; clear temp;
+    data = reshape(temp, size(BOLD)); clear temp; clear B;
+else
+    % WB coordinates
+    [orig_voxel_ts, coordinates] = grabTimeseries(data, mask);
+end
+
 % GM coordinates
 [gm_voxel_ts, gmcoordinates] = grabTimeseries(data, refmask);
-%make some room
 
 if opts.prewhite
     gm_voxel_ts = gm_voxel_ts'; parfor ii=1:size(gmcoordinates,1); [gm_voxel_ts(:,ii), ~, ~] = prewhiten(gm_voxel_ts(:,ii)); end; gm_voxel_ts = gm_voxel_ts';
@@ -552,7 +563,7 @@ if opts.corr_model
         tmpLag = opts.TR*(lag_map/opts.interp_factor).*mask;
         if min(tmpLag(:)) < 0; tmpLag = tmpLag + abs(min(tmpLag(:))); end
 
-        if opts.medfilt_lag
+        if opts.medfilt_maps
             tmpLag = medfilt3(tmpLag);
             lag_map = medfilt3(lag_map);
         end
@@ -1073,8 +1084,8 @@ if opts.glm_model
         cR2(1, coordinates) = R2; cR2 = reshape(cR2, [xx yy zz]);
         cSSE(1, coordinates) = SSE; cSSE = reshape(cSSE, [xx yy zz]);
         cTstat(1, coordinates) = cT; cTstat = reshape(cTstat, [xx yy zz]);
-   
-        if opts.medfilt_lag
+
+        if opts.medfilt_maps
             tmpLag = medfilt3(tmpLag);
             GLM_lags = medfilt3(GLM_lags);
         end
