@@ -237,8 +237,8 @@ if opts.niiwrite
 else
     saveImageData(nCVRidx_map,opts.headers.map,opts.CVRidxdir,'relativeCVRidx_map.nii.gz',64);
     saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
-    saveImageData(mask.*R2, opts.headers.map, opts.corrCVRdir,'bR2_map.nii.gz', datatype);
-    saveImageData(mask.*Tstat, opts.headers.map, opts.corrCVRdir,'bTstat_map.nii.gz', datatype);
+    saveImageData(mask.*R2, opts.headers.map, opts.CVRidxdir,'bR2_map.nii.gz', 64);
+    saveImageData(mask.*Tstat, opts.headers.map, opts.CVRidxdir,'bTstat_map.nii.gz', 64);
 end
 
 nCVRidx_map(nCVRidx_map == 0) = NaN;
