@@ -21,12 +21,12 @@
 (Metric0Weight 0.5)
 (Metric1Weight 1)
 
-(MaximumStepLength 1)
+(MaximumStepLength 0.5)
 
 // ***************** Transformation **************************
 (NumberOfResolutions 4)
 (FinalGridSpacingInVoxels 20)
-(GridSpacingSchedule  12 8 6 4)
+(GridSpacingSchedule  10 6 4 2)
 (HowToCombineTransforms "Compose")
 
 // ******************* Similarity measure *********************
@@ -36,11 +36,11 @@
 // ******************** Multiresolution **********************
 
 
-(ImagePyramidSchedule  20 20 20  10 10 10  6 6 6  4 4 4)
+(ImagePyramidSchedule   10 10 10  4 4 4  2 2 2  1 1 1)
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 500 1000 1000 1000)  
+(MaximumNumberOfIterations 1000 1000 2000 3000)  
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "GeometricalCenter")
@@ -60,7 +60,7 @@
 (FinalBSplineInterpolationOrder 2)
 (ShowExactMetricValue "false") 
 (WriteTransformParametersEachResolution "false")
-(WriteResultImageAfterEachResolution "true")
+(WriteResultImageAfterEachResolution "false")
 (WritePyramidImagesAfterEachResolution "false")
 (DefaultPixelValue 0)
 (WriteResultImage "true")
