@@ -138,13 +138,13 @@ t = cputime;
 %% grab coordinates
 if opts.filloutliers
     disp('removing outliers...')
-    [orig_voxel_ts, coords] = grabTimeseries(data, mask);
-    B = filloutliers(voxels', 'spline', 'mean');
+    [orig_voxel_ts, coordinates] = grabTimeseries(data, mask);
+    B = filloutliers(orig_voxel_ts', 'spline', 'mean');
     B = B';
     figure; plot(mean(B,1)); hold on; plot(mean(orig_voxel_ts' ,2)); title('check outlier removal: global signal');
-    temp = zeros([numel(mask) size(BOLD,4)]);
-    temp(coords,:) = B; clear temp;
-    data = reshape(temp, size(BOLD)); clear temp; clear B;
+    temp = zeros([numel(mask) size(data,4)]);
+    temp(coordinates,:) = B; 
+    data = reshape(temp, size(data)); clear temp; clear B;
 else
     % WB coordinates
     [orig_voxel_ts, coordinates] = grabTimeseries(data, mask);

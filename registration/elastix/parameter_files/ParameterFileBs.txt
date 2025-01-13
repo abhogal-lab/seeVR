@@ -21,7 +21,7 @@
 (Metric0Weight 0.5)
 (Metric1Weight 1)
 
-(MaximumStepLength 0.5)
+(MaximumStepLength 1)
 
 // ***************** Transformation **************************
 (NumberOfResolutions 4)
