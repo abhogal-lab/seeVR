@@ -55,19 +55,32 @@ try opts.elastixdir; catch
 end
 
 if isfield(opts,'invert_affine'); else; opts.invert_affine = 1; end
+if isfield(opts,'usemask'); else; opts.usemask = 1; end
 
 elastixroot = opts.elastixdir;
 
 %setup OS-dependent paths
 if ispc
     elastixrootOS = fullfile(elastixroot,'windows');
-    affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
+    if opts.usemask
+        affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
+    else
+        affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg, ' -m ',moveImg,' -p ',param_af,' -out ',regdir ];
+    end
 elseif ismac
     elastixrootOS = fullfile(elastixroot,'mac','bin'); %not tested - may be buggy
-    affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
+    if opts.usemask
+        affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
+    else
+        affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg, ' -m ',moveImg,' -p ',param_af,' -out ',regdir ];
+    end
 else
     elastixrootOS = fullfile(elastixroot,'linux','bin');
-    affine_command = ['elastix -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
+    if opts.usemask
+        affine_command = ['elastix -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
+    else
+        affine_command = ['elastix -f ',refImg, ' -m ',moveImg,' -p ',param_af,' -out ',regdir ];
+    end
 end
 
 system(affine_command);
@@ -76,11 +89,11 @@ forward_transform = fullfile(regdir,'TransformParameters.0.txt')
 disp(['transformation parameter file saved as: ',forward_transform])
 
 if opts.invert_affine
-    
+
     % calculate inverse
     invdir = fullfile(regdir, 'inverse'); mkdir(invdir);
     moveImg_new = fullfile(regdir, 'result.0.nii.gz');
-    
+
     if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')) == 2
         disp('found parameter file')
         param_af_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt');
@@ -90,21 +103,21 @@ if opts.invert_affine
     else
         error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')])
     end
-    
+
     if ispc
         inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg, ' -m ',moveImg_new,' -t0 ',forward_transform,' -p ',param_af_rev,' -out ',invdir ];
     else
         inverse_command = ['elastix -f ',moveImg,' -m ',moveImg_new,' -t0 ',forward_transform,' -p ',param_af_rev,' -out ',invdir ];
     end
-    
+
     system(inverse_command);
-    
+
     inverse_transform = fullfile(invdir,'TransformParameters.0.txt')
     disp(['inverse transformation parameter file saved as: ',inverse_transform])
     disp('applying inverse transformation to reference image')
-    
+
     [~] = transformixReg(refImg, inverse_transform, invdir, elastixrootOS);
-    
+
 else
     inverse_transform = [];
 end
