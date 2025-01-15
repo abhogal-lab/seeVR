@@ -3,7 +3,7 @@
 (FixedImageDimension 3)
 (MovingImageDimension 3)
 (UseDirectionCosines "true")
-(ErodeFixedMask "false")
+(ErodeFixedMask "true")
 
 // **************** Main Components **************************
 
@@ -20,15 +20,15 @@
 
 (Transform "RecursiveBSplineTransform" "RecursiveBSplineTransform")
 (Metric "DisplacementMagnitudePenalty" "TransformBendingEnergyPenalty")
-//(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
+//(Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
 (Metric0Weight 0.1)
 (Metric1Weight 1)
 (MaximumStepLength 1)
 
 // ***************** Transformation **************************
 (NumberOfResolutions 6)
-(FinalGridSpacingInVoxels 28)
-(GridSpacingSchedule  16 12 8 4 1 1)
+(FinalGridSpacingInVoxels 16)
+(GridSpacingSchedule  12 8 6 4 2 1)
 (HowToCombineTransforms "Compose")
 
 // ******************* Similarity measure *********************
@@ -37,15 +37,15 @@
 
 // ******************** Multiresolution **********************
 
-(ImagePyramidSchedule   16 16 16  12 12 12  8 8 8  4 4 4  2 2 2  1 1 1)
+(ImagePyramidSchedule   16 16 16  12 12 12  6 6 6  2 2 2  1 1 1  1 1 1)
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 2000 2000 2000 2000 3000 3000)  
+(MaximumNumberOfIterations 2000 2000 2000 2000 2000 2000)  
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "CenterOfGravity")
-(NumberOfSpatialSamples 8000) 
+(NumberOfSpatialSamples 9000) 
 (NewSamplesEveryIteration "true")
 //(ImageSampler "RandomSparseMask")
 (ImageSampler "MultiInputRandomCoordinate" "MultiInputRandomCoordinate")

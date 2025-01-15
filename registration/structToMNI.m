@@ -118,7 +118,7 @@ else
 end
 if opts.useBET;  refImg_BET = refImg; end
 
-[trans_params] = nlinReg(moveImg, moveMask, refImg, refMask, opts.bspline_dir, opts.elastixdir)
+[trans_params] = nlinReg(moveImg, moveMask, refImg_BET, refMask, opts.bspline_dir, opts.elastixdir);
 
 % update transform parameters
 outputdir = fullfile(opts.bspline_dir,'Inverse');

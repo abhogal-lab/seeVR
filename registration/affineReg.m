@@ -105,7 +105,8 @@ if opts.invert_affine
     end
 
     if ispc
-        inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg, ' -m ',moveImg_new,' -t0 ',forward_transform,' -p ',param_af_rev,' -out ',invdir ];
+        %inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg, ' -m ',moveImg,' -t0 ',forward_transform,' -p ',param_af_rev,' -out ',invdir ];
+        inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg, ' -m ',moveImg_new,' -p ',param_af_rev,' -out ',invdir ];
     else
         inverse_command = ['elastix -f ',moveImg,' -m ',moveImg_new,' -t0 ',forward_transform,' -p ',param_af_rev,' -out ',invdir ];
     end

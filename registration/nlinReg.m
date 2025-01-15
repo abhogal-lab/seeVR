@@ -67,7 +67,7 @@ else
     elastixrootOS = fullfile(elastixroot,'linux','bin');
 end
 
-if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_rev.txt')) == 2
+if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')) == 2
     disp('found parameter file')
     param_af_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt');
     param_af = fullfile(regdir,'ParameterFileAf_rev.txt');
@@ -77,7 +77,7 @@ else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')])
 end
 
-if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt')) == 2
+if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')) == 2
     disp('found parameter file')
     param_bs_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileBs_rev.txt');
     param_bs = fullfile(regdir,'ParameterFileBs_rev.txt');

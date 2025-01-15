@@ -213,9 +213,9 @@ system(trans_command);
 %% inverse transform MNI images to functional space
 % to mask maps
 if ispc
-    adaptElastixTransFile( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '0')
+    adaptElastixTransFile( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '0');
 else
-    adaptElastixTransFile_linux( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '0')
+    adaptElastixTransFile_linux( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '0');
 end
 
 maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
