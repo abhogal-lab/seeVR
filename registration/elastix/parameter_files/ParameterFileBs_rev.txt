@@ -19,7 +19,7 @@
 
 (Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
-(Metric0Weight 0.7)
+(Metric0Weight 1)
 (Metric1Weight 1)
 
 
@@ -27,7 +27,7 @@
 
 // ***************** Transformation **************************
 (NumberOfResolutions 6)
-(FinalGridSpacingInVoxels 16)
+(FinalGridSpacingInVoxels 10)
 (GridSpacingSchedule  18 12 8 4 2 1)
 (HowToCombineTransforms "Compose")
 

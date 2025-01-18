@@ -148,7 +148,7 @@ disp('Registration of functional image to structural image space complete')
 disp('Registering structural image to MNI space')
 
 %for non-linear registration, use non-brain extracted images
-[trans_params] = structToMNI(refImg, refMask, opts);
+[trans_params] = structToMNI(refImg_BET, refMask, opts);
 disp('registration time....')
 toc
 opts.regFuncOutputMNI = fullfile(opts.resultsdir,'funcToMNI'); mkdir(opts.regFuncOutputMNI);
@@ -169,9 +169,10 @@ mInvtrans3 = fullfile(opts.regFuncOutputMNI,'mInverseAFTransformParameters.1.txt
 if ispc
     adaptElastixTransFile( opts.affineTxParamFile, mtrans1, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile( opts.affineTxParamFile2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
-    adaptElastixTransFile( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '0');
+    adaptElastixTransFile( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile( opts.bsplineTxParamFile, mtrans3, 'InitialTransformParametersFileName', mtrans2);
-    adaptElastixTransFile( mtrans3, mtrans3, 'FinalBSplineInterpolationOrder', '0');
+    adaptElastixTransFile( mtrans3, mtrans3, 'FinalBSplineInterpolationOrder', '1');
+    
     %inverse
     adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '0');
     adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'InitialTransformParametersFileName', 'NoInitialTransform');
@@ -183,9 +184,9 @@ if ispc
 else
     adaptElastixTransFile_linux( opts.affineTxParamFile, mtrans1, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile_linux( opts.affineTxParamFile2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
-    adaptElastixTransFile_linux( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '0');
+    adaptElastixTransFile_linux( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile_linux( opts.bsplineTxParamFile, mtrans3, 'InitialTransformParametersFileName', mtrans2);
-    adaptElastixTransFile_linux( mtrans3, mInvtrans1, 'FinalBSplineInterpolationOrder', '0');
+    adaptElastixTransFile_linux( mtrans3, mInvtrans1, 'FinalBSplineInterpolationOrder', '1');
 
     %inverse
     adaptElastixTransFile_linux( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '0');
