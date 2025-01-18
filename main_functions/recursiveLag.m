@@ -495,10 +495,10 @@ tmpLag = reshape(tmpLag,[xx yy zz]);
 maps.XCORR.recursiveLag_map = mask.*tmpLag;
 maps.XCORR.recursiveR_map = mask.*r_map;
 if opts.niiwrite
-    niftiwrite(cast(mask.*tmpLag,opts.mapDatatype), fullfile(opts.recursivedir,'recursiveLag'),opts.info.map);
-    niftiwrite(cast(mask.*r_map,opts.mapDatatype), fullfile(opts.recursivedir,'recursiveR_map'),opts.info.map);
+    niftiwrite(cast(mask.*tmpLag,opts.mapDatatype), fullfile(opts.recursivedir,'recursive_hemodynamic_lag_map'),opts.info.map);
+    niftiwrite(cast(mask.*r_map,opts.mapDatatype), fullfile(opts.recursivedir,'recursive_r_lag_map'),opts.info.map);
 else
-    saveImageData(mask.*tmpLag, opts.headers.map, opts.recursivedir, 'recursiveLag.nii.gz', datatype);
-    saveImageData(mask.*r_map, opts.headers.map, opts.recursivedir, 'recursiveR_map.nii.gz', datatype);
+    saveImageData(mask.*tmpLag, opts.headers.map, opts.recursivedir, 'recursive_hemodynamic_lag_map.nii.gz', datatype);
+    saveImageData(mask.*r_map, opts.headers.map, opts.recursivedir, 'recursive_r_map_map.nii.gz', datatype);
 end
 end

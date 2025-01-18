@@ -1,6 +1,6 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <glmCVRidx: generates internally normalized CVR maps (i.e. without using respiratory data) >
+% <gaslessCVR: generates internally normalized CVR maps (i.e. without using respiratory data) >
 %
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@
 %
 % bpData: a bandpassed version of the input data
 
-function [maps, BP_ref, bpData] = glmCVRidx(data, mask, refmask, nuisance, opts)
+function [maps, BP_ref, bpData] = gaslessCVR(data, mask, refmask, nuisance, opts)
 try
     warning('off');
     warning('off', 'MATLAB:rankDeficientMatrix');
@@ -230,15 +230,15 @@ nCVRidx_map(nCVRidx_map > 100) = 0; nCVRidx_map(nCVRidx_map < -100) = 0;
 
 if opts.niiwrite
     cd(opts.CVRidxdir);
-    niftiwrite(cast(nCVRidx_map, opts.mapDatatype),'relativeCVRidx_map',opts.info.map);
-    niftiwrite(cast(CVRidx_map, opts.mapDatatype),'CVRidx_map',opts.info.map);
-    niftiwrite(cast(mask.*R2,opts.mapDatatype),'bR2_map',opts.info.map);
-    niftiwrite(cast(mask.*Tstat,opts.mapDatatype),'bTstat_map',opts.info.map);
+    niftiwrite(cast(nCVRidx_map, opts.mapDatatype),'GLM_CVR_normalized_map',opts.info.map);
+    niftiwrite(cast(CVRidx_map, opts.mapDatatype),'GLM_CVR_non_normalized_map',opts.info.map);
+    niftiwrite(cast(mask.*R2,opts.mapDatatype),'GLM_CVR_R2_map',opts.info.map);
+    niftiwrite(cast(mask.*Tstat,opts.mapDatatype),'GLM_CVR_Tstat_map',opts.info.map);
 else
-    saveImageData(nCVRidx_map,opts.headers.map,opts.CVRidxdir,'relativeCVRidx_map.nii.gz',64);
-    saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'CVRidx_map.nii.gz',64);
-    saveImageData(mask.*R2, opts.headers.map, opts.CVRidxdir,'bR2_map.nii.gz', 64);
-    saveImageData(mask.*Tstat, opts.headers.map, opts.CVRidxdir,'bTstat_map.nii.gz', 64);
+    saveImageData(nCVRidx_map,opts.headers.map,opts.CVRidxdir,'GLM_CVR_normalized_map.nii.gz',64);
+    saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'GLM_CVR_non_normalized_map.nii.gz',64);
+    saveImageData(mask.*R2, opts.headers.map, opts.CVRidxdir,'GLM_CVR_R2_map.nii.gz', 64);
+    saveImageData(mask.*Tstat, opts.headers.map, opts.CVRidxdir,'GLM_CVR_Tstat_map.nii.gz', 64);
 end
 
 nCVRidx_map(nCVRidx_map == 0) = NaN;

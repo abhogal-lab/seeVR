@@ -246,13 +246,13 @@ end
 
 if opts.niiwrite
     cd(opts.dynamicdir);
-    niftiwrite(cast(mask.*b1_map,opts.mapDatatype),'exp_scaling',opts.info.map);
-    niftiwrite(cast(mask.*b2_map,opts.mapDatatype),'exp_tau',opts.info.map);
-    niftiwrite(cast(mask.*b3_map,opts.mapDatatype),'exp_offset',opts.info.map);
+    niftiwrite(cast(mask.*b1_map,opts.mapDatatype),'signal_magnitude',opts.info.map);
+    niftiwrite(cast(mask.*b2_map,opts.mapDatatype),'signal_dispersion',opts.info.map);
+    niftiwrite(cast(mask.*b3_map,opts.mapDatatype),'signal_offset',opts.info.map);
 else
-    saveImageData(mask.*b1_map, opts.headers.map, opts.dynamicdir, 'exp_scaling.nii.gz', 64);
-    saveImageData(mask.*b2_map, opts.headers.map, opts.dynamicdir, 'exp_tau.nii.gz', 64);
-    saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'exp_offset.nii.gz', 64);
+    saveImageData(mask.*b1_map, opts.headers.map, opts.dynamicdir, 'signal_magnitude.nii.gz', 64);
+    saveImageData(mask.*b2_map, opts.headers.map, opts.dynamicdir, 'signal_dispersion.nii.gz', 64);
+    saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'signal_offset.nii.gz', 64);
 end
 
 responseFits = zeros(length(coordinates), length(t));
