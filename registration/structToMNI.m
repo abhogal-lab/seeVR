@@ -41,7 +41,6 @@ function [trans_params] = structToMNI(moveImg, moveMask, opts)
 global opts
 
 if isfield(opts,'T1'); else; opts.T1 = 1; end
-if isfield(opts,'useBET'); else; opts.useBET = 0; end
 
 try opts.elastixdir; catch
     error('elastix directory not specified... specify OS-dependent path to elastix: e.g. opts.elastixdir = /.../seeVR/registration/elastix/')
@@ -116,7 +115,6 @@ if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')) == 2
 else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')])
 end
-if opts.useBET;  refImg_BET = refImg; end
 
 [trans_params] = nlinReg(moveImg, moveMask, refImg_BET, refMask, opts.bspline_dir, opts.elastixdir);
 

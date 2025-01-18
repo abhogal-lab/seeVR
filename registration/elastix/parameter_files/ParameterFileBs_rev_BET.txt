@@ -3,12 +3,12 @@
 (FixedImageDimension 3)
 (MovingImageDimension 3)
 (UseDirectionCosines "true")
-//(ErodeFixedMask "true")
+
 // **************** Main Components **************************
 
 (Registration "MultiMetricMultiResolutionRegistration")
 (Interpolator "BSplineInterpolator" "BSplineInterpolator")
-(ResampleInterpolator "FinalBSplineInterpolator")
+(ResampleInterpolator "FinalBSplineInterpolator" "FinalBSplineInterpolator")
 (Resampler "DefaultResampler")
 
 (FixedImagePyramid "FixedSmoothingImagePyramid" "FixedSmoothingImagePyramid")
@@ -22,11 +22,12 @@
 (Metric0Weight 0.7)
 (Metric1Weight 1)
 
+
 (MaximumStepLength 1)
 
 // ***************** Transformation **************************
 (NumberOfResolutions 6)
-(FinalGridSpacingInVoxels 22)
+(FinalGridSpacingInVoxels 16)
 (GridSpacingSchedule  18 12 8 4 2 1)
 (HowToCombineTransforms "Compose")
 
@@ -36,22 +37,21 @@
 
 // ******************** Multiresolution **********************
 
-
 (ImagePyramidSchedule  20 20 20  10 10 10  6 6 6  4 4 4  2 2 2  1 1 1)
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 1000 1000 1000 1000 2000 2000)  
+(MaximumNumberOfIterations 200 200 200 600 600 600)
 
 // **************** Image sampling **********************
-(AutomaticTransformInitializationMethod "GeometricalCenter")
+(AutomaticTransformInitializationMethod "CenterOfGravity")
 (NumberOfSpatialSamples 8000) 
 (NewSamplesEveryIteration "true")
-//(ImageSampler "MultiInputRandomCoordinate" "MultiInputRandomCoordinate")
-(ImageSampler "RandomCoordinate" "RandomCoordinate")
 //(ImageSampler "RandomSparseMask")
+(ImageSampler "MultiInputRandomCoordinate" "MultiInputRandomCoordinate")
+//(ImageSampler "RandomCoordinate")
 //(UseRandomSampleRegion "true")
-(MaximumNumberOfSamplingAttempts 5)
+//(MaximumNumberOfSamplingAttempts 20)
 (SampleRegionSize 40.0 40.0 40.0)
 
 (UseAdaptiveStepSizes "true")

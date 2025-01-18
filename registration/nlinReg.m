@@ -1,9 +1,8 @@
 % Copyright (C) Alex A. Bhogal, 2023, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <affineReg: uses elastix to perform affine registration of a functional
-% to an anatomical image. The function returns the path to both the forward
-% and inverse transformation parameter file >
-%
+% <nlinReg: uses elastix to perform affine + bspline registration of a
+% anatomical to 1mm MNI image. The function returns paths to transformation
+% files.
 %
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -70,7 +69,7 @@ end
 if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt')) == 2
     disp('found parameter file')
     param_af_base = fullfile(opts.elastixdir,'parameter_files','ParameterFileAf.txt');
-    param_af = fullfile(regdir,'ParameterFileAf_rev.txt');
+    param_af = fullfile(regdir,'ParameterFileAf.txt');
     copyfile(param_af_base, param_af)
     disp(['copying affine parameter file for forward transform to: ', regdir])
 else

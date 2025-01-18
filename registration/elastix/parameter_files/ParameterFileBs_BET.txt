@@ -41,7 +41,7 @@
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 1000 1000 1000 1000 2000 2000)  
+(MaximumNumberOfIterations 200 200 200 200 300 300)  
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "GeometricalCenter")
