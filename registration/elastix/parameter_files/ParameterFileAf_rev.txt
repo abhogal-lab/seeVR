@@ -12,6 +12,7 @@
 (Optimizer "AdaptiveStochasticGradientDescent")
 (Transform "AffineTransform")
 (Metric "AdvancedMattesMutualInformation")
+//(Metric "DisplacementMagnitudePenalty")
 //(AutomaticScalesEstimation "true")
 (AutomaticTransformInitialization "true")
 (HowToCombineTransforms "Compose")

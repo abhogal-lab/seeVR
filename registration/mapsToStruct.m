@@ -41,10 +41,10 @@
 % function; i.e. opts.resultsdir and opts.elastixdir
 %
 % opts.elastixdir: !!!Important: This is where the elastix binaries are
-% stored: e.g., /seeVR-main/registration/elastix
+% stored: e.g., /seeVR/registration/elastix
 %
 % parameter files are stored in
-% /seeVR-main/registration/elastix/parameter_files and can be optimized as
+% /seeVR/registration/elastix/parameter_files and can be optimized as
 % needed. See the elastix manual
 
 function [] = mapsToStruct(moveImg, moveMask, refImg, refMask, mapdir, opts)

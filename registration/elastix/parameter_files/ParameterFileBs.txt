@@ -15,18 +15,19 @@
 (MovingImagePyramid "MovingSmoothingImagePyramid" "MovingSmoothingImagePyramid")
 
 (Optimizer "AdaptiveStochasticGradientDescent")
-(Transform "BSplineTransform")
+(Transform "RecursiveBSplineTransform" "RecursiveBSplineTransform")
+
 (Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
-(Metric0Weight 0.5)
+(Metric0Weight 0.7)
 (Metric1Weight 1)
 
 (MaximumStepLength 1)
 
 // ***************** Transformation **************************
-(NumberOfResolutions 4)
-(FinalGridSpacingInVoxels 20)
-(GridSpacingSchedule  12 8 6 4)
+(NumberOfResolutions 6)
+(FinalGridSpacingInVoxels 22)
+(GridSpacingSchedule  18 12 8 4 2 1)
 (HowToCombineTransforms "Compose")
 
 // ******************* Similarity measure *********************
@@ -36,15 +37,15 @@
 // ******************** Multiresolution **********************
 
 
-(ImagePyramidSchedule  20 20 20  10 10 10  6 6 6  4 4 4)
+(ImagePyramidSchedule  20 20 20  10 10 10  6 6 6  4 4 4  2 2 2  1 1 1)
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 500 1000 1000 1000)  
+(MaximumNumberOfIterations 1000 1000 1000 1000 2000 2000)  
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "GeometricalCenter")
-(NumberOfSpatialSamples 6000) 
+(NumberOfSpatialSamples 8000) 
 (NewSamplesEveryIteration "true")
 //(ImageSampler "MultiInputRandomCoordinate" "MultiInputRandomCoordinate")
 (ImageSampler "RandomCoordinate" "RandomCoordinate")

@@ -45,7 +45,7 @@
 % function; i.e. opts.resultsdir and opts.elastixdir
 %
 % opts.elastixdir: !!!Important: This is where the elastix binaries are
-% stored: e.g., /seeVR-main/registration/elastix
+% stored: e.g., /seeVR/registration/elastix
 
 function [trans_params] = nlinReg(moveImg, moveMask, refImg, refMask, regdir, opts)
 global opts;
