@@ -37,15 +37,14 @@ switch ndims(data)
 mask = logical(mask(:));
 coordinates = find(mask); 
 %disp('grabbing timeseries (4D) at each voxel')
-
 clean_voxel_ts=zeros([length(coordinates) dyn]);
 data = reshape(data,[x*y*z dyn]);
 clean_voxel_ts = data(coordinates,:);
 clean_voxel_ts(clean_voxel_ts == 0) = NaN;
 voxel_ts = clean_voxel_ts;
 %remove NaN rows
-voxel_ts(any(isnan(clean_voxel_ts(1,1)), 2), :) = [];
-coordinates(any(isnan(clean_voxel_ts(1,1)), 2), :) = [];
+voxel_ts(any(isnan(clean_voxel_ts(:,1)), 2), :) = [];
+coordinates(any(isnan(clean_voxel_ts(:,1)), 2), :) = [];
 %remove Inf rows
 coordinates(any(isinf(voxel_ts), 2), :) = [];
 voxel_ts(any(isinf(voxel_ts), 2), :) = [];
@@ -63,8 +62,8 @@ clean_voxel_ts = data(coordinates,:);
 clean_voxel_ts(clean_voxel_ts == 0) = NaN;
 voxel_ts = clean_voxel_ts;
 %remove NaN rows
-voxel_ts(any(isnan(clean_voxel_ts(1,1)), 2), :) = [];
-coordinates(any(isnan(clean_voxel_ts(1,1)), 2), :) = [];
+voxel_ts(any(isnan(clean_voxel_ts(:,1)), 2), :) = [];
+coordinates(any(isnan(clean_voxel_ts(:,1)), 2), :) = [];
 %remove Inf rows
 coordinates(any(isinf(voxel_ts), 2), :) = [];
 voxel_ts(any(isinf(voxel_ts), 2), :) = [];
