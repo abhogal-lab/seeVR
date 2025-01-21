@@ -79,6 +79,7 @@ if isfield(opts,'win_size'); else; opts.win_size = 1; end                 %the n
 if isfield(opts,'passes'); else; opts.passes = 10; end                    %how many iterations for lag_map refinement
 if isfield(opts,'medfilt_maps'); else; opts.medfilt_maps = 1; end         %cleans up lag map with median filter but does not change statistical maps. May improve lag-corrected CVR
 if isfield(opts,'filloutliers'); else; opts.filloutliers = 1; end         %spike removal
+if isfield(opts,'figdir'); else; opts.figdir = opts.resultsdir; end        
 if opts.niiwrite
     if isfield(opts.info,'rts'); else; opts.info.rts = opts.info.ts; end
 end

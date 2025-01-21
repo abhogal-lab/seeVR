@@ -186,7 +186,8 @@ system(trans_command);
 [mask,info] = loadMask(anatdir, 'result.nii.gz');
 [FILEPATH,NAME,EXT] = fileparts(anatImg);
 [anat,anat_info] = loadImage(FILEPATH, [NAME,EXT]);
-anat_brain = anat.*(cast(mask, class(anat)));
+SE = strel('sphere', 2);
+anat_brain = anat.*imdilate((cast(mask, class(anat))),SE);
 
 %save images
 niftiwrite(anat_brain,fullfile(anatdir,'anat_brain'),anat_info, 'compressed',1);

@@ -45,9 +45,13 @@ function [maps, BP_ref, bpData] = gaslessCVR(data, mask, refmask, nuisance, opts
 try
     warning('off');
     warning('off', 'MATLAB:rankDeficientMatrix');
-
+    warning('off', 'MATLAB:nearlySingularMatrix')
+    warning('off', 'MATLAB:singularMatrix')
     spmd
+        warning('off');
         warning('off', 'MATLAB:rankDeficientMatrix');
+        warning('off', 'MATLAB:nearlySingularMatrix')
+        warning('off', 'MATLAB:singularMatrix')
     end
 catch
 end
@@ -248,12 +252,38 @@ maps.CVRidx = CVRidx_map;
 maps.R2 = R2;
 maps.Tstat = Tstat;
 
+
+% %%  generate lag maps
+% %wavelet cross-correlation
+% [delayTimes, statistic] = waveletCrossCorr(BP_V, BP_ref, opts)
+% %coherence
+% [delayTimes, statistic] = coherence(BP_V, BP_ref, opts);
+% 
+% %save delay mao
+% 
+% wave_corr_map = zeros([1 numel(mask)]);
+% wave_corr_map(1, coordinates) = delayTimes;
+% wave_corr_map = reshape(wave_corr_map, size(mask));
+% 
+% 
+% if opts.niiwrite
+%     cd(opts.CVRidxdir);
+%     niftiwrite(cast(wave_corr_map, opts.mapDatatype),'wavelet_corr_hemodynamic_lag_map',opts.info.map);
+% else
+%     saveImageData(wave_corr_map,opts.headers.map,opts.CVRidxdir,'wavelet_corr_hemodynamic_lag_map.nii.gz',64);
+% end
+
+
 try
     warning('on');
     warning('on', 'MATLAB:rankDeficientMatrix');
-
+    warning('on', 'MATLAB:nearlySingularMatrix')
+    warning('on', 'MATLAB:singularMatrix')
     spmd
+        warning('on');
         warning('on', 'MATLAB:rankDeficientMatrix');
+        warning('on', 'MATLAB:nearlySingularMatrix')
+        warning('on');
     end
 catch
 end
