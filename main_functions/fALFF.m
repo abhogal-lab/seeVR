@@ -39,6 +39,7 @@
 %
 % zfALFF_map: z-transformed fALFF map defined by the standard deviation of
 % fALFF values defined by the input mask
+
 function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)
 global opts
 data = double(data);

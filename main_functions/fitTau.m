@@ -20,7 +20,10 @@
 % Measuring cerebrovascular reactivity: the dynamic response to a step hypercapnic stimulus
 % DOI: 10.1038/jcbfm.2015.114
 %
-% data: input timeseries data (i.e. 4D BOLD MRI dataset)
+% data: input timeseries data (i.e. 4D BOLD MRI dataset). IMPORTANT:
+% Volumes with zero values will not be weighted in the tau fit. This allows
+% to weight specific aspects of the data - for example. only a rising or
+% falling slope.
 %
 % mask: binary mask defining voxels of interest
 %
@@ -64,6 +67,8 @@ else
     % WB coordinates
     [voxel_ts, coordinates] = grabTimeseries(data, mask);
 end
+voxel_ts(isnan(voxel_ts)) = 0; voxel_ts(isinf(voxel_ts)) = 0;
+
 ts = zeros([length(coordinates),opts.interp_factor*dyn]);
 
 if size(data,4) ~= length(probe) && opts.interp_factor > 1
