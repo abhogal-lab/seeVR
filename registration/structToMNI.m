@@ -22,7 +22,7 @@
 % hompage at: https://elastix.lumc.nl/
 %
 % moveImg: path (i.e. directory AND filename with extention) to moving, or
-% anatomical image. 
+% anatomical image.
 %
 % moveMask: path (i.e. directory AND filename with extention) to moving, or
 % anatomical mask (binary image)
@@ -40,7 +40,8 @@
 function [trans_params] = structToMNI(moveImg, moveMask, opts)
 global opts
 
-if isfield(opts,'T1'); else; opts.T1 = 1; end
+if isfield(opts,'useBET'); else; opts.useBET = 1; end                      %if this is set to 1, then brain extracted MNI image is used. Input structural image must also be brain extracted.
+if isfield(opts,'T1'); else; opts.T1 = 1; end                              %if this is set to 1, then T1w MNI image is used. High resolution functional images can be registered using opts.T1 = 0 - then T2w MNI image is used as target
 
 try opts.elastixdir; catch
     error('elastix directory not specified... specify OS-dependent path to elastix: e.g. opts.elastixdir = /.../seeVR/registration/elastix/')
@@ -83,7 +84,7 @@ end
 if opts.T1
     disp('performing initial affine registration of brain extracted moving to brain extracted T1-weighted MNI image')
     refImg_BET = fullfile(opts.elastixdir,'MNI','T1_1mm_brain.nii.gz')
-    refImg = fullfile(opts.elastixdir,'MNI','T1_1mm.nii.gz') 
+    refImg = fullfile(opts.elastixdir,'MNI','T1_1mm.nii.gz')
 else
     disp('performing initial affine registration of brain extracted moving to brain extracted T2-weighted MNI image')
     refImg_BET = fullfile(opts.elastixdir,'MNI','T2_1mm_brain.nii.gz')
@@ -116,7 +117,13 @@ else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')])
 end
 
-[trans_params] = nlinReg(moveImg, moveMask, refImg_BET, refMask, opts.bspline_dir, opts.elastixdir);
+opts.useBET
+target_image = refImg_BET;
+else
+    target_image = refImg;
+end
+
+[trans_params] = nlinReg(moveImg, moveMask, target_image , refMask, opts.bspline_dir, opts.elastixdir);
 
 % update transform parameters
 outputdir = fullfile(opts.bspline_dir,'Inverse');
@@ -160,9 +167,9 @@ end
 clear maskname
 % to probability maps
 if ispc
-    adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '2') 
+    adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '2')
 else
-    adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '2') 
+    adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '2')
 end
 
 probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
