@@ -117,7 +117,7 @@ else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')])
 end
 
-opts.useBET
+if opts.useBET
 target_image = refImg_BET;
 else
     target_image = refImg;
