@@ -69,4 +69,6 @@ coordinates(any(isinf(voxel_ts), 2), :) = [];
 voxel_ts(any(isinf(voxel_ts), 2), :) = [];
 voxel_ts = cast(voxel_ts,tf); coordinates = cast(coordinates,tf);
 end
+voxel_ts(isnan(voxel_ts)) = 0;
+voxel_ts(isinf(voxel_ts)) = 0;
 end
