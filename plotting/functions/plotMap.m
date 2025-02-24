@@ -1,60 +1,174 @@
-function [] = plotMap(sourceImg,mask,paramMap,map,opts)
-% a.bhogal@umcutrecht.nl
-% <plotMap: plots parameter map next to source image >
+function [] = plotMap(sourceImg, mask, paramMap, map, filename, foldername, rotations, opts)
+% plotMap: Plots parameter map next to source image in transverse, coronal, and sagittal views.
 %
-% This program is free software: you can redistribute it and/or modify
-% it under the terms of the GNU General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
+% USAGE:
+%   plotMap(sourceImg, mask, paramMap, map, filename, foldername, rotations, opts)
 %
-% This program is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU General Public License for more details.
+% INPUTS:
+%   sourceImg   : source image (e.g., mean BOLD or anatomical image).
+%   mask        : binary mask defining voxels of interest.
+%   paramMap    : parameter map with the same size as sourceImg (can be 3D or 4D).
+%   map         : colormap to be used when displaying the paramMap slices.
+%   filename    : base filename for saving images (no extension).
+%   foldername  : path to directory where images will be saved.
+%   rotations   : 1x3 numeric vector specifying the number of 90-degree rotations
+%                 to apply for each orientation:
+%                    rotations(1) -> transverse
+%                    rotations(2) -> coronal
+%                    rotations(3) -> sagittal
+%                 e.g., [0 1 -1] means no rotation for transverse, rotate coronal
+%                 slices 90° CCW, and rotate sagittal slices 90° clockwise (=-1).
 %
-% You should have received a copy of the GNU General Public License
-% along with this program.  If not, see <https://www.gnu.org/licenses/>.
+%   opts        : structure with optional fields:
+%       opts.scale  - data range               (default: [-5 5])
+%       opts.row    - number of rows in figure (default: 5)
+%       opts.col    - number of columns        (default: 6)
+%       opts.step   - step size through slices (default: 1)
+%       opts.start  - starting slice index     (orientation-dependent default)
 %
-% *************************************************************************
+% OUTPUT:
+%   Saved PNG and EPS images for each orientation in 'foldername', named:
+%       filename_ori1.png / filename_ori1.eps   (transverse)
+%       filename_ori2.png / filename_ori2.eps   (coronal)
+%       filename_ori3.png / filename_ori3.eps   (sagittal)
 %
-% sourceImg: source image (e.g. unprocessed mean BOLD image or anatomical image in the case that it has the same matrix size as the parameter map)
-%
-% mask: binary mask defining voxels of interest
-%
-% paramMap: parameter map with same marix size as sourceImg
-%
-% map: colormap to be used
-%
-% opts: options structure containing required variables for this specific
-% function; i.e. opts.scale opts.row, opts.col, opts,niiwrite, opts.resultsdir
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% -------------------------------------------------------------------------
+global opts;  % If your workflow relies on global opts
 
-if isfield(opts,'scale'); else; opts.scale = [-5 5]; end                   % data range
-if isfield(opts,'row'); else; opts.row = 5; end                            % nr rows in plot
-if isfield(opts,'col'); else; opts.col = 6; end                            % nr cols in plot
-if isfield(opts,'step'); else; opts.step = 1; end                          % nr of steps through slices
-if isfield(opts,'start'); else; opts.start = floor(size(mask,3))/3; end    % first slice number
+% ================= Default Options =================
+if ~isfield(opts, 'scale'), opts.scale = [-5 5]; end
+if ~isfield(opts, 'row'),   opts.row   = 5;     end
+if ~isfield(opts, 'col'),   opts.col   = 6;     end
+if ~isfield(opts, 'step'),  opts.step  = 1;     end
 
-
-sourceImg = double(sourceImg);
-mask = double(mask);
-paramMap = double(paramMap);
-
-    figure;
-    set(gcf, 'Units', 'pixels', 'Position', [10, 100, 1500, 900]);
-
-    for jj=1:2:opts.row*opts.col-1  
-    subplot(opts.row,opts.col,jj); imagesc(mask(:,:,opts.start + jj*opts.step).*sourceImg(:,:,opts.start + jj*opts.step)); 
-    colormap(gray); freezeColors; set(gca,'visible','off'); set(gca,'xtick',[]);set(gcf,'color','k') 
-        
-    tmp = paramMap(:,:,opts.start + jj*opts.step);
-    tmp = nanmean(tmp,4).*mask(:,:,opts.start + jj*opts.step); tmp(tmp == 0)= NaN;
-    subplot(opts.row,opts.col,jj+1); imagesc(tmp,opts.scale); colormap(map); 
-    freezeColors; set(gca,'visible','off'); set(gca,'xtick',[]);set(gcf,'color','k') 
-
-    end
-      
+% ================= Validate foldername =================
+if ~exist('foldername','var') || isempty(foldername) || ~ischar(foldername)
+    foldername = pwd;  % fallback if invalid
 end
 
+% ================= Validate rotations =================
+if ~exist('rotations','var') || isempty(rotations) || numel(rotations) < 3
+    rotations = [0 0 0];  % default = no rotation
+end
 
+% ================= Convert Inputs to Double =================
+sourceImg = double(sourceImg);
+mask      = double(mask);
+mask(mask > 0) = 1;   % ensure mask is strictly 0/1
+paramMap  = double(paramMap);
+
+% ================= Dimensions & Default Start Indices =================
+dims = size(mask);
+% orientation: 1=transverse (vary 3rd dim)
+%              2=coronal    (vary 2nd dim)
+%              3=sagittal   (vary 1st dim)
+defaultStart = [floor(dims(3)/3), floor(dims(2)/3), floor(dims(1)/3)];
+
+% ================= Main Loop over 3 Orientations =================
+for ori = 1:3
+    
+    % Determine start slice for this orientation
+    if ~isfield(opts,'start') || isempty(opts.start)
+        startSlice = defaultStart(ori);
+    else
+        startSlice = opts.start;
+        % Make sure we don't go out of bounds
+        switch ori
+            case 1 % transverse
+                if startSlice > dims(3), startSlice = floor(dims(3)/2); end
+            case 2 % coronal
+                if startSlice > dims(2), startSlice = floor(dims(2)/2); end
+            case 3 % sagittal
+                if startSlice > dims(1), startSlice = floor(dims(1)/2); end
+        end
+    end
+    
+    % Create a figure for this orientation
+    figure('Units','pixels',...
+           'Position',[10, 100, 100 * opts.col * size(paramMap,2), ...
+                       opts.row * size(paramMap,2)],...
+           'Color','k');
+
+    % We'll create pairs of subplots: (sourceSlice, paramMapSlice)
+    for jj = 1 : 2 : (opts.row*opts.col - 1)
+        
+        sliceIdx = startSlice + jj * opts.step;
+
+        % ------------------ Source Slice ------------------
+        sourceSlice = getSlice(sourceImg, mask, sliceIdx, ori);
+        
+        % ------------------ ParamMap Slice ------------------
+        pmSlice = getSlice(paramMap, mask, sliceIdx, ori);
+        % If paramMap is 4D, average across the 4th dimension
+        pmSlice = nanmean(pmSlice,4);
+        
+        % Set zeros to NaN for display
+        pmSlice(pmSlice == 0) = NaN;
+        
+        % ------------------ Apply Requested Rotation ------------------
+        % rotations(ori) times 90° CCW. Negative rotates clockwise.
+        kRot = rotations(ori);
+        if kRot ~= 0
+            sourceSlice = rot90(sourceSlice, kRot);
+            pmSlice     = rot90(pmSlice, kRot);
+        end
+        
+        % ------------------ Plot the Slices ------------------
+        subplot(opts.row, opts.col, jj);
+        imagesc(sourceSlice);
+        colormap(gray); freezeColors;
+        axis off; axis image;
+
+        subplot(opts.row, opts.col, jj+1);
+        imagesc(pmSlice, opts.scale);
+        colormap(map); freezeColors;
+        axis off; axis image;
+    end
+    
+    % Save figure for this orientation
+    outBase = fullfile(foldername, [filename, '_ori', num2str(ori)]);
+    f = gcf;
+    
+    % Save PNG
+    exportgraphics(f, [outBase, '.png'], ...
+        'Resolution', 600, 'BackgroundColor','black');
+    % Save EPS
+    exportgraphics(f, [outBase, '.eps'], ...
+        'Resolution', 600, 'BackgroundColor','black');
+
+    close(f);
+end
+
+end % plotMap
+
+% =============== Helper: getSlice ===============
+function slice2D = getSlice(vol3D, mask3D, sliceIndex, orientation)
+% Extract a 2D slice (plus any extra 4th-dim if present) according to:
+%   ori=1 (transverse): vol3D(:,:,sliceIndex)
+%   ori=2 (coronal)   : vol3D(:,sliceIndex,:)
+%   ori=3 (sagittal)  : vol3D(sliceIndex,:,:)
+
+switch orientation
+    case 1 % Transverse
+        if ndims(vol3D) == 3
+            slice2D = mask3D(:,:,sliceIndex) .* vol3D(:,:,sliceIndex);
+        else
+            slice2D = mask3D(:,:,sliceIndex) .* vol3D(:,:,sliceIndex,:);
+        end
+        
+    case 2 % Coronal
+        if ndims(vol3D) == 3
+            slice2D = squeeze(mask3D(:,sliceIndex,:) .* vol3D(:,sliceIndex,:));
+        else
+            slice2D = squeeze(mask3D(:,sliceIndex,:)) .* squeeze(vol3D(:,sliceIndex,:,:));
+        end
+        
+    case 3 % Sagittal
+        if ndims(vol3D) == 3
+            slice2D = squeeze(mask3D(sliceIndex,:,:) .* vol3D(sliceIndex,:,:));
+        else
+            slice2D = squeeze(mask3D(sliceIndex,:,:)) .* squeeze(vol3D(sliceIndex,:,:,:));
+        end
+end
+
+end

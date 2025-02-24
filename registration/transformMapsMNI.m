@@ -2,17 +2,7 @@ function [] = transformMapsMNI(mapdir, opts)
 global opts
 
 elastixroot = opts.elastixdir;
-
-%if bspline parameter file is not provided, check to see if we can find it
-if ~isfield(opts,'bsplineTxParamFile')
-    disp('...checking for parameter file')
-    if exist(fullfile(opts.savedir,'structToMNI/mTransformParameters.1.txt'))
-    opts.bsplineTxParamFile = fullfile(opts.savedir,'structToMNI/mTransformParameters.1.txt')
-    else
-        error('run registration to generate transformation files')
-    end
-end
-        
+       
 %setup OS-dependent paths
 if ispc
     elastixrootOS = fullfile(elastixroot,'windows');
