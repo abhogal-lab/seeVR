@@ -1,6 +1,6 @@
-function [fftexp] = fftexponential(a,t)
+function [fftexp] = fftexponential(a,s,t)
 
-expn = exp(-t/a);
+expn = s*exp(-t/a);
 
 fftexp = fftshift(fft(expn));
 end

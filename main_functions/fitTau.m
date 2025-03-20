@@ -36,7 +36,7 @@
 % independently
 %
 
-function [maps] = fitTau(probe, data, mask, opts)
+function [maps, tau_fits] = fitTau(probe, data, mask, opts)
 global opts
 tic
 
@@ -98,20 +98,16 @@ ts(isnan(ts)) = 0;
 nr_params = 3;
 b = nan([length(coordinates), nr_params]);
 
-model = (@(a,t) a(1)*rescale(real(ifft(ifftshift(fftinput(input_probe).*fftexponential(a(2),t)))))+a(nr_params));
+model = (@(a,t) (real(ifft(ifftshift(fftinput(input_probe).*fftexponential(a(2),a(1),t)))))+a(nr_params));
 
-% bounds
-lb = [ -20  0 -Inf];
-ub = [ 30 opts.max_tau Inf];
 
 % Ensure bounds are of type double
-lb = double([-20, 0, -Inf]);
-ub = double([30, opts.max_tau, Inf]);
+lb = double([-Inf, 0, -Inf]);
+ub = double([Inf, opts.max_tau, Inf]);
 
 % Define options for lsqnonlin
 options = optimoptions('lsqnonlin', 'Display', 'none', ...
-    'FunctionTolerance', 1.0000e-8, 'StepTolerance', 1.0000e-8, 'MaxIter', 250);
-
+    'FunctionTolerance', 1.0000e-8, 'StepTolerance', 1.0000e-8, 'MaxIter', 500);
 
 % Main fitting loop
 parfor ii = 1:length(coordinates)
@@ -243,6 +239,28 @@ if opts.refine_tau
 end
 %% save maps and calculate stats
 
+responseFits = zeros(length(coordinates), length(t));
+b = [];
+b(1,:) = b1_map(coordinates);
+b(2,:) = b2_map(coordinates);
+b(3,:) = b3_map(coordinates);
+SSE = zeros(1,length(coordinates));
+SST = zeros(1,length(coordinates));
+r_corr = zeros(1,length(coordinates));
+
+parfor ii=1:length(coordinates)
+    %responseFits(ii,:) = b(1,ii)*rescale(real(ifft(ifftshift(fftinput(input_probe).*fftexponential(b(2,ii),t)))))+b(3,ii);
+    responseFits(ii,:) = model(b(:,ii), t);
+    SSE(1,ii) = (norm(ts(ii,:) - responseFits(ii,:)))^2;
+    SST(1,ii) = (norm(ts(ii,:)-mean(ts(ii,:))))^2;
+    r_corr(1,ii) = corr(ts(ii,:)', responseFits(ii,:)');
+end
+
+R2 = 1 - SSE./SST;
+cR2 = zeros(1, numel(mask)); r = zeros(1, numel(mask));
+cR2(1, coordinates) = R2; r(1, coordinates) = r_corr;
+cR2 = reshape(cR2, size(mask)); r = reshape(r, size(mask));
+
 if opts.medfilt_maps
     b1_map = medfilt3(b1_map);
     b2_map = medfilt3(b2_map);
@@ -254,48 +272,23 @@ if opts.niiwrite
     niftiwrite(cast(mask.*b1_map,opts.mapDatatype),'signal_magnitude',opts.info.map);
     niftiwrite(cast(mask.*b2_map,opts.mapDatatype),'signal_dispersion',opts.info.map);
     niftiwrite(cast(mask.*b3_map,opts.mapDatatype),'signal_offset',opts.info.map);
-else
-    saveImageData(mask.*b1_map, opts.headers.map, opts.dynamicdir, 'signal_magnitude.nii.gz', 64);
-    saveImageData(mask.*b2_map, opts.headers.map, opts.dynamicdir, 'signal_dispersion.nii.gz', 64);
-    saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'signal_offset.nii.gz', 64);
-end
-
-responseFits = zeros(length(coordinates), length(t));
-b = [];
-b(1,:) = b1_map(coordinates);
-b(2,:) = b2_map(coordinates);
-b(3,:) = b3_map(coordinates);
-SSE = zeros(1,length(coordinates));
-SST = zeros(1,length(coordinates));
-r_corr = zeros(1,length(coordinates));
-
-parfor ii=1:length(coordinates)
-    responseFits(ii,:) = b(1,ii)*rescale(real(ifft(ifftshift(fftinput(input_probe).*fftexponential(b(2,ii),t)))))+b(3,ii);
-    SSE(1,ii) = (norm(ts(ii,:) - responseFits(ii,:)))^2;
-    SST(1,ii) = (norm(ts(ii,:)-mean(ts(ii,:))))^2;
-    r_corr(1,ii) = corr(ts(ii,:)', responseFits(ii,:)');
-end
-
-R2 = 1 - SSE./SST;
-cR2 = zeros(1, numel(mask)); r = zeros(1, numel(mask));
-cR2(1, coordinates) = R2; r(1, coordinates) = r_corr;
-cR2 = reshape(cR2, size(mask)); r = reshape(r, size(mask));
-
-if opts.niiwrite
     niftiwrite(cast(mask.*cR2,opts.mapDatatype),'R2_map',opts.info.map);
     niftiwrite(cast(mask.*r,opts.mapDatatype),'r_map',opts.info.map);
     niftiwrite(cast(mask.*(r.^2),opts.mapDatatype),'expVariance_r2_map',opts.info.map);
 else
+    saveImageData(mask.*b1_map, opts.headers.map, opts.dynamicdir, 'signal_magnitude.nii.gz', 64);
+    saveImageData(mask.*b2_map, opts.headers.map, opts.dynamicdir, 'signal_dispersion.nii.gz', 64);
+    saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'signal_offset.nii.gz', 64);
     saveImageData(mask.*cR2, opts.headers.map, opts.dynamicdir,'R2_map.nii.gz', 64);
     saveImageData(mask.*r, opts.headers.map, opts.dynamicdir,'r_map.nii.gz', 64);
     saveImageData(mask.*(r.^2), opts.headers.map, opts.dynamicdir,'expVariance_r2_map', 64);
 end
 
-if opts.save_responses
-    tau_fits = zeros(numel(mask), size(data,4));
-    tau_fits(coordinates) = responseFits;
+tau_fits = zeros(numel(mask), size(data,4));
+tau_fits(coordinates,:) = responseFits;
+tau_fits = reshape(tau_fits, (size(data)));
 
-    tau_fits = reshape(tau_fits, (size(data)));
+if opts.save_responses
 
     if opts.niiwrite
         niftiwrite(cast(tau_fits,opts.tsDatatype),'tau_fits',opts.info.ts);

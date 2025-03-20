@@ -47,9 +47,9 @@ function [y_fit, b] = fitTau1D(probe, ts, opts)
     % Initialize weights: zero weight for zero values in ts, otherwise weight = 1
     weights = ts ~= 0;
 
-    model = @(a, t) a(1) * rescale(real(ifft(ifftshift(fftinput(probe) .* fftexponential(a(2), t))))) + a(nr_params);
+    model = @(a, t)  (real(ifft(ifftshift(fftinput(probe) .* fftexponential(a(2),a(1),t))))) + a(nr_params);
     a0 = [mean(ts(weights)) / mean(probe), 1, mean(ts(weights))];
-    lb = [0, 0, -Inf];
+    lb = [-Inf, 0, -Inf];
     ub = [Inf, opts.maxTau, Inf];
 
     % Weighted least squares residual function
