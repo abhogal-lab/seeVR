@@ -24,7 +24,7 @@
 (NumberOfSpatialSamples 3000)
 (NewSamplesEveryIteration "true")
 (ImageSampler "Random")
-(BSplineInterpolationOrder 0)
+(BSplineInterpolationOrder 1)
 (FinalBSplineInterpolationOrder 0)
 (DefaultPixelValue 0)
 (WriteResultImage "true")

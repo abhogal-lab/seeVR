@@ -32,7 +32,7 @@
 % opts.elastixdir: !!!Important: This is where the elastix binaries are
 % stored: e.g., /seeVR/registration/elastix
 
-function [anatMask anatBET] = optiBET(anatImg, opts)
+function [mask anatBET] = optiBET(anatImg, opts)
 global opts;
 
 [anatdir,~,~] = fileparts(anatImg);
@@ -44,6 +44,7 @@ end
 elastixroot = opts.elastixdir;
 
 if isfield(opts,'T1'); else; opts.T1 = 1; end
+if isfield(opts,'dilation'); else; opts.dilation = 2; end
 
 %setup OS-dependent paths
 if ispc
@@ -185,8 +186,11 @@ system(trans_command);
 
 [mask,info] = loadMask(anatdir, 'result.nii.gz');
 [FILEPATH,NAME,EXT] = fileparts(anatImg);
+if exist(fullfile(FILEPATH,[NAME,EXT])) == 0
+EXT = '.nii.gz';
+end
 [anat,anat_info] = loadImage(FILEPATH, [NAME,EXT]);
-SE = strel('sphere', 2);
+SE = strel('sphere', opts.dilation);
 anat_brain = anat.*imdilate((cast(mask, class(anat))),SE);
 
 %save images
@@ -214,6 +218,6 @@ end
 
 disp('clean-up files completed');
 disp('finished brain extraction...');
-
+mask = (cast(mask, class(anat)));
 end
 
