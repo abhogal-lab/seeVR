@@ -72,7 +72,12 @@ if license('test','signal_toolbox')
     % Bandpass filter voxel time series
     BP_V = zeros(size(voxels_ts));
     parfor ii = 1:size(voxels_ts,1)
+        try
         BP_V(ii,:) = filtfilt(b,a,voxels_ts(ii,:));
+        catch
+            disp(['error voxel :', int2str(ii)])
+        BP_V(ii,:) = zeros(size(voxels_ts,2));
+        end
     end
 else
     error('Signal Processing Toolbox is required for Butterworth filtering.');

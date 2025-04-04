@@ -128,12 +128,12 @@ rALFF_map  = reshape(rALFF_map, mapSize);
 zrALFF_map = reshape(zrALFF_map, mapSize);
 
 %% Save results
-saveMap(ALFF_map, 'ALFF_map', temp_info, opts);
-saveMap(zALFF_map, 'zALFF_map', temp_info, opts);
-saveMap(fALFF_map, 'fALFF_map', temp_info, opts);
-saveMap(zfALFF_map, 'zfALFF_map', temp_info, opts);
+saveMap(ALFF_map, opts.ALFFdir, 'ALFF_map', temp_info, opts);
+saveMap(zALFF_map, opts.ALFFdir, 'zALFF_map', temp_info, opts);
+saveMap(fALFF_map, opts.ALFFdir, 'fALFF_map', temp_info, opts);
+saveMap(zfALFF_map, opts.ALFFdir, 'zfALFF_map', temp_info, opts);
 saveMap(rALFF_map, 'rALFF_map', temp_info, opts);
-saveMap(zrALFF_map, 'zrALFF_map', temp_info, opts);
+saveMap(zrALFF_map, opts.ALFFdir, 'zrALFF_map', temp_info, opts);
 
 end
 
