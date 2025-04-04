@@ -11,6 +11,7 @@
 (MovingImagePyramid "MovingRecursiveImagePyramid")
 (Optimizer "AdaptiveStochasticGradientDescent")
 (Transform "AffineTransform")
+//(Transform "RigidTransform")
 (Metric "AdvancedMattesMutualInformation")
 (AutomaticScalesEstimation "true")
 (AutomaticTransformInitialization "true")

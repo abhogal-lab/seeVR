@@ -30,6 +30,8 @@ function [dmData] = demeanData(data, mask)
 warning('off')
 global opts;
 tf = class(data);
+data = double(data);
+mask = double(mask);
 if isfield(opts,'verbose'); else; opts.verbose = 0; end %turn on/off select command output
 
 switch ndims(data)

@@ -16,92 +16,77 @@
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
 % *************************************************************************
+function [bpData, bpMeanSignal] = bandpassfilt(data, mask, opts)
+% bandpassfilt performs a bandpass filter on 4D input fMRI data within a given mask.
 %
-% data: input timeseries data (i.e. 4D BOLD MRI dataset)
+% Inputs:
+% - data: 4D BOLD MRI dataset [X,Y,Z,T]
+% - mask: binary ROI mask defining voxels to filter
+% - opts: options structure with fields:
+%       opts.TR - repetition time (s)
+%       opts.fpass - frequency pass-band [low high] (Hz)
+%       opts.filter_order (optional) - order of Butterworth filter
 %
-% mask: binary mask defining voxels of interest
-%
-% refmask: binary mask that defines the reference signals of interest
-%
-%
-% opts: options structure containing required variables for this specific
-% function; i.e. opts.fpass opts.headers.map, opts.info.map, opts,niiwrite, opts.resultsdir
-%
-%
-% ROI defined by refmask
-%
-% bpData: a bandpassed version of the input data%
-function [bpData] = bandpassfilt(data, mask, opts)
+% Outputs:
+% - bpData: bandpass-filtered dataset
+% - bpMeanSignal: mean filtered signal within the mask
+global opts
 warning('off');
-global opts;
-t = cputime;
+tic;
 
-% data = normTimeseries(data, mask);
-mean_image = mean(data, 4);
-data = demeanData(data, mask);
+if ~isfield(opts,'fpass')
+    opts.fpass = [0.000001 0.1164]; % default band: approx. 0.000001 - 0.1164 Hz
+end
 
-mask = logical(mask);
-
-if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.1164]; end  %default frequency band see doi: 10.1148/radiol.2021203568
-    
-[xx yy zz N] = size(data);
+% Data dimensions
+[xx, yy, zz, N] = size(data);
 data = double(data);
+mask = double(mask);
+% Extract voxels within mask
 
-%get voxels
-[voxels_ts coordinates] = grabTimeseries(data, mask);
-mean_ts = mean(voxels_ts,1);
-Fs = 1/opts.TR;
-t = 0:1/Fs:1-1/Fs;
-N = size(voxels_ts,2);
-dF = Fs/N;
-freq = 0:Fs/N:Fs/2;
-Lowf = opts.fpass(1); Highf = opts.fpass(2); %Hz
+[voxels_ts, coordinates] = grabTimeseries(data, mask);
 
-%check whether signal processing toolbox is available
-if license('test','signal_toolbox') == 1
-    % if opts.filter_order is specified
+% Mean ROI time series
+mean_ts = mean(voxels_ts, 1);
+Fs = 1 / opts.TR;
+Lowf = opts.fpass(1);
+Highf = opts.fpass(2);
+
+% Define Butterworth filter
+if license('test','signal_toolbox')
     if isfield(opts,'filter_order')
-        [b,a] = butter(opts.filter_order,2*[Lowf, Highf]/Fs);
-        BP_ref = filtfilt(b,a,(mean_ts));
+        [b,a] = butter(opts.filter_order, 2*[Lowf, Highf]/Fs);
     else
-        % else find optimal filter (automated)
-        SSres = []; BP = [];
-        for forder = 1:4
-            [b,a] = butter(forder,2*[Lowf, Highf]/Fs);
-            BP(forder,:) = filtfilt(b,a,mean_ts);
-            SSres(forder,:)= sum((mean_ts - BP(forder,:).^2),2);
+        % Automatically select optimal filter order (1 to 4)
+        SSres = zeros(1,4);
+        for order = 1:4
+            [b_temp,a_temp] = butter(order, 2*[Lowf, Highf]/Fs);
+            BP_temp = filtfilt(b_temp,a_temp,mean_ts);
+            SSres(order) = sum((mean_ts - BP_temp).^2);
         end
-        %select closest filter
-        [~,I] = min(SSres);
-        [b,a] = butter(I,2*[Lowf, Highf]/Fs);
-        BP_ref = filtfilt(b,a,(mean_ts));
-        opts.filter_order = I;
+        [~, best_order] = min(SSres);
+        [b,a] = butter(best_order, 2*[Lowf, Highf]/Fs);
+        opts.filter_order = best_order;
     end
-    
-    %bandpass signals of interest contained within mask
+
+    % Bandpass filter voxel time series
     BP_V = zeros(size(voxels_ts));
-    parfor ii=1:size(BP_V,1)
+    parfor ii = 1:size(voxels_ts,1)
         BP_V(ii,:) = filtfilt(b,a,voxels_ts(ii,:));
     end
-    
 else
-    isplot = 0;
-
-    %bandpass signals of interest contained within mask
-    BP_V = zeros(size(voxels_ts));
-    BP_V = bpfilt(voxels_ts,Lowf, Highf, isplot);
+    error('Signal Processing Toolbox is required for Butterworth filtering.');
 end
 
-%regress whole brain & reference signals against band passed reference
+% Reconstruct filtered data
+bpData = zeros(xx*yy*zz, N);
+bpData(coordinates,:) = BP_V;
+bpData = reshape(bpData, [xx, yy, zz, N]);
 
-bpData = zeros(size(data));
-bpData = reshape(bpData,[xx*yy*zz N]);
-bpData(coordinates, :) = BP_V;
-bpData = reshape(bpData,size(data)) + mean_image;
+% Output mean filtered signal within mask
+bpMeanSignal = filtfilt(b,a,mean(voxels_ts,1));
 
-disp(['finished bandpass filtering of input data in: ',int2str(cputime-t),' seconds']);
+elapsedTime = toc;
+disp(['Finished bandpass filtering in ', num2str(elapsedTime), ' seconds.']);
 
 end
-
-
-

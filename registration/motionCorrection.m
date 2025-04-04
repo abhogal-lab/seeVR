@@ -108,7 +108,7 @@ for idx=1:length(names)
         if contains(tline, '(TransformParameters')
             % Extract numerical parameters
             param_str = extractBetween(tline, '(TransformParameters ', ')');
-            param_vals = str2num(param_str{1}); %#ok<ST2NM>
+            param_vals = str2num(param_str{1}); 
             motion_params = [motion_params; param_vals];
             break;
         end
@@ -119,7 +119,7 @@ end
 
 output_filename = fullfile(opts.outputdir_mc,'motion_params.txt')
 % Write the concatenated parameters to output file
-writematrix(motion_params, output_filename, 'Delimiter', 'tab');
+writematrix(motion_params, output_filename, 'Delimiter',  '\t');
 disp('motion parameters are saved in motion_params.txt file')
 
 % Plotting each motion parameter

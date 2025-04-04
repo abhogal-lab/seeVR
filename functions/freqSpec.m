@@ -127,5 +127,7 @@ fSpec(coordinates, :) = r_psdx;
 fSpec = reshape(fSpec, [x, y, z, size(r_psdx,2)]);
 
 disp('Returning spectra for the mask region (NOT log-transformed)');
-
+saveas(gcf,fullfile(opts.figdir,'spectrum.png'))
+saveas(gcf,fullfile(opts.figdir,'pectrum.fig'))
+saveas(gcf,fullfile(opts.figdir,'spectrum.svg'))
 end
