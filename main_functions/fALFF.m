@@ -15,110 +15,126 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
-% *************************************************************************
-% Timeseries data is used to generate ALFF and fALFF maps based on specified
-% frequency bands. For details see:
-% An improved approach to detection of amplitude of low-frequency fluctuation (ALFF) for resting-state fMRI: Fractional ALFF
-%doi: 10.1016/j.jneumeth.2008.04.012
+function [ALFF_map, fALFF_map, rALFF_map, zALFF_map, zfALFF_map, zrALFF_map] = fALFF(data, mask, refmask, opts)
+% fALFF - Computes ALFF, fALFF, and rALFF maps from 4D fMRI data.
 %
-% data: input timeseries data (i.e. 4D BOLD MRI dataset)
+% Usage:
+%   [ALFF_map, fALFF_map, rALFF_map, zALFF_map, zfALFF_map, zrALFF_map] = ...
+%       fALFF(data, mask, refmask, opts)
 %
-% mask: binary mask defining voxels of interest
+% Inputs:
+%   data      - 4D fMRI data matrix (X × Y × Z × T), double or single precision.
+%   mask      - 3D logical or binary mask defining voxels of interest.
+%   refmask   - 3D logical or binary mask for the reference region (e.g., whole brain).
+%   opts      - Struct containing processing options with required/optional fields:
+%       .TR           - Repetition time in seconds (required).
+%       .fpass        - 1x2 vector specifying frequency band [low high] in Hz (default: [0.01 0.15]).
+%       .resultsdir   - Directory to save output maps (required).
+%       .info         - Template NIfTI header info (required if opts.niiwrite = 1).
+%       .headers.map  - Map header info (required if opts.niiwrite = 0).
+%       .niiwrite     - Boolean flag to save as NIfTI (.nii) or custom (default: 0 = custom).
 %
-% refmask: binary mask that defines the reference signals of interest
+% Outputs:
+%   ALFF_map   - Amplitude of low frequency fluctuations (raw ALFF).
+%   fALFF_map  - ALFF normalized by full frequency spectrum (fractional ALFF).
+%   rALFF_map  - ALFF normalized by reference region ALFF (relative ALFF).
+%   zALFF_map  - Z-transformed ALFF map.
+%   zfALFF_map - Z-transformed fALFF map.
+%   zrALFF_map - Z-transformed rALFF map.
 %
-% opts: options structure containing required variables for this specific
-% function; i.e. opts.fpass, opts.resultsdir
+% Description:
+%   The function computes three variants of ALFF:
+%     1. ALFF: Raw amplitude in a low-frequency band (default 0.01–0.15 Hz).
+%     2. fALFF: Fraction of ALFF relative to the full spectral amplitude.
+%     3. rALFF: ALFF normalized to the mean ALFF of a reference region.
 %
-% ALFF_map: ALFF map defined by opts.fpass
+%   It also outputs z-scored versions of all three metrics. Optionally saves maps
+%   as NIfTI or using a custom saving function (`saveImageData`).
 %
-% fALFF_map: fALFF map defined by opts.fpass
+% Example:
+%   opts.TR = 2;
+%   opts.resultsdir = './results';
+%   opts.headers.map = header;
+%   opts.niiwrite = 0;
+%   [ALFF, fALFF, rALFF, zA, zf, zr] = fALFF(data, brainMask, brainMask, opts);
 %
-% zALFF_map: z-transformed ALFF map defined by the standard deviation of
-% ALFF values defined by the input mask
+% References:
+%   - Zang et al., 2007. Altered baseline brain activity in children with ADHD revealed by resting-state fMRI. Brain & Development.
+%   - Zou et al., 2008. An improved approach to detection of amplitude of low-frequency fluctuation (ALFF) for resting-state fMRI. Front Syst Neurosci.
+%   - Yang et al., 2007. Amplitude of low frequency fluctuation within visual areas revealed by resting-state functional MRI. NeuroImage.
 %
-% zfALFF_map: z-transformed fALFF map defined by the standard deviation of
-% fALFF values defined by the input mask
+% See also: fft, meanTimeseries, grabTimeseries, saveImageData, niftiwrite
 
-function [ALFF_map fALFF_map zALFF_map zfALFF_map] = fALFF(data, mask, refmask, opts)
 global opts
 data = double(data);
 temp_info = opts.info.map;
 temp_info.Datatype = 'double';
 
-if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end                
-if isfield(opts,'fpass'); else; opts.fpass = [0.0000001 0.15]; end
+if isfield(opts,'niiwrite') == 0, opts.niiwrite = 0; end
+if isfield(opts,'fpass') == 0, opts.fpass = [0.01 0.15]; end
 opts.ALFFdir = fullfile(opts.resultsdir,'ALFF'); mkdir(opts.ALFFdir);
 
-[xx yy zz N] = size(data);
-[refdata] = meanTimeseries(data, refmask);
+[xx, yy, zz, N] = size(data);
+Fs = 1 / opts.TR;
+dF = Fs / N;
+freq = 0:Fs/N:Fs/2;
+[Lowval, Lowidx] = min(abs(freq - opts.fpass(1)));
+[Highval, Highidx] = min(abs(freq - opts.fpass(2)));
 
-Fs = 1/opts.TR;
-dF = Fs/N;
+%% Compute reference region ALFF
+refdata = meanTimeseries(data, refmask);
 xdft = fft(refdata);
 xdft = xdft(1:N/2+1);
-%reference signal
-psdx = (abs(xdft).*2)/N; %square this to get the power (ampl^2 = pwer)
+psdx = (abs(xdft).^2)/N;
 psdx(2:end-1) = 2*psdx(2:end-1);
-freq = 0:Fs/length(data):Fs/2;
-Lowf = opts.fpass(1); Highf = opts.fpass(2);
+refALFF = sum(sqrt(psdx(Lowidx:Highidx)));  % reference ALFF for rALFF
 
-%find idx for low & high freq
-[Lowval,Lowidx]=min(abs(freq-Lowf));
-[Highval,Highidx]=min(abs(freq-Highf));
-rALFF = sum(sqrt(psdx(1,Lowidx:Highidx))); %whole brain reference ALFF see: https://pubmed.ncbi.nlm.nih.gov/16919409/
+%% Voxel-wise ALFF
+[voxels, coordinates] = grabTimeseries(data, mask);
+xdft = fft(voxels, [], 2);
+xdft = xdft(:, 1:N/2+1);
+psdx = (abs(xdft).^2)/N;
+psdx(:, 2:end-1) = 2 * psdx(:, 2:end-1);
 
-%voxel-wise ALFF
-[voxels coordinates] = grabTimeseries(data, mask);
-xdft = fft(voxels,[],2);
-xdft = xdft(:,1:N/2+1);
-psdx = (abs(xdft).^2)/N; %square this to get the power (ampl^2 = pwer)
-psdx(2:end-1) = 2*psdx(2:end-1); %not sure yet is factor 2 is needed
+vALFF = sum(sqrt(psdx(:, Lowidx:Highidx)), 2);  % raw ALFF
+fvALFF = sum(sqrt(psdx), 2);                   % full spectrum
 
-vALFF = sum(sqrt(psdx(:,Lowidx:Highidx)),2); %ALFF in freq band of interest
-fvALFF = sum(sqrt(psdx),2); %whole spectrum reference ALFF
+% Z-transformed values
+zALFF = (vALFF - mean(vALFF)) / std(vALFF);
+zfALFF = (vALFF ./ fvALFF - mean(vALFF ./ fvALFF)) / std(vALFF ./ fvALFF);
+zrALFF = (vALFF / refALFF - mean(vALFF / refALFF)) / std(vALFF / refALFF);
 
-%generate ALFF map and z-transformed ALFF map
-ALFF_map = zeros(size(mask)); ALFF_map = ALFF_map(:); zALFF_map = ALFF_map;
-ALFF_map(coordinates,1) =  vALFF/rALFF; %divide by global mean ALFF - see: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3902859/
-zALFF_map(coordinates,1) = (vALFF - mean(vALFF))/std(vALFF); %calculate z-score
-ALFF_map = reshape(ALFF_map,size(mask)); zALFF_map = reshape(zALFF_map,size(mask));
+%% Initialize output maps
+mapSize = size(mask);
+ALFF_map = zeros(mapSize);      zALFF_map = zeros(mapSize);
+fALFF_map = zeros(mapSize);     zfALFF_map = zeros(mapSize);
+rALFF_map = zeros(mapSize);     zrALFF_map = zeros(mapSize);
 
-limits = string(opts.fpass);
+ALFF_map(coordinates)   = vALFF;
+zALFF_map(coordinates)  = zALFF;
 
-%save ALFF
-delimeter = {'_','_'};
-if opts.niiwrite
-    niftiwrite(ALFF_map,fullfile(opts.ALFFdir,'ALFF_map'),temp_info);
-else
-    saveImageData(ALFF_map,opts.headers.map,opts.ALFFdir,'ALFF_map',64)
+fALFF_map(coordinates)  = vALFF ./ fvALFF;
+zfALFF_map(coordinates) = zfALFF;
+
+rALFF_map(coordinates)  = vALFF / refALFF;
+zrALFF_map(coordinates) = zrALFF;
+
+% Reshape to 3D
+ALFF_map   = reshape(ALFF_map, mapSize);
+zALFF_map  = reshape(zALFF_map, mapSize);
+fALFF_map  = reshape(fALFF_map, mapSize);
+zfALFF_map = reshape(zfALFF_map, mapSize);
+rALFF_map  = reshape(rALFF_map, mapSize);
+zrALFF_map = reshape(zrALFF_map, mapSize);
+
+%% Save results
+saveMap(ALFF_map, 'ALFF_map', temp_info, opts);
+saveMap(zALFF_map, 'zALFF_map', temp_info, opts);
+saveMap(fALFF_map, 'fALFF_map', temp_info, opts);
+saveMap(zfALFF_map, 'zfALFF_map', temp_info, opts);
+saveMap(rALFF_map, 'rALFF_map', temp_info, opts);
+saveMap(zrALFF_map, 'zrALFF_map', temp_info, opts);
+
 end
 
-%save ALFF z-map
-if opts.niiwrite
-    cd(opts.ALFFdir)
-    niftiwrite(zALFF_map,fullfile(opts.ALFFdir,'zALFF_map'),temp_info);
-else
-    saveImageData(zALFF_map,opts.headers.map,opts.ALFFdir,'zALFF_map',64)
-end
 
-%generate ALFF map and z-transformed ALFF map
-fALFF_map = zeros(size(mask)); fALFF_map = fALFF_map(:); zfALFF_map = fALFF_map;
-fALFF_map(coordinates,1) =  vALFF./fvALFF;
-zfALFF_map(coordinates,1) = (fALFF_map(coordinates,1) - mean(fALFF_map(coordinates,1)))/std(fALFF_map(coordinates,1));
-fALFF_map = reshape(fALFF_map,size(mask)); zfALFF_map = reshape(zfALFF_map,size(mask));
-
-%save fALFF
-if opts.niiwrite
-    niftiwrite(fALFF_map,fullfile(opts.ALFFdir,'fALFF_map'),temp_info);
-else
-    saveImageData(fALFF_map,opts.headers.map,opts.ALFFdir,'fALFF_map',64)
-end
-
-%save fALFF z-map
-if opts.niiwrite
-    niftiwrite(zfALFF_map,fullfile(opts.ALFFdir,'zfALFF_map'),temp_info);
-else
-    saveImageData(zfALFF_map,opts.headers.map,opts.ALFFdir,'zfALFF_map',64)
-end
-end
