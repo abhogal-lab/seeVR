@@ -1,4 +1,4 @@
-function [] = transformMapsStruct(mapdir, opts)
+function [] = transformMapsStruct(mapdir, TxFile, opts)
 global opts
 
 elastixroot = opts.elastixdir;
@@ -22,7 +22,7 @@ for kk=1:size(dirinfo,1)
     if dirinfo(kk).isdir
     else
         TxImg = fullfile(dirinfo(kk).folder,dirinfo(kk).name);
-        [~] = transformixReg(TxImg, opts.affineTxParamFile, opts.regOutput, elastixrootOS);
+        [~] = transformixReg(TxImg, TxFile, opts.regOutput, elastixrootOS);
 
      end
 end

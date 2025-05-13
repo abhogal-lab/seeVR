@@ -44,7 +44,7 @@ end
 elastixroot = opts.elastixdir;
 
 if isfield(opts,'T1'); else; opts.T1 = 1; end
-if isfield(opts,'dilation'); else; opts.dilation = 2; end
+if isfield(opts,'dilation'); else; opts.dilation = 4; end
 
 %setup OS-dependent paths
 if ispc
