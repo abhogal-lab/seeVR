@@ -98,7 +98,8 @@ ts(isnan(ts)) = 0;
 nr_params = 3;
 b = nan([length(coordinates), nr_params]);
 
-model = (@(a,t) (real(ifft(ifftshift(fftinput(input_probe).*fftexponential(a(2),a(1),t)))))+a(nr_params));
+probe_fft = fftinput(input_probe);
+model = @(a,t) real(ifft(ifftshift(probe_fft .* fftexponential(a(2),a(1),t)))) + a(nr_params);
 
 
 % Ensure bounds are of type double
