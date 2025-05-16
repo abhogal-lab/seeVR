@@ -111,6 +111,7 @@ options = optimoptions('lsqnonlin', 'Display', 'none', ...
     'FunctionTolerance', 1.0000e-8, 'StepTolerance', 1.0000e-8, 'MaxIter', 500);
 
 % Main fitting loop
+queue = createParallelProgressBar(numel(coordinates));  %  <---
 parfor ii = 1:length(coordinates)
     % Generate weights for the timeseries
     valid_idx = ~(ts(ii, :) == 0 | isnan(ts(ii, :)));
@@ -123,6 +124,8 @@ parfor ii = 1:length(coordinates)
     catch
         disp(['Error voxel ', int2str(ii)]);
     end
+    pause(0.00001);
+    send(queue, ii);
 end
 
 
