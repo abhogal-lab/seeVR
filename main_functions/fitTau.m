@@ -143,17 +143,10 @@ if opts.save_unrefined && opts.refine_tau
     b1_map = reshape(b1_vec, [xx yy zz]);
     b2_map = reshape(b2_vec, [xx yy zz]);
     b3_map = reshape(b3_vec, [xx yy zz]);
-
-    if opts.niiwrite
-        cd(opts.dynamicdir);
-        niftiwrite(cast(mask.*b1_map,opts.mapDatatype),'exp_scaling_unrefined',opts.info.map);
-        niftiwrite(cast(mask.*b2_map,opts.mapDatatype),'exp_tau_unrefined',opts.info.map);
-        niftiwrite(cast(mask.*b3_map,opts.mapDatatype),'exp_offset_unrefined',opts.info.map);
-    else
-        saveImageData(mask.*b1_map, opts.headers.map, opts.dynamicdir, 'exp_scaling.nii.gz', 64);
-        saveImageData(mask.*b2_map, opts.headers.map, opts.dynamicdir, 'exp_tau.nii.gz', 64);
-        saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'exp_offset.nii.gz', 64);
-    end
+    savedir = opts.dynamicdir;
+    saveMap(cast(mask.*b1_map,opts.mapDatatype), savedir, 'exp_scaling_unrefined', opts.info.map, opts);
+    saveMap(cast(mask.*b2_map,opts.mapDatatype), savedir, 'exp_tau_unrefined', opts.info.map, opts);
+    saveMap(cast(mask.*b2_map,opts.mapDatatype), savedir, 'exp_offset_unrefined', opts.info.map, opts);
 end
 
 if opts.refine_tau
@@ -271,41 +264,29 @@ if opts.medfilt_maps
     b3_map = medfilt3(b3_map);
 end
 
-if opts.niiwrite
-    cd(opts.dynamicdir);
-    niftiwrite(cast(mask.*b1_map,opts.mapDatatype),'signal_magnitude',opts.info.map);
-    niftiwrite(cast(mask.*b2_map,opts.mapDatatype),'signal_dispersion',opts.info.map);
-    niftiwrite(cast(mask.*b3_map,opts.mapDatatype),'signal_offset',opts.info.map);
-    niftiwrite(cast(mask.*cR2,opts.mapDatatype),'R2_map',opts.info.map);
-    niftiwrite(cast(mask.*r,opts.mapDatatype),'r_map',opts.info.map);
-    niftiwrite(cast(mask.*(r.^2),opts.mapDatatype),'expVariance_r2_map',opts.info.map);
-else
-    saveImageData(mask.*b1_map, opts.headers.map, opts.dynamicdir, 'signal_magnitude.nii.gz', 64);
-    saveImageData(mask.*b2_map, opts.headers.map, opts.dynamicdir, 'signal_dispersion.nii.gz', 64);
-    saveImageData(mask.*b3_map, opts.headers.map, opts.dynamicdir, 'signal_offset.nii.gz', 64);
-    saveImageData(mask.*cR2, opts.headers.map, opts.dynamicdir,'R2_map.nii.gz', 64);
-    saveImageData(mask.*r, opts.headers.map, opts.dynamicdir,'r_map.nii.gz', 64);
-    saveImageData(mask.*(r.^2), opts.headers.map, opts.dynamicdir,'expVariance_r2_map', 64);
-end
+
+saveMap(cast(mask.*b1_map,opts.mapDatatype), savedir, 'signal_magnitude', opts.info.map, opts);
+saveMap(cast(mask.*b2_map,opts.mapDatatype), savedir, 'signal_dispersion', opts.info.map, opts);
+saveMap(cast(mask.*b3_map,opts.mapDatatype), savedir, 'signal_offset', opts.info.map, opts);
+saveMap(cast(mask.*cR2,opts.mapDatatype), savedir, 'R2_map', opts.info.map, opts);
+saveMap(cast(mask.*r,opts.mapDatatype), savedir, 'r_map', opts.info.map, opts);
+saveMap(cast(mask.*(r.^2),opts.mapDatatype), savedir, 'expVariance_r2_map', opts.info.map, opts);
+
 
 tau_fits = zeros(numel(mask), size(data,4));
 tau_fits(coordinates,:) = responseFits;
 tau_fits = reshape(tau_fits, (size(data)));
 
 if opts.save_responses
-
-    if opts.niiwrite
-        niftiwrite(cast(tau_fits,opts.tsDatatype),'tau_fits',opts.info.ts);
-    else
-        saveImageData(tau_fits, opts.headers.ts, opts.dynamicdir,'tau_fits.nii.gz', 64);
-    end
+    saveMap(cast(tau_fits,opts.tsDatatype), savedir, 'tau_fits', opts.info.ts, opts);
 end
-maps.expHRF.scale = b1_map;
-maps.expHRF.tau = b2_map;
-maps.expHRF.offset = b3_map;
-maps.expHRF.R2 = cR2;
-maps.expHRF.r = r;
-maps.expHRF.explainedVariance = r.^2;
+
+maps.expHRF.signal_magnitude = b1_map;
+maps.expHRF.signal_dispersion = b2_map;
+maps.expHRF.signal_offset = b3_map;
+maps.expHRF.R2_map = cR2;
+maps.expHRF.r_map = r;
+maps.expHRF.expVariance_r2_map = r.^2;
 
 toc
 
