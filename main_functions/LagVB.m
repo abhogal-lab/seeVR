@@ -20,7 +20,7 @@
 %   maps.postLag  – posterior mean lag [s]
 %   maps.postVar  – posterior variance of lag [s²]
 % ---------------------------------------------------------------------
-function maps = LagVB(mask, data4d, petco2, TR, nuis, opts)
+function maps = lagVB(mask, data4d, petco2, TR, nuis, opts)
 global opts;
 opts.VBdir = fullfile(opts.resultsdir,'vbLAG'); mkdir(opts.VBdir);
 %% ---------- defaults ---------------------------------------------------
