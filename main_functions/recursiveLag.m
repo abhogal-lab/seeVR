@@ -264,7 +264,7 @@ maps.recursiveR_map  = r_map;
 
 if opts.smoothmap
     temp = opts.FWHM;
-    opts.FWHM = [5 5 5];
+    opts.FWHM = [3 3 3];
     maps.recursiveLag_map = filterData(single(maps.recursiveLag_map), mask, mask, opts);
     opts.FWHM = temp; clear temp
 end

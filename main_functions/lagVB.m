@@ -10,7 +10,7 @@
 %   • Computes softmax-weighted posterior mean and variance of lag.
 % ---------------------------------------------------------------------
 % Usage
-%   maps = lagVB(mask, data4d, petco2, TR, nuis, opts)
+%   maps = lagVB(mask, data, probe, TR, nuis, opts)
 % ---------------------------------------------------------------------
 % Outputs (single‑precision maps)
 %   maps.delay    – best lag [s]
@@ -20,7 +20,7 @@
 %   maps.postLag  – posterior mean lag [s]
 %   maps.postVar  – posterior variance of lag [s²]
 % ---------------------------------------------------------------------
-function maps = LagVB(mask, gmMask, wmMask, data4d, petco2, nuis, opts)
+function maps = LagVB(mask, gmMask, wmMask, data, probe, nuis, opts)
 global opts;
 opts.VBdir = fullfile(opts.resultsdir,'vbLAG'); mkdir(opts.VBdir);
 
@@ -71,9 +71,9 @@ for i = 1:length(wbVoxels)
 end
 
 mask   = mask~=0;
-[X,Y,Z,T] = size(data4d);
-petco2 = double(petco2(:)');
-assert(T == numel(petco2), 'Regressor length ≠ 4‑D time dimension');
+[X,Y,Z,T] = size(data);
+probe = double(probe(:)');
+assert(T == numel(probe), 'Regressor length ≠ 4‑D time dimension');
 if nargin < 5 || isempty(nuis), nuis = zeros(T,0); end
 
 %% ---------- nuisance regressors ---------------------------------------
@@ -83,7 +83,7 @@ Xn   = [poly, nuis];
 P    = size(Xn,2);
 
 %% ---------- voxel list -------------------------------------------------
-[voxTS, coords] = grabTimeseries(double(data4d), mask);
+[voxTS, coords] = grabTimeseries(double(data), mask);
 Nvox = size(voxTS,1);
 if opts.verbose
     fprintf('lagVB | vox=%d  lag grid=%d  nuis=%d  TR=%.2f s\n', Nvox, numel(opts.lags), P, TR);
@@ -92,7 +92,7 @@ end
 %% ---------- build shifted CO₂ matrix ----------------------------------
 L = numel(opts.lags);
 Xc = zeros(T,L);
-ft = fft(petco2).';
+ft = fft(probe).';
 freq = (0:T-1)'/T;
 for k = 1:L
     lag = opts.lags(k);
@@ -229,7 +229,7 @@ end
 
 if opts.smoothmap
 temp = opts.FWHM;
-opts.FWHM = [5 5 5];
+opts.FWHM = [3 3 3];
 maps.delay = filterData(single(maps.delay), mask, mask, opts);
 maps.postLag = filterData(single(maps.postLag), mask, mask, opts);
 opts.FWHM = temp; clear temp

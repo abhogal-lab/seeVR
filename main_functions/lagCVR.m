@@ -385,19 +385,15 @@ if opts.corr_model
             tmpLag = medfilt3(tmpLag);
             lag_map = medfilt3(lag_map);
         end
-
+        
+        savedir = opts.corrlagdir;
         switch pp
             case 1
-                if opts.niiwrite
-                    cd(opts.corrlagdir);
-                    niftiwrite(cast(mask.*tmpLag,opts.mapDatatype),'hemodynamic_lag_map_refined_probe',opts.info.map);
-                    niftiwrite(cast(mask.*lag_map,opts.mapDatatype),'raw_hemodynamic_lag_map_refined_probe',opts.info.map);
-                    niftiwrite(cast(mask.*r_map,opts.mapDatatype),'r_map_refined_probe',opts.info.map);
-                else
-                    saveImageData(mask.*tmpLag, opts.headers.map, opts.corrlagdir, 'hemodynamic_lag_map_refined_probe.nii.gz', datatype);
-                    saveImageData(mask.*lag_map, opts.headers.map, opts.corrlagdir, 'raw_hemodynamic_lag_map_refined_probe.nii.gz', datatype);
-                    saveImageData(mask.*r_map, opts.headers.map, opts.corrlagdir, '.nii.gz', datatype);
-                end
+
+                saveMap(cast(mask.*tmpLag,opts.mapDatatype), savedir, 'hemodynamic_lag_map_refined_probe', opts.info.map, opts);
+                saveMap(cast(mask.*lag_map,opts.mapDatatype), savedir, 'raw_hemodynamic_lag_map_refined_probe', opts.info.map, opts);
+                saveMap(cast(mask.*r_map,opts.mapDatatype), savedir, 'r_map_refined_probe', opts.info.map, opts);
+                
                 maps.XCORR.lag_opti = tmpLag;
                 maps.XCORR.uncorrlag_opti = lag_map;
                 maps.XCORR.r_opti = r_map;
@@ -420,31 +416,19 @@ if opts.corr_model
                 end
                 clear tmpLag lag_map r_map;
             case 2
-                if opts.niiwrite
-                    cd(opts.corrlagdir);
-                    niftiwrite(cast(mask.*tmpLag,opts.mapDatatype),'hemodynamic_lag_map_input_probe',opts.info.map);
-                    niftiwrite(cast(mask.*lag_map,opts.mapDatatype),'raw_hemodynamic_lag_map_input_probe',opts.info.map);
-                    niftiwrite(cast(mask.*r_map,opts.mapDatatype),'r_map_input_probe',opts.info.map);
-                else
-                    saveImageData(mask.*tmpLag, opts.headers.map, opts.corrlagdir,  'hemodynamic_lag_map_input_probe.nii.gz', datatype);
-                    saveImageData(mask.*lag_map, opts.headers.map,opts.corrlagdir, 'raw_hemodynamic_lag_map_input_probe.nii.gz', datatype);
-                    saveImageData(mask.*r_map, opts.headers.map, opts.corrlagdir, 'r_map_input_probe.nii.gz', datatype);
-                end
+
+                saveMap(cast(mask.*tmpLag,opts.mapDatatype), savedir, 'hemodynamic_lag_map_input_probe', opts.info.map, opts);
+                saveMap(cast(mask.*lag_map,opts.mapDatatype), savedir, 'raw_hemodynamic_lag_map_input_probe', opts.info.map, opts);
+                saveMap(cast(mask.*r_map,opts.mapDatatype), savedir, 'r_map_input_probe', opts.info.map, opts);
+               
                 maps.XCORR.lag_input = tmpLag;
                 maps.XCORR.uncorrlag_input = lag_map;
                 maps.XCORR.r_input = r_map;
 
                 if opts.save_rts
-                    if opts.niiwrite
-                        cd(opts.corrlagdir);
-                        disp('saving correlation timeseries based on optimized regressor')
-                        niftiwrite(cast(corr_ts,opts.mapDatatype),'correlation_timeseries_input_probe',opts.info.rts);
+                        saveMap(cast(corr_ts,opts.mapDatatype), savedir, 'correlation_timeseries', opts.info.map, opts);
+                        disp('saving correlation timeseries')
                         clear Trcorr_ts;
-                    else
-                        disp('saving correlation timeseries based on input probe')
-                        saveImageData(Trcorr_ts, opts.headers.ts, opts.corrlagdir, 'correlation_timeseries_input_probe.nii.gz', datatype);
-                        clear Trcorr_ts;
-                    end
                 end
                 if opts.robust
                     LAG(2,:,:,:) = mask.*mask.*tmpLag;
