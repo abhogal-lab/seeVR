@@ -31,15 +31,15 @@
 %   (adapted from Aso et al., 2017). The algorithm starts from a seed
 %   regressor and iteratively propagates lag information, updating the
 %   regressor at each step with voxels that show strong local
-%   cross‑correlation.
+%   cross‑correlation. Yseful for resting state lag mapping.
 %
 % USAGE
-%   maps = recursiveLag(mask, data4D, seedProbe, opts)
+%   maps = recursiveLag(mask, data, probe, opts)
 %
 % INPUTS
 %   mask      – 3‑D logical (X×Y×Z) brain mask.
-%   data4D    – 4‑D numeric (X×Y×Z×T) fMRI/BOLD data.
-%   seedProbe – (T×1) reference timeseries.
+%   data    – 4‑D numeric (X×Y×Z×T) fMRI/BOLD data.
+%   probe – (T×1) reference timeseries.
 %   opts      – Struct of optional parameters (see below).
 %
 % OUTPUT
@@ -85,7 +85,6 @@ if ~isfield(opts,'TR'),              error('opts.TR (seconds) must be supplied')
 if ~isfield(opts,'showwaitbar'),     opts.showwaitbar    = 1;  end
 if ~isfield(opts,'smoothmap'),       opts.smoothmap    = 1;  end
 if ~isfield(opts,'circular'), opts.circular = 1; end   % true = use circshift
-if ~isfield(opts,'cvr'),  opts.cvr = 0;          end %compute CVR maps - makes sense if your probe is a CO2 trace
 
 %% Derived parameters
 opts.adjlowlag  = opts.lowlag  * opts.interp_factor;
@@ -294,106 +293,5 @@ end
 if ~exist(savedir, 'dir'), mkdir(savedir); end
 saveMap(cast(lag_img, opts.mapDatatype), savedir, 'recursive_lag_map', opts.info.map, opts);
 saveMap(cast(R_img,   opts.mapDatatype), savedir, 'recursive_r_map',   opts.info.map, opts);
-
-if opts.cvr
-    fprintf('Computing standard and lag-corrected CVR...\n');
-
-    T = dyn;
-    probe = double(probe(:));
-
-    % Extract voxelwise timeseries again
-    [voxTS, coords] = grabTimeseries(double(data), mask);
-    Nvox = size(voxTS, 1);
-
-    % Allocate outputs
-    cvr         = nan(Nvox, 1);
-    R2_CVR      = nan(Nvox, 1);
-    T_CVR       = nan(Nvox, 1);
-    cvr_lag     = nan(Nvox, 1);
-    R2_lag      = nan(Nvox, 1);
-    T_lag       = nan(Nvox, 1);
-
-    % Get voxel lag index in TR units
-    voxel_lags = lag_sec(mask);  % already in seconds
-    lag_samples = round(voxel_lags / opts.TR);  % integer lag in samples
-
-% Prepare lag-corrected regressors
-shifted_regr = NaN(Nvox, T);
-for ii = 1:Nvox
-    s = lag_samples(ii);
-
-    if ~isfinite(s)
-        continue;  % skip bad lag values
-    end
-
-    corr_regr = NaN(1, T);
-    if s == 0
-        corr_regr = probe;
-    elseif s > 0 && s < T
-        corr_regr((s+1):end) = probe(1:end-s);
-        corr_regr(1:s) = probe(1);
-    elseif s < 0 && abs(s) < T
-        s_abs = abs(s);
-        corr_regr(1:end-s_abs) = probe((s_abs+1):end);
-        corr_regr((end-s_abs+1):end) = probe(end);
-    else
-        continue;  % skip if shift would go out of bounds
-    end
-
-    shifted_regr(ii,:) = corr_regr;
-end
-
-    % Compute regressions
-    parfor ii = 1:Nvox
-        y = voxTS(ii,:)';
-        if all(y == 0) || any(isnan(y)), continue; end
-
-        % --- Standard CVR
-        X = [probe, ones(T,1)];
-        b = X \ y;
-        yhat = X * b;
-        cvr(ii) = b(1);
-        SSE = norm(y - yhat)^2;
-        SST = norm(y - mean(y))^2;
-        R2_CVR(ii) = 1 - SSE / SST;
-        T_CVR(ii) = b(1) / std(y - yhat);
-
-        % --- Lag-corrected CVR
-        A = shifted_regr(ii,:)';
-        Xc = [A, ones(T,1)];
-        bc = Xc \ y;
-        yhat_c = Xc * bc;
-        cvr_lag(ii) = bc(1);
-        SSE_c = norm(y - yhat_c)^2;
-        SST_c = norm(y - mean(y))^2;
-        R2_lag(ii) = 1 - SSE_c / SST_c;
-        T_lag(ii) = bc(1) / std(y - yhat_c);
-    end
-
-    % Write to maps
-    mapSize = [xx, yy, zz];
-    maps.cvr          = nan(mapSize, 'single');
-    maps.R2CVR        = nan(mapSize, 'single');
-    maps.TCVR         = nan(mapSize, 'single');
-    maps.cvrLagCorr   = nan(mapSize, 'single');
-    maps.R2LagCorr    = nan(mapSize, 'single');
-    maps.TLagCorr     = nan(mapSize, 'single');
-
-    maps.cvr(mask)          = single(cvr);
-    maps.R2CVR(mask)        = single(R2_CVR);
-    maps.TCVR(mask)         = single(T_CVR);
-    maps.cvrLagCorr(mask)   = single(cvr_lag);
-    maps.R2LagCorr(mask)    = single(R2_lag);
-    maps.TLagCorr(mask)     = single(T_lag);
-
-    % Save
-    saveMap(cast(mask .* maps.cvr,          opts.mapDatatype), opts.recursivedir, 'cvr',          opts.info.map, opts);
-    saveMap(cast(mask .* maps.R2CVR,        opts.mapDatatype), opts.recursivedir, 'R2CVR',        opts.info.map, opts);
-    saveMap(cast(mask .* maps.TCVR,         opts.mapDatatype), opts.recursivedir, 'TCVR',         opts.info.map, opts);
-    saveMap(cast(mask .* maps.cvrLagCorr,   opts.mapDatatype), opts.recursivedir, 'cvrLagCorr',   opts.info.map, opts);
-    saveMap(cast(mask .* maps.R2LagCorr,    opts.mapDatatype), opts.recursivedir, 'R2LagCorr',    opts.info.map, opts);
-    saveMap(cast(mask .* maps.TLagCorr,     opts.mapDatatype), opts.recursivedir, 'TLagCorr',     opts.info.map, opts);
-end
-
 
 end
