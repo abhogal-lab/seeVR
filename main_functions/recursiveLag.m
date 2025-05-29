@@ -70,22 +70,22 @@ mask = logical(mask);
 
 %% ---------------- Parameter defaults -------------------------
 if ~isfield(opts,'plot'),             opts.plot           = 1;  end
-if ~isfield(opts,'prewhite'),         opts.prewhite       = 0;  end
+if ~isfield(opts,'prewhite'),         opts.prewhite       = 1;  end
 if ~isfield(opts,'interp_factor'),    opts.interp_factor  = 1;  end
 if ~isfield(opts,'uni'),              opts.uni            = 0;  end
-if ~isfield(opts,'rescale_probe'),    opts.rescale_probe  = 1;  end
+if ~isfield(opts,'rescale_probe'),    opts.rescale_probe  = 0;  end
 if ~isfield(opts,'norm_regr'),        opts.norm_regr      = 0;  end
 if ~isfield(opts,'lim'),              opts.lim            = 3;  end
-if ~isfield(opts,'lim_s'),            opts.lim_s          = 1;  end
-if ~isfield(opts,'THR'),              opts.THR            = 0.3;end
-if ~isfield(opts,'comp'),             opts.comp           = 1;  end
+if ~isfield(opts,'lim_s'),            opts.lim_s          = 3;  end
+if ~isfield(opts,'THR'),              opts.THR            = 0.3; end
 if ~isfield(opts,'resultsdir'),       opts.resultsdir     = pwd;end
-if ~isfield(opts,'lowlag'),           opts.lowlag         = -5; end
-if ~isfield(opts,'highlag'),          opts.highlag        = 30; end
+if ~isfield(opts,'lowlag'),           opts.lowlag         = -8; end
+if ~isfield(opts,'highlag'),          opts.highlag        = 8; end
 if ~isfield(opts,'TR'),              error('opts.TR (seconds) must be supplied');end
 if ~isfield(opts,'showwaitbar'),     opts.showwaitbar    = 1;  end
 if ~isfield(opts,'smoothmap'),       opts.smoothmap    = 1;  end
-
+if ~isfield(opts,'circular'), opts.circular = 1; end   % true = use circshift
+if ~isfield(opts,'cvr'),  opts.cvr = 0;          end %compute CVR maps - makes sense if your probe is a CO2 trace
 
 %% Derived parameters
 opts.adjlowlag  = opts.lowlag  * opts.interp_factor;
@@ -93,186 +93,307 @@ opts.adjhighlag = opts.highlag * opts.interp_factor;
 opts.recursivedir = fullfile(opts.resultsdir,'recursiveLag');
 if ~exist(opts.recursivedir,'dir'), mkdir(opts.recursivedir); end
 
-%% ---------------- Data prep ----------------------------------
+% ---------------- Data prep ------------------------
 [xx,yy,zz,dyn] = size(data);
 probe = probe(:);
 
-maps = struct();
+[orig_ts, coordinates] = grabTimeseries(data, mask);
 
-[orig_voxel_ts, coordinates] = grabTimeseries(data, mask);
-
-%% Optional pre‑whitening
+% Pre‑whiten if requested
 if opts.prewhite
-    pw_voxel_ts = orig_voxel_ts';
-    parfor v = 1:size(coordinates,1)
-        pw_voxel_ts(:,v) = prewhiten(pw_voxel_ts(:,v));
+    pw_ts = orig_ts';
+    parfor v = 1:numel(coordinates)
+        pw_ts(:,v) = prewhiten(pw_ts(:,v));
     end
-    pw_voxel_ts = pw_voxel_ts';
+    pw_ts = pw_ts';
     probe = prewhiten(probe);
 end
 
-%% Temporal interpolation
+% Temporal interpolation
 probe = interp(probe, opts.interp_factor);
-wb_voxel_ts = zeros(length(coordinates), opts.interp_factor*dyn, 'single');
+wb_ts = zeros(numel(coordinates), opts.interp_factor*dyn, 'single');
 if opts.prewhite
-    parfor v = 1:length(coordinates)
-        wb_voxel_ts(v,:) = interp(pw_voxel_ts(v,:), opts.interp_factor);
+    parfor v = 1:numel(coordinates)
+        wb_ts(v,:) = interp(pw_ts(v,:), opts.interp_factor);
     end
 else
-    parfor v = 1:length(coordinates)
-        wb_voxel_ts(v,:) = interp(orig_voxel_ts(v,:), opts.interp_factor);
+    parfor v = 1:numel(coordinates)
+        wb_ts(v,:) = interp(orig_ts(v,:), opts.interp_factor);
     end
 end
 
-%% ───────── OPTIONAL: capture & plot evolving regressors ─────────
+% Store evolving regressors for plotting
 if opts.plot
-    % Pre-allocate a cell array large enough to hold all regressors
-    maxRegs        = 1 + 2*max(opts.adjhighlag-1 , abs(opts.adjlowlag)-1);
-    evolvingReg    = cell(maxRegs,1);
-    regCounter     = 1;
-    evolvingReg{regCounter} = probe;           % initial seed
+    maxRegs     = 1 + 2*max(opts.adjhighlag-1, abs(opts.adjlowlag)-1);
+    evolvingReg = cell(maxRegs,1); evolvingReg{1} = probe; regCounter = 1;
 end
 
-%% Lag‑window definitions
-lag_window   = -opts.lim:opts.lim;          % local search lags
-lag_centerLW = opts.lim + 1;                % zero‑lag index in local window
-store_range  = -opts.lim_s:opts.lim_s;
-store_idx    = lag_centerLW + store_range;
+% Lag window setup
+lag_window   = -opts.lim:opts.lim;    lag0LW = opts.lim+1;
+keep_idx     = lag0LW + (-opts.lim_s:opts.lim_s);
+Nlags        = opts.adjhighlag - opts.adjlowlag + 1;
+col0         = 1 - opts.adjlowlag;   % global column for lag 0
+r_map   = zeros(xx*yy*zz, Nlags,'single');
+lag_map =  NaN (xx*yy*zz, Nlags,'single');
 
-nTotalLags   = opts.adjhighlag - opts.adjlowlag + 1;
-centerCol    = 1 - opts.adjlowlag;          % global table column of lag 0
+% Initial X‑corr
+C0 = cell2mat(cellfun(@(a) xcorr(a,probe,opts.lim,'coeff'), mat2cell(wb_ts,ones(size(wb_ts,1),1),size(wb_ts,2)), 'uni',0));
+if opts.uni, [R0,peak] = max(C0,[],2); else, [R0,peak] = max(abs(C0),[],2); end
+R0(R0<opts.THR)=0;
 
-r_map   = zeros(xx*yy*zz, nTotalLags, 'single');
-lag_map =  NaN(xx*yy*zz, nTotalLags, 'single');
-
-%% ---------------- Initial correlation ------------------------
-a2 = mat2cell(wb_voxel_ts, ones(size(wb_voxel_ts,1),1), size(wb_voxel_ts,2));
-xcfun = @(a) xcorr(a, probe, opts.lim, 'coeff');
-C0 = cell2mat(cellfun(xcfun, a2,'UniformOutput',false));
-if opts.uni, [R0, idx0] = max(C0,[],2); else, [R0, idx0] = max(abs(C0),[],2); end
-R0(R0<opts.THR) = 0;
-
-lag_vals = lag_window;
-for k = 1:length(coordinates)
-    row = coordinates(k);
-    li  = idx0(k);
-    if ismember(li, store_idx)
-        r_map(row, centerCol)   = R0(k);
-        lag_map(row, centerCol) = lag_vals(li);
+for k = 1:numel(coordinates)
+    if ismember(peak(k),keep_idx)
+        r_map(coordinates(k),col0)   = R0(k);
+        lag_map(coordinates(k),col0) = lag_window(peak(k));
     end
 end
 
-Uidx = idx0; Lidx = idx0; Rpos = R0; Rneg = R0;
+Uidx = peak; Lidx = peak; Rpos=R0; Rneg=R0;
 
-%% ---------------- Recursive propagation ----------------------
-maxSteps = max(opts.adjhighlag-1 , abs(opts.adjlowlag)-1);
-if opts.showwaitbar, hWB = waitbar(0,'Recursive lag mapping...'); end
+% -------------------------------------------------------------------------
+% Recursive propagation ----------------------------------------------------
+% -------------------------------------------------------------------------
+steps = max(opts.adjhighlag-1, abs(opts.adjlowlag)-1);
+if opts.showwaitbar, hWB = waitbar(0, 'Recursive lag mapping...'); end
 
-for p = 1:maxSteps
-    % -------- Positive branch --------
+for p = 1:steps
+    %% ---------------- Positive branch -----------------------------------
     if p <= opts.adjhighlag-1
-        voxSel = (Uidx == lag_centerLW+1) & (Rpos > opts.THR);
-        if any(voxSel)
-            reg = mean(wb_voxel_ts(voxSel,:),1);
+        vox = (Uidx == lag0LW + 1) & (Rpos > opts.THR);
+        if any(vox)
+            % ─── POSITIVE branch regressor ─────────────────────────────────────────
+            reg = mean(wb_ts(vox,:), 1);
             if opts.rescale_probe, reg = rescale(reg); end
-            Uregr = zeros(size(probe),'like',probe);
-            Uregr(1+p:end) = reg(1:end-p);
-            if opts.plot
-                regCounter = regCounter + 1;
-                evolvingReg{regCounter} = Uregr;
-            end
-            C = cell2mat(cellfun(@(a) xcorr(a,Uregr,opts.lim,'coeff'), a2,'UniformOutput',false));
-            if opts.uni, [Rpos,Uidx] = max(C,[],2); else, [Rpos,Uidx] = max(abs(C),[],2); end
-            Rpos(Rpos<opts.THR) = 0;
 
-            col = centerCol + p;
-            for k = 1:length(coordinates)
-                row = coordinates(k); li = Uidx(k);
-                if ismember(li, store_idx)
-                    r_map(row,col)   = Rpos(k);
-                    lag_map(row,col) = lag_vals(li) + p;
+            if opts.circular
+                % Classic circular shift (no NaNs)
+                Ureg = circshift(reg,  [0  p]);           % delay by +p samples
+            else
+                % NaN-pad then inpaint gaps
+                Ureg          = nan(size(probe), 'like', probe);
+                Ureg(1+p:end) = reg(1:end-p);
+                Ureg          = inpaint_nans(Ureg);       % or fillgaps / fillmissing
+            end
+
+            % Diagnostics
+            if opts.plot
+                regCounter              = regCounter + 1;
+                evolvingReg{regCounter} = Ureg;   % ← store the filled regressor
+            end
+
+            % Cross-correlation (unchanged)
+            C = cell2mat(cellfun(@(a) xcorr(a, Ureg, opts.lim, 'coeff'), ...
+                mat2cell(wb_ts, ones(size(wb_ts,1),1), size(wb_ts,2)), ...
+                'UniformOutput', false));
+            if opts.uni,  [Rpos, Uidx] = max(C, [], 2);
+            else,         [Rpos, Uidx] = max(abs(C), [], 2); end
+            Rpos(Rpos < opts.THR) = 0;
+
+            col = col0 + p;   % global column index
+            for k = 1:numel(coordinates)
+                if ismember(Uidx(k), keep_idx)
+                    r_map(coordinates(k), col)   = Rpos(k);
+                    lag_map(coordinates(k), col) = lag_window(Uidx(k)) + p;
                 end
             end
         end
     end
 
-    % -------- Negative branch --------
-    if p <= abs(opts.adjlowlag)-1
-        voxSel = (Lidx == lag_centerLW-1) & (Rneg > opts.THR);
-        if any(voxSel)
-            reg = mean(wb_voxel_ts(voxSel,:),1);
-            Lregr = zeros(size(probe),'like',probe);
-            Lregr(1:end-p) = reg(1+p:end);
-            if opts.plot
-                regCounter = regCounter + 1;
-                evolvingReg{regCounter} = Lregr;
-            end
-            C = cell2mat(cellfun(@(a) xcorr(a,Lregr,opts.lim,'coeff'), a2,'UniformOutput',false));
-            if opts.uni, [Rneg,Lidx] = max(C,[],2); else, [Rneg,Lidx] = max(abs(C),[],2); end
-            Rneg(Rneg<opts.THR) = 0;
+    %% ---------------- Negative branch -----------------------------------
+    if p <= abs(opts.adjlowlag) - 1
+        vox = (Lidx == lag0LW - 1) & (Rneg > opts.THR);
+        if any(vox)
+            % ─── NEGATIVE branch regressor ────────────────────────────────────────
+            reg = mean(wb_ts(vox,:), 1);
 
-            col = centerCol - p;
-            for k = 1:length(coordinates)
-                row = coordinates(k); li = Lidx(k);
-                if ismember(li, store_idx)
-                    r_map(row,col)   = Rneg(k);
-                    lag_map(row,col) = lag_vals(li) - p;
+            if opts.circular
+                Lreg = circshift(reg,  [0 -p]);           % advance by –p samples
+            else
+                Lreg          = nan(size(probe), 'like', probe);
+                Lreg(1:end-p) = reg(1+p:end);
+                Lreg          = inpaint_nans(Lreg);
+            end
+
+            C = cell2mat(cellfun(@(a) xcorr(a, Lreg, opts.lim, 'coeff'), ...
+                mat2cell(wb_ts, ones(size(wb_ts,1),1), size(wb_ts,2)), ...
+                'UniformOutput', false));
+            if opts.uni,  [Rneg, Lidx] = max(C, [], 2);
+            else,         [Rneg, Lidx] = max(abs(C), [], 2); end
+            Rneg(Rneg < opts.THR) = 0;
+
+            col = col0 - p;
+            for k = 1:numel(coordinates)
+                if ismember(Lidx(k), keep_idx)
+                    r_map(coordinates(k), col)   = Rneg(k);
+                    lag_map(coordinates(k), col) = lag_window(Lidx(k)) - p;
                 end
             end
         end
     end
 
-    if opts.showwaitbar && ishandle(hWB), waitbar(p/maxSteps, hWB); end
-end
-if opts.showwaitbar && exist('hWB','var') && ishandle(hWB), close(hWB); end
-
-%% ───────── Visualise the evolving regressors ─────────
-if opts.plot
-    % Trim unused cells
-    evolvingReg = evolvingReg(1:regCounter);
-
-    % Build common time-axis in seconds
-    t = (0:numel(evolvingReg{1})-1) .* opts.TR ./ opts.interp_factor;
-
-    figure('Name','Evolving regressors','Color','w'); hold on
-    cmap = jet(numel(evolvingReg));
-    for ii = 1:numel(evolvingReg)
-        plot(t, zscore(double(evolvingReg{ii})), 'Color', cmap(ii,:));
+    % Update waitbar
+    if opts.showwaitbar && ishandle(hWB)
+        waitbar(p/steps, hWB);
     end
-    xlabel('Time (s)'); ylabel('z-scored amplitude');
-    title('Average time-course of each updated regressor');
-    colormap(cmap); cb = colorbar;
-    cb.Label.String = 'Iteration (cool → warm)';
-    box on, grid on
 end
 
-%% ---------------- Max‑r extraction ---------------------------
-[maxR, bestCol] = max(r_map,[],2);
-lag_best = NaN(xx*yy*zz,1,'single');
-for k = 1:length(coordinates)
+if opts.showwaitbar && exist('hWB', 'var') && ishandle(hWB)
+    close(hWB);
+end
+
+% -------------------------------------------------------------------------
+% Extract max‑r lag per voxel ---------------------------------------------
+% -------------------------------------------------------------------------
+[maxR, bestCol] = max(r_map, [], 2);
+lag_best        = NaN(xx*yy*zz, 1, 'single');
+for k = 1:numel(coordinates)
     lag_best(coordinates(k)) = lag_map(coordinates(k), bestCol(coordinates(k)));
 end
 
-lag_sec = opts.TR * (lag_best / opts.interp_factor);
+lag_sec = opts.TR * lag_best / opts.interp_factor;
 
-%% ---------------- Output maps -------------------------------
-lag_img = mask .* reshape(lag_sec, [xx yy zz]);
-r_map   = mask .* reshape(maxR  , [xx yy zz]);
+% -------------------------------------------------------------------------
+% Diagnostic plot of evolving regressors ----------------------------------
+% -------------------------------------------------------------------------
+if opts.plot && regCounter >= 2
+    evolvingReg = evolvingReg(1:regCounter);
+    taxis       = (0:numel(evolvingReg{1})-1) * opts.TR / opts.interp_factor;
 
-maps.recursiveLag_map = lag_img;
-maps.recursiveR_map  = r_map;
-
-if opts.smoothmap
-    temp = opts.FWHM;
-    opts.FWHM = [3 3 3];
-    maps.recursiveLag_map = filterData(single(maps.recursiveLag_map), mask, mask, opts);
-    opts.FWHM = temp; clear temp
+    figure('Name', 'Evolving regressors', 'Color', 'w'); hold on
+    cmap = jet(numel(evolvingReg));
+    for ii = 1:numel(evolvingReg)
+        plot(taxis, zscore(double(evolvingReg{ii})), 'Color', cmap(ii,:));
+    end
+    xlabel('Time (s)'); ylabel('z‑scored amplitude'); grid on
+    title('Average time‑course of each updated regressor');
+    colormap(cmap); cb = colorbar; cb.Label.String = 'Iteration (early → late)';
 end
 
-%% ---------------- Save maps -------------------------------
+% -------------------------------------------------------------------------
+% Prepare output maps ------------------------------------------------------
+% -------------------------------------------------------------------------
+lag_img = mask .* reshape(lag_sec, [xx yy zz]);
+R_img   = mask .* reshape(maxR  , [xx yy zz]);
 
-savedir = opts.recursivedir
-saveMap(cast(mask.*maps.recursiveLag_map,opts.mapDatatype), savedir, 'recursive_lag_map', opts.info.map, opts);
-saveMap(cast(mask.*r_map,opts.mapDatatype), savedir, 'recursive_r_map', opts.info.map, opts);
+maps.recursiveLag_map = lag_img;
+maps.recursiveR_map   = R_img;
+savedir = opts.recursivedir;
+
+% Optional spatial smoothing of lag map
+if opts.smoothmap
+    fwhm_tmp  = opts.FWHM;        % backup
+    opts.FWHM = [3 3 3];
+    maps.recursiveLag_map_smoothed = filterData(single(maps.recursiveLag_map), mask, mask, opts);
+    opts.FWHM = fwhm_tmp; clear fwhm_tmp
+    saveMap(cast(maps.recursiveLag_map_smoothed, opts.mapDatatype), savedir, 'recursive_lag_map_smoothed', opts.info.map, opts);
+end
+
+% -------------------------------------------------------------------------
+% Save maps ---------------------------------------------------------------
+% -------------------------------------------------------------------------
+if ~exist(savedir, 'dir'), mkdir(savedir); end
+saveMap(cast(lag_img, opts.mapDatatype), savedir, 'recursive_lag_map', opts.info.map, opts);
+saveMap(cast(R_img,   opts.mapDatatype), savedir, 'recursive_r_map',   opts.info.map, opts);
+
+if opts.cvr
+    fprintf('Computing standard and lag-corrected CVR...\n');
+
+    T = dyn;
+    probe = double(probe(:));
+
+    % Extract voxelwise timeseries again
+    [voxTS, coords] = grabTimeseries(double(data), mask);
+    Nvox = size(voxTS, 1);
+
+    % Allocate outputs
+    cvr         = nan(Nvox, 1);
+    R2_CVR      = nan(Nvox, 1);
+    T_CVR       = nan(Nvox, 1);
+    cvr_lag     = nan(Nvox, 1);
+    R2_lag      = nan(Nvox, 1);
+    T_lag       = nan(Nvox, 1);
+
+    % Get voxel lag index in TR units
+    voxel_lags = lag_sec(mask);  % already in seconds
+    lag_samples = round(voxel_lags / opts.TR);  % integer lag in samples
+
+% Prepare lag-corrected regressors
+shifted_regr = NaN(Nvox, T);
+for ii = 1:Nvox
+    s = lag_samples(ii);
+
+    if ~isfinite(s)
+        continue;  % skip bad lag values
+    end
+
+    corr_regr = NaN(1, T);
+    if s == 0
+        corr_regr = probe;
+    elseif s > 0 && s < T
+        corr_regr((s+1):end) = probe(1:end-s);
+        corr_regr(1:s) = probe(1);
+    elseif s < 0 && abs(s) < T
+        s_abs = abs(s);
+        corr_regr(1:end-s_abs) = probe((s_abs+1):end);
+        corr_regr((end-s_abs+1):end) = probe(end);
+    else
+        continue;  % skip if shift would go out of bounds
+    end
+
+    shifted_regr(ii,:) = corr_regr;
+end
+
+    % Compute regressions
+    parfor ii = 1:Nvox
+        y = voxTS(ii,:)';
+        if all(y == 0) || any(isnan(y)), continue; end
+
+        % --- Standard CVR
+        X = [probe, ones(T,1)];
+        b = X \ y;
+        yhat = X * b;
+        cvr(ii) = b(1);
+        SSE = norm(y - yhat)^2;
+        SST = norm(y - mean(y))^2;
+        R2_CVR(ii) = 1 - SSE / SST;
+        T_CVR(ii) = b(1) / std(y - yhat);
+
+        % --- Lag-corrected CVR
+        A = shifted_regr(ii,:)';
+        Xc = [A, ones(T,1)];
+        bc = Xc \ y;
+        yhat_c = Xc * bc;
+        cvr_lag(ii) = bc(1);
+        SSE_c = norm(y - yhat_c)^2;
+        SST_c = norm(y - mean(y))^2;
+        R2_lag(ii) = 1 - SSE_c / SST_c;
+        T_lag(ii) = bc(1) / std(y - yhat_c);
+    end
+
+    % Write to maps
+    mapSize = [xx, yy, zz];
+    maps.cvr          = nan(mapSize, 'single');
+    maps.R2CVR        = nan(mapSize, 'single');
+    maps.TCVR         = nan(mapSize, 'single');
+    maps.cvrLagCorr   = nan(mapSize, 'single');
+    maps.R2LagCorr    = nan(mapSize, 'single');
+    maps.TLagCorr     = nan(mapSize, 'single');
+
+    maps.cvr(mask)          = single(cvr);
+    maps.R2CVR(mask)        = single(R2_CVR);
+    maps.TCVR(mask)         = single(T_CVR);
+    maps.cvrLagCorr(mask)   = single(cvr_lag);
+    maps.R2LagCorr(mask)    = single(R2_lag);
+    maps.TLagCorr(mask)     = single(T_lag);
+
+    % Save
+    saveMap(cast(mask .* maps.cvr,          opts.mapDatatype), opts.recursivedir, 'cvr',          opts.info.map, opts);
+    saveMap(cast(mask .* maps.R2CVR,        opts.mapDatatype), opts.recursivedir, 'R2CVR',        opts.info.map, opts);
+    saveMap(cast(mask .* maps.TCVR,         opts.mapDatatype), opts.recursivedir, 'TCVR',         opts.info.map, opts);
+    saveMap(cast(mask .* maps.cvrLagCorr,   opts.mapDatatype), opts.recursivedir, 'cvrLagCorr',   opts.info.map, opts);
+    saveMap(cast(mask .* maps.R2LagCorr,    opts.mapDatatype), opts.recursivedir, 'R2LagCorr',    opts.info.map, opts);
+    saveMap(cast(mask .* maps.TLagCorr,     opts.mapDatatype), opts.recursivedir, 'TLagCorr',     opts.info.map, opts);
+end
+
 
 end

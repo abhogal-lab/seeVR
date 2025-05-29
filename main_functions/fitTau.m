@@ -56,6 +56,7 @@ if isfield(opts,'filloutliers'); else; opts.filloutliers = 1; end          %spik
 if isfield(opts,'medfilt_maps'); else; opts.medfilt_maps = 1; end          %cleans up tau maps with median filter but does not change statistical maps.
 
 opts.dynamicdir = fullfile(opts.resultsdir,'tau'); mkdir(opts.dynamicdir);
+savedir = opts.dynamicdir;
 [xx yy zz dyn] = size(data);
 
 if opts.filloutliers
@@ -263,7 +264,6 @@ if opts.medfilt_maps
     b2_map = medfilt3(b2_map);
     b3_map = medfilt3(b3_map);
 end
-
 
 saveMap(cast(mask.*b1_map,opts.mapDatatype), savedir, 'signal_magnitude', opts.info.map, opts);
 saveMap(cast(mask.*b2_map,opts.mapDatatype), savedir, 'signal_dispersion', opts.info.map, opts);
