@@ -1,51 +1,80 @@
-function volOnBase = overlay_to_base(baseVol, A_base, movVol , A_mov , method)
-                                     
-% Put movVol (T1) into the voxel grid of baseVol
+function volOnBase = overlay_to_base(baseVol, baseInfo, movVol, movInfo, method)
+% OVERLAY_TO_BASE Resamples movVol into baseVol's voxel grid using affine transforms.
 %
-% baseVol  : reference data   (nyB × nxB × nzB)
-% A_base   : 4×4 row-vector voxel→world from base header
-% movVol   : moving   data   (nyM × nxM × nzM)
-% A_mov    : 4×4 row-vector voxel→world from moving header
-% method   : 'nearest' | 'linear' | 'cubic'   (default 'linear')
-%
-% volOnBase: resampled movVol with size(baseVol)
+% baseVol : reference volume [Y X Z]
+% baseInfo: niftiinfo struct for base volume
+% movVol  : moving volume [Y X Z]
+% movInfo : niftiinfo struct for moving volume
+% method  : interpolation method (default: 'linear')
 
-if nargin<5, method = 'linear'; end
+    if nargin < 5, method = 'linear'; end
 
-if isfield(A_base,'Qfactor') && isfield(A_mov,'Qfactor')
-    if A_base.Qfactor ~= A_mov.Qfactor
-        movVol = flip(movVol,3);                % flip slices
-        Nz     = size(movVol,3);
-        Fz     = eye(4);  Fz(3,3) = -1;  Fz(4,3) = Nz-1;
-        A_mov  = Fz * A_mov.Transform.T;
-    else
-        A_mov  = A_mov.Transform.T; 
-    end
+    % Extract affine matrices
+    A_base = getAffineMatrix(baseInfo);
+    A_mov  = getAffineMatrix(movInfo);
+
+    % Generate voxel grid for base volume (0-based indexing)
+    [Yi, Xi, Zi] = ndgrid(0:size(baseVol,1)-1, ...
+                          0:size(baseVol,2)-1, ...
+                          0:size(baseVol,3)-1);
+
+    baseVox = [Yi(:), Xi(:), Zi(:), ones(numel(Yi), 1)];
+
+    % Convert base voxel indices to world coordinates
+    worldPts = baseVox * A_base';
+
+    % Convert world coordinates to moving image voxel indices
+    movVox = worldPts * inv(A_mov)';
+
+    ym = movVox(:,1) + 1;
+    xm = movVox(:,2) + 1;
+    zm = movVox(:,3) + 1;
+
+    % Interpolate moving volume at computed voxel positions
+    volOnBase = interpn(double(movVol), ym, xm, zm, method, NaN);
+    volOnBase = reshape(volOnBase, size(baseVol));
 end
 
-% --- index grids of the reference volume ---------------------------------
-[Xi,Yi,Zi] = ndgrid(0:size(baseVol,1)-1, ...
-                    0:size(baseVol,2)-1, ...
-                    0:size(baseVol,3)-1);     % 0-based like NIfTI
+function A = getAffineMatrix(info)
+% Constructs a 4x4 voxel-to-world affine matrix from NIfTI header information
 
-pts   = [Yi(:) Xi(:) Zi(:) ones(numel(Xi),1)] * A_base.Transform.T;   % world mm
+    % Check for sform matrix
+    if isfield(info, 'raw') && isfield(info.raw, 'sform_code') && info.raw.sform_code > 0
+        % Construct affine matrix from srow_x, srow_y, srow_z
+        A = [info.raw.srow_x; info.raw.srow_y; info.raw.srow_z; 0 0 0 1];
+    elseif isfield(info, 'raw') && isfield(info.raw, 'qform_code') && info.raw.qform_code > 0
+        % Construct affine matrix from qform parameters
+        b = info.raw.quatern_b;
+        c = info.raw.quatern_c;
+        d = info.raw.quatern_d;
+        a = sqrt(1.0 - (b^2 + c^2 + d^2));
 
-% --- convert those world mm to *moving* voxel indices --------------------
-idxM  = pts / A_mov;                      % row-vector algebra
-xm    = idxM(:,2);      %   columns  (X)
-ym    = idxM(:,1);      %   rows     (Y)
-zm    = idxM(:,3);      %   slices   (Z)
+        qfac = info.raw.pixdim(1);
+        if qfac == 0
+            qfac = 1;
+        end
 
-% MATLAB’s interpn is 1-based.  Add 1 to go from 0-based → 1-based coords
-xm = xm + 1;   ym = ym + 1;   zm = zm + 1;
+        R = [a^2 + b^2 - c^2 - d^2,     2*b*c - 2*a*d,         2*b*d + 2*a*c;
+             2*b*c + 2*a*d,             a^2 + c^2 - b^2 - d^2, 2*c*d - 2*a*b;
+             2*b*d - 2*a*c,             2*c*d + 2*a*b,         a^2 + d^2 - b^2 - c^2];
 
-% --- build scattered sampling -------------------------------------------
-[NyM,NxM,NzM] = size(movVol);
-volOnBase = interpn(double(movVol), ...
-                    ym, xm, zm, ...         % query points
-                    method, NaN);           % NaN outside FOV
+        % Apply voxel dimensions
+        pixdim = info.raw.pixdim(2:4);
+        R = R * diag(pixdim);
 
-volOnBase = reshape(volOnBase, size(baseVol));
-volOnBase = imrotate(volOnBase,270); % needed to add this to fix orientation issues
-volOnBase = flip(volOnBase,2);
+        % Apply qfac to the third column
+        R(:,3) = R(:,3) * qfac;
+
+        % Construct affine matrix
+        A = eye(4);
+        A(1:3,1:3) = R;
+        A(1:3,4) = [info.raw.qoffset_x; info.raw.qoffset_y; info.raw.qoffset_z];
+    else
+        % Fallback: use Transform.T if available
+        if isfield(info, 'Transform') && isfield(info.Transform, 'T')
+            A = info.Transform.T;
+        else
+            error('No valid affine transformation found in NIfTI header.');
+        end
+    end
 end
