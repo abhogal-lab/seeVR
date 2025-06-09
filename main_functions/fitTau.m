@@ -289,5 +289,8 @@ maps.expHRF.r_map = r;
 maps.expHRF.expVariance_r2_map = r.^2;
 
 toc
+disp('finished running tau analysis')
+disp('...saving maps in .mat file' )
 
+save(fullfile(opts.dynamicdir,'result_tau_maps.mat'), 'maps');
 end

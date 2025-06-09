@@ -47,6 +47,7 @@ function volOnBase = overlay_to_base(baseVol, baseInfo, movVol, movInfo, method)
     xm = movVox(:,2) + 1;
     zm = movVox(:,3) + 1;
 
+    
     % Interpolate moving volume at computed voxel positions
     volOnBase = interpn(double(movVol), ym, xm, zm, method, NaN);
     % spline kernels smear a few epsilon-level numbers into the NaN area

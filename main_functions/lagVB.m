@@ -196,6 +196,7 @@ if opts.plotPrior
     xlabel('Lag (s)'); ylabel('Prior Probability'); grid on;
     legend('GM prior','WM prior');
     title('Delay Priors with Shifted Means');
+    saveas(gcf,fullfile(opts.VBdir,'tissue_delay_priors.fig'));
 end
 
 
@@ -454,5 +455,7 @@ if opts.cvr
     saveMap(cast(mask .* maps.R2LagCorr, opts.mapDatatype), opts.VBdir, 'R2LagCorr', opts.info.map, opts);
     saveMap(cast(mask .* maps.TLagCorr,  opts.mapDatatype), opts.VBdir, 'TLagCorr',  opts.info.map, opts);
 end
-
+disp('finished running bayesian analysis')
+disp('...saving maps in .mat file' )
+save(fullfile(opts.VBdir,'result_lagVB_maps.mat'), 'maps');
 end
