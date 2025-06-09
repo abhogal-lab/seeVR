@@ -1,3 +1,59 @@
+% Copyright (C) Alex A. Bhogal, 2025, University Medical Center Utrecht,
+% a.bhogal@umcutrecht.nl
+% <plotMap: Visual montage of volumetric data in three canonical planes >
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+% -------------------------------------------------------------------------
+% Syntax
+%   plotMap(sourceImg, mask, paramMap, map, filename, foldername, rotations, opts)
+% 
+% Description
+%   Creates a figure for each anatomical orientation (transverse, coronal, sagittal)
+%   showing paired sub‑plots of a "source" image (e.g. mean BOLD or anatomical)
+%   and an associated parameter map slice‑by‑slice.  A dedicated colour‑bar is
+%   placed in an extra column on the right, leaving the image grid untouched.
+%   Figures are automatically saved as PNG and EPS.
+% 
+% Input Arguments
+%   sourceImg  –  3‑D (X×Y×Z) numeric array; base anatomy or mean volume
+%   mask       –  3‑D logical/numeric array; non‑zero voxels define brain area
+%   paramMap   –  3‑D or 4‑D numeric array; parameter values (e.g. arrival time)
+%   map        –  Nx3 colormap matrix for the parameter image
+%   filename   –  Base filename for saved images (no extension)
+%   foldername –  Output directory (defaults to current folder)
+%   rotations  –  1×3 vector of 90° rotations per orientation  [axial cor sag]
+%   opts       –  Struct with optional fields:   
+%                • scale  : [low high] colour limits (default [‑5 5])  
+%                • row    : # subplot rows                (default 5)  
+%                • col    : # subplot columns *including* colour‑bar (default 6)
+% 
+% Behaviour
+%  ▸ Central 80 % of brain mask is sampled; slice indices are evenly spaced.  
+%  ▸ Each slice uses two adjacent sub‑plots: [ source | param ]  
+%  ▸ Final column is skipped for image pairs and holds the colour‑bar.  
+%  ▸ Greyscale is used for source; supplied colormap for paramMap.  
+%  ▸ Rotations (multiples of 90°) can correct orientation per plane.  
+%  ▸ Figures are saved as <filename>_ori1/2/3.(png|eps).
+% 
+% Example
+%   opts = struct('scale',[-2 2],'row',4,'col',6);
+%   plotMap(meanVol, brainMask, tauMap, brewermap(256,'Spectral'),'patient1',pwd,[0 1 1],opts)
+% 
+% See also  imagesc, subplot, colorbar
+% -------------------------------------------------------------------------
+
 function [] = plotMap(sourceImg, mask, paramMap, map, filename, foldername, rotations, opts)
 % plotMap: Plots parameter map next to source image in transverse, coronal, and sagittal views.
 % Adds a dedicated colour‑bar column to the right (no change to existing subplot logic).
