@@ -63,7 +63,6 @@
 %
 % AUTHORSHIP
 %     Original  : Alex Bhogal   • a.bhogal@umcutrecht.nl
-%     Revisions : ChatGPT-o3    • May 2025
 %
 %__________________________________________________________________________
 
