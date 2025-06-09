@@ -1,3 +1,20 @@
+% Copyright (C) Alex A. Bhogal, 2025, University Medical Center Utrecht
+% a.bhogal@umcutrecht.nl
+% <overlay_to_base: resamples image for overlay using header information
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
+%
 function volOnBase = overlay_to_base(baseVol, baseInfo, movVol, movInfo, method)
 % OVERLAY_TO_BASE Resamples movVol into baseVol's voxel grid using affine transforms.
 %
@@ -7,7 +24,7 @@ function volOnBase = overlay_to_base(baseVol, baseInfo, movVol, movInfo, method)
 % movInfo : niftiinfo struct for moving volume
 % method  : interpolation method (default: 'linear')
 
-    if nargin < 5, method = 'linear'; end
+    if nargin < 5, method = 'cubic'; end
 
     % Extract affine matrices
     A_base = getAffineMatrix(baseInfo);
@@ -32,6 +49,8 @@ function volOnBase = overlay_to_base(baseVol, baseInfo, movVol, movInfo, method)
 
     % Interpolate moving volume at computed voxel positions
     volOnBase = interpn(double(movVol), ym, xm, zm, method, NaN);
+    % spline kernels smear a few epsilon-level numbers into the NaN area
+    volOnBase( abs(volOnBase) < 1e-5 ) = NaN;
     volOnBase = reshape(volOnBase, size(baseVol));
 end
 
