@@ -27,7 +27,8 @@
 % dmData: a de-meaned version of the input data
 function [dmData] = demeanData(data, mask)
 
-warning('off')
+if nargin ==1; mask = []; end
+
 global opts;
 tf = class(data);
 data = double(data);

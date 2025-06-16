@@ -116,7 +116,7 @@ if ~isfield(opts,'priorDelay_WM'), opts.priorDelay_WM = 15;       end
 if ~isfield(opts,'smoothmap'), opts.smoothmap = 0;       end
 if ~isfield(opts,'scaleInput'), opts.scaleInput = 0;       end
 if ~isfield(opts,'verbose'),  opts.verbose = 1;          end
-if ~isfield(opts,'cvr'),  opts.cvr = 0;          end %compute CVR maps - makes sense if your probe is a CO2 trace
+if ~isfield(opts,'cvr'),  opts.cvr = 1;          end %compute CVR maps - makes sense if your probe is a CO2 trace
 
 TR = opts.TR;
 %% ---------- dimensions & sanity ---------------------------------------
@@ -365,7 +365,7 @@ if opts.cvr
     % Save
     saveMap(cast(mask .* maps.cvr,    opts.mapDatatype), opts.VBdir, 'cvr',    opts.info.map, opts);
     saveMap(cast(mask .* maps.R2CVR,  opts.mapDatatype), opts.VBdir, 'R2CVR',  opts.info.map, opts);
-    saveMap(cast(mask .* maps.TCVR,   opts.mapDatatype), opts.VBdir, 'TCVR',   opts.info.map, opts);
+    saveMap(cast(mask .* maps.TCVR,   opts.mapDatatype), opts.VBdir, 'Tstat_CVR',   opts.info.map, opts);
 
     %%
     fprintf('Generating lag-adjusted CVR maps...\n');
@@ -453,7 +453,7 @@ if opts.cvr
     % Save
     saveMap(cast(mask .* maps.cvrLagCorr, opts.mapDatatype), opts.VBdir, 'cvrLagCorr', opts.info.map, opts);
     saveMap(cast(mask .* maps.R2LagCorr, opts.mapDatatype), opts.VBdir, 'R2LagCorr', opts.info.map, opts);
-    saveMap(cast(mask .* maps.TLagCorr,  opts.mapDatatype), opts.VBdir, 'TLagCorr',  opts.info.map, opts);
+    saveMap(cast(mask .* maps.TLagCorr,  opts.mapDatatype), opts.VBdir, 'Tstat_LagCorr',  opts.info.map, opts);
 end
 disp('finished running bayesian analysis')
 disp('...saving maps in .mat file' )
