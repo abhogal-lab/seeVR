@@ -1,26 +1,39 @@
-function quickPlot(vol, nRows, nCols)
+function quickPlot(vol, nRows, nCols, cmap)
 % quickPlot  —  fast visual check of a 3-D volume
 %
-%   quickPlot(vol)              shows a 4×4 grid of slices
-%   quickPlot(vol, nRows, nCols) lets you choose the grid size
+%   quickPlot(vol)                           → 4×4 grid, auto-colormap
+%   quickPlot(vol, nRows, nCols)             → custom grid
+%   quickPlot(vol, nRows, nCols, cmap)       → explicit colormap
 %
-%   • Only the 3rd dimension is interpreted as “slice”.
-%   • Slices that are entirely zero or NaN are skipped automatically.
-%   • Each subplot is autoscaled (imagesc with []) and shown in gray.
+%   • Only the 3rd dimension is treated as “slice”.
+%   • Blank slices and blank XY borders are skipped/cropped.
+%   • Each subplot autoscale uses imagesc(volSlice, []).
 %
 % ----------------------------------------------------------------------
 % Alex Bhogal  ·  20-Jun-2025
 % ----------------------------------------------------------------------
 
-% ---------------- defaults & sanity checks ----------------------------
+% -------------- defaults & sanity checks -------------------------------
 if nargin < 2 || isempty(nRows), nRows = 4; end
 if nargin < 3 || isempty(nCols), nCols = 4; end
 assert(ndims(vol) == 3, 'Input must be a 3-D matrix.');
 
-vol = double(vol);                       % ensure numeric
+% -------------- automatic colormap choice ------------------------------
+if nargin < 4 || isempty(cmap)
+    % Heuristic “is this a mask?”
+    if islogical(vol) || numel(unique(vol(~isnan(vol)))) <= 3
+        cmap = gray;                         % mask → gray
+    else
+        cmap = parula;                       % normal data → parula
+    end
+elseif ischar(cmap) || isstring(cmap)
+    cmap = feval(char(cmap),256);            % convert name to array
+end
 
-% ---------------- find informative slice range ------------------------
-sliceSum = squeeze(sum(sum(abs(vol),1),2));     % energy per slice
+vol = double(vol);
+
+% -------------- find informative slice range ---------------------------
+sliceSum = squeeze(sum(sum(abs(vol),1),2));
 nzSlices = find(sliceSum > 0 & ~isnan(sliceSum));
 
 if isempty(nzSlices)
@@ -31,37 +44,34 @@ end
 firstSlice = nzSlices(1);
 lastSlice  = nzSlices(end);
 
-% ---------------- choose slices to display ----------------------------
-nPlots  = nRows * nCols;
-if numel(nzSlices) <= nPlots
-    sliceIdx = nzSlices;                       % show all non-zero slices
+% -------------- choose slices to display -------------------------------
+maxPlots = nRows*nCols;
+if numel(nzSlices) <= maxPlots
+    sliceIdx = nzSlices;
 else
-    sliceIdx = round(linspace(firstSlice, lastSlice, nPlots));
+    sliceIdx = round(linspace(firstSlice,lastSlice,maxPlots));
 end
-nPlots = numel(sliceIdx);                      % may be fewer than 16
+maxPlots = numel(sliceIdx);
 
-% ---------------- optional XY bounding-box crop -----------------------
-% (crops empty borders, keeps at least 4-voxel padding)
+% -------------- optional XY bounding-box crop --------------------------
 maskXY = any(vol(:,:,sliceIdx) ~= 0 & ~isnan(vol(:,:,sliceIdx)), 3);
 [rows, cols] = find(maskXY);
 if isempty(rows)
-    r1 = 1; r2 = size(vol,1);
-    c1 = 1; c2 = size(vol,2);
+    r1=1; r2=size(vol,1); c1=1; c2=size(vol,2);
 else
-    pad  = 4;
-    r1 = max(min(rows)-pad,1);  r2 = min(max(rows)+pad, size(vol,1));
-    c1 = max(min(cols)-pad,1);  c2 = min(max(cols)+pad, size(vol,2));
+    pad = 4;
+    r1 = max(min(rows)-pad,1);  r2 = min(max(rows)+pad,size(vol,1));
+    c1 = max(min(cols)-pad,1);  c2 = min(max(cols)+pad,size(vol,2));
 end
 
-% ------------------- plot ---------------------------------------------
+% -------------- plot ---------------------------------------------------
 figure('Color','k','Name','quickPlot');
-for k = 1:nPlots
-    subplot(nRows, nCols, k);
-    imagesc(vol(r1:r2, c1:c2, sliceIdx(k)));   %#ok<NASGU>
-    axis image off;
-    colormap gray;
-    title(sprintf('z = %d', sliceIdx(k)),'Color',[1 1 1],'FontSize',8);
+for k = 1:maxPlots
+    subplot(nRows,nCols,k);
+    imagesc(vol(r1:r2,c1:c2,sliceIdx(k))); 
+    axis image off; 
+    colormap(cmap); 
+    title(sprintf('z = %d',sliceIdx(k)),'Color',[1 1 1],'FontSize',8);
 end
 sgtitle('quickPlot – fast slice overview','Color',[1 1 1]);
-
 end
