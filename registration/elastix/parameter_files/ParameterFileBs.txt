@@ -17,17 +17,17 @@
 (Optimizer "AdaptiveStochasticGradientDescent")
 (Transform "RecursiveBSplineTransform" "RecursiveBSplineTransform")
 
-(Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
-//(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
-(Metric0Weight 0.7)
-(Metric1Weight 1)
+(Metric "TransformBendingEnergyPenalty" "AdvancedMattesMutualInformation")
+//(Metric "TransformBendingEnergyPenalty" "AdvancedNormalizedCorrelation")
+(Metric0Weight 1)
+(Metric1Weight 0.3)
 
 (MaximumStepLength 1)
 
 // ***************** Transformation **************************
 (NumberOfResolutions 6)
-(FinalGridSpacingInVoxels 22)
-(GridSpacingSchedule  18 12 8 4 2 1)
+(FinalGridSpacingInVoxels 12)
+(GridSpacingSchedule   24 16 12 8 8 2)
 (HowToCombineTransforms "Compose")
 
 // ******************* Similarity measure *********************
@@ -37,11 +37,11 @@
 // ******************** Multiresolution **********************
 
 
-(ImagePyramidSchedule  20 20 20  10 10 10  6 6 6  4 4 4  2 2 2  1 1 1)
+(ImagePyramidSchedule  16 16 16  8 8 8  4 4 4  2 2 2  2 2 2)
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 1000 1000 1000 1000 2000 2000)  
+(MaximumNumberOfIterations 700 700 1000 2000 2000 3000)  
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "GeometricalCenter")

@@ -11,22 +11,25 @@
 (MovingImagePyramid "MovingRecursiveImagePyramid")
 (Optimizer "AdaptiveStochasticGradientDescent")
 (Transform "AffineTransform")
-//(Metric "AdvancedMattesMutualInformation")
-(Metric "DisplacementMagnitudePenalty")
-//(AutomaticScalesEstimation "true")
+(Metric "AdvancedMattesMutualInformation")
+//(Metric "DisplacementMagnitudePenalty")
+
 (AutomaticTransformInitialization "true")
 (HowToCombineTransforms "Compose")
+
 (NumberOfHistogramBins 32)
-(NumberOfResolutions 5)
-(ImagePyramidSchedule 12 12 12  8 8 8  4 4 4  2 2 2  1 1 1)
+(NumberOfResolutions 4)
+(ImagePyramidSchedule 6 6 6  4 4 4  2 2 2  1 1 1)
 (MaximumNumberOfIterations 1000)
 (MaximumStepLength 1)
+
 (NumberOfSpatialSamples 8000)
 (NewSamplesEveryIteration "true")
 //(ImageSampler "Random")
 //(ImageSampler "RandomSparseMask")
 (ImageSampler "MultiInputRandomCoordinate")
 (SampleRegionSize 40.0 40.0 40.0)
+
 (BSplineInterpolationOrder 2)
 (FinalBSplineInterpolationOrder 2)
 (DefaultPixelValue 0)
@@ -40,4 +43,7 @@
 (WriteTransformParametersEachResolution "false")
 (WriteResultImageAfterEachResolution "false")
 (WritePyramidImagesAfterEachResolution "false")
-(Scales 10000.0)
+
+
+(AutomaticScalesEstimation "true")
+//(Scales 10000.0)

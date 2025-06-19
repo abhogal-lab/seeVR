@@ -54,6 +54,7 @@ try opts.elastixdir; catch
 end
 
 if isfield(opts,'invert_bspline'); else; opts.invert_bspline = 1; end
+if isfield(opts,'usemask'); else; opts.usemask = 0; end
 
 elastixroot = opts.elastixdir;
 
@@ -86,12 +87,21 @@ else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileBs.txt')])
 end
 
+%% perform a rigid body initial transform
+
+
 if ispc
-    bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
-
+    if opts.usemask
+        bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ', refMask,' -m ',moveImg,' -mMask ',moveMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+    else
+        bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+    end
 else
-    bspline_command = ['elastix -f ',refImg,' -m0 ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
-
+    if opts.usemask
+        bspline_command = ['elastix -f ',refImg,' -fmask ', refMask,' -m ',moveImg,' -mMask ',moveMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+    else
+        bspline_command = ['elastix -f ',refImg,' -m0 ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+    end
 end
 
 dos(bspline_command);
