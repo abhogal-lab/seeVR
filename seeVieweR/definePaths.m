@@ -6,5 +6,5 @@ function [toolbox,datadir] = definePaths()
 % datadir is the path to data is stored
 % 
 toolbox = 'E:\seeVR\';
-datadir = 'G:\4DASL_MRA\DATA\';
+datadir = pwd;
 end

@@ -8,6 +8,9 @@ if ~isfield(opts,'pca_analysis'); opts.pca_analysis = 1; end
 if ~isfield(opts,'RMSEthresh'); opts.RMSEthresh = 0.05; end
 if ~isfield(opts,'explainedVariance'); opts.explainedVariance = 0.75; end
 
+probe = double(probe); data = double(data); refmask = double(refmask); 
+
+
 probe = probe(:);
 
 [voxel_ts,~] = grabTimeseries(data, refmask);
