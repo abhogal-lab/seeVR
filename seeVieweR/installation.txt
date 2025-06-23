@@ -1,7 +1,14 @@
 seeVieweR installation
 
-+ simply click on the mlappinstall file while matlab is open and it should automatically installation
++ simply click on the mlappinstall file while matlab is open and it should automatically install
 + open the app from the 'APPS' tab or by typing 'seeVieweR' in the command window
 
 * NOTE app was developped in MATLAB 2023b and may not be compatible with older versions of MATLAB
 * If you have bugs - contact me to work through them: a.bhogal@umcutrecht.nl
+
+
+- The Base image can be either 3D or 4D
+- The Overlay image can can only be 3D
+- When the 'Generate Movie' button is pressed, the app will run through the 4D volumes and save a dynamic movie. 
+This can be followed by a rotation if the user chooses (default = yes)
+- If a 3D image is loaded, only the rotation is generated.
