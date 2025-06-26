@@ -111,9 +111,9 @@ sliceIdx = opts.start:opts.step:size(source,3);
 nslices  = numel(sliceIdx);
 
 row_img  = ~isempty(opts.row)*min(maxRows,opts.row) ...
-           + isempty(opts.row)*min(maxRows,ceil(nslices/maxPairs));
+    + isempty(opts.row)*min(maxRows,ceil(nslices/maxPairs));
 colPairs = ~isempty(opts.col)*min(maxPairs,opts.col) ...
-           + isempty(opts.col)*min(maxPairs,ceil(nslices/row_img));
+    + isempty(opts.col)*min(maxPairs,ceil(nslices/row_img));
 
 capacity = row_img*colPairs;
 if nslices>capacity
@@ -162,24 +162,73 @@ for ii=opts.start_ind:opts.step_size:dyn-win
         end
     end
 
-    % 4b — stimulus trace ----------------------------------------------
-    traceAx = nexttile((traceRow-1)*opts.col+1,[1 opts.col]);
-    cla(traceAx)
-    plot(trace,'Parent',traceAx,'LineWidth',2,'Color','m'); hold(traceAx,'on')
-    yl=ylim(traceAx);
-    line(traceAx,[ii ii],[yl(1) yl(2)],'Color','c','LineWidth',1,'Clipping','off')
-    xlim(traceAx,[1 dyn]); set(traceAx,'Color','k','XColor','w','YColor','w',...
-        'LineWidth',1,'FontSize',12); xlabel(traceAx,'Dynamic scans','Color','w')
+    % 4b — custom-positioned trace panel with colormap-shaded background ----
+    % Get position of full grid to anchor custom axis
+    parentPos = get(t, 'Position');         % [x y width height] of tiledlayout
+    traceHeightFrac = 0.12;                 % adjustable height for trace subplot
+
+    % Create trace axis manually (not part of tiledlayout)
+    traceAx = axes('Parent', fig, ...
+        'Position', [parentPos(1), ...
+        parentPos(2), ...
+        parentPos(3), ...
+        parentPos(4) * traceHeightFrac], ...
+        'Color', 'k');
+
+    hold(traceAx, 'on')
+
+    % Normalize trace to [0,1] for shading
+    traceNorm = (trace - min(trace)) / (max(trace) - min(trace) + eps);
+
+    % Define background colormap for the trace panel
+    if isfield(opts, 'trace_cmap') && ~isempty(opts.trace_cmap)
+        traceCmap = opts.trace_cmap;  % User-supplied colormap (Nx3)
+    else
+        traceCmap = gray(128);        % Default to grayscale if not specified
+    end
+
+    % Interpolate trace values to colormap indices
+    cmapIdx = round(1 + traceNorm * (size(traceCmap, 1)-1));
+    cmapIdx = min(max(cmapIdx, 1), size(traceCmap,1));
+
+    % Draw shaded background rectangles
+    for tIdx = 1:dyn
+        fill(traceAx, ...
+            [tIdx-0.5, tIdx+0.5, tIdx+0.5, tIdx-0.5], ...
+            [0, 0, 1, 1], ...
+            traceCmap(cmapIdx(tIdx),:), ...
+            'EdgeColor', 'none');
+    end
+
+    % Plot trace line (top color of main cmap)
+    plot(traceNorm, 'Parent', traceAx, ...
+        'LineWidth', 2.5, 'Color', cmap(end,:));
+
+    % Vertical time marker (bottom color of main cmap)
+    tMid = ii + (win-1)/2;
+    line(traceAx, [tMid tMid], [0 1], ...
+        'Color', cmap(1,:), 'LineWidth', 3, 'Clipping', 'off');
+
+    % Axis formatting
+    xlim(traceAx, [1 dyn]);
+    ylim(traceAx, [0 1]);
+    set(traceAx, 'Color', 'k', 'XColor', 'w', 'YColor', 'none', ...
+        'LineWidth', 1.5, 'FontSize', 10, ...
+        'XTick', [], 'YTick', []);
+    xlabel(traceAx, 'Dynamic scans', 'Color', 'w');
+
 
     % 4c — colour-bar (right edge) -------------------------------------
-    % attach to an invisible dummy axis so we can freely place it
+    % Attach to a dummy axes for controlled positioning
     cbAx = axes('Parent',fig,'Position',[0.93 0.15 0.02 0.7],'Visible','off');
-    colormap(cbAx,cmap); caxis(cbAx,opts.scale);
-    cb  = colorbar(cbAx);                        % default = east inside cbAx
-    cb.Units   = 'normalized';
-    cb.Position= [0.95 0.15 0.015 0.7];          % [x y w h] relative to fig
+    colormap(cbAx, cmap);
+    caxis(cbAx, opts.scale);
+    cb = colorbar(cbAx);
+    cb.Units = 'normalized';
+    cb.Position = [0.95 0.15 0.015 0.7];  % [x y width height]
     cb.Label.String = '% signal change';
-    cb.Color='w'; cb.FontSize=12;
+    cb.Color = 'w';
+    cb.FontSize = 12;
 
     % 4d — write frame ---------------------------------------------------
     drawnow nocallbacks
@@ -195,8 +244,9 @@ for ii=opts.start_ind:opts.step_size:dyn-win
                 imwrite(imind,cm,gifFile,'gif','WriteMode','append','DelayTime',0);
             end
     end
-
-    delete(cb); delete(cbAx); delete(t);        % clean before next frame
+    if exist('cb','var'), delete(cb); end
+    if exist('cbAx','var'), delete(cbAx); end
+    delete(t);  % safe to delete the tiledlayout always
 end
 
 if opts.type==2, close(v), end
