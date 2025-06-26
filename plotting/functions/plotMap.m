@@ -136,6 +136,8 @@ for ori = 1:3
     outBase = fullfile(foldername, sprintf('%s_ori%d',filename,ori));
     exportgraphics(gcf,[outBase '.png'],'Resolution',600,'BackgroundColor','black');
     exportgraphics(gcf,[outBase '.eps'],'Resolution',600,'BackgroundColor','black');
+    print(gcf, [outBase '.svg'], '-dsvg')
+
 end
 end
 
