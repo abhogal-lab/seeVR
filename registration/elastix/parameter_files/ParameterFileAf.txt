@@ -33,8 +33,8 @@
 (CheckNumberOfSamplesInsideMask "true")
 //(MaskOutsidePixels "false")
 
-(BSplineInterpolationOrder 2)
-(FinalBSplineInterpolationOrder 2)
+(BSplineInterpolationOrder 3)
+(FinalBSplineInterpolationOrder 3)
 (DefaultPixelValue 0)
 (WriteResultImage "true")
 (ResultImagePixelType "float")
