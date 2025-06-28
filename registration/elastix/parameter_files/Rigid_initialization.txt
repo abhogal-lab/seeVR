@@ -1,0 +1,47 @@
+// --- Basic Setup ---
+(FixedInternalImagePixelType "float")
+(MovingInternalImagePixelType "float")
+(FixedImageDimension 3)
+(MovingImageDimension 3)
+
+(UseDirectionCosines "true")
+
+(Registration "MultiResolutionRegistration")
+(Interpolator "BSplineInterpolator")
+(ResampleInterpolator "FinalBSplineInterpolator")
+(Resampler "DefaultResampler")
+
+(Transform "EulerTransform")  // Rigid-body: 3 rotation + 3 translation
+
+(Metric "AdvancedMattesMutualInformation")
+
+// --- Pyramid & Optimization ---
+(FixedImagePyramid "FixedRecursiveImagePyramid")
+(MovingImagePyramid "MovingRecursiveImagePyramid")
+
+(Optimizer "AdaptiveStochasticGradientDescent")
+(AutomaticScalesEstimation "true")
+(AutomaticTransformInitialization "true")   // use geometric center as default
+(AutomaticTransformInitializationMethod "GeometricalCenter")
+
+(NumberOfResolutions 4)
+(ImagePyramidSchedule 6 6 6  4 4 4  2 2 2  1 1 1)
+
+(MaximumNumberOfIterations 1000)
+(MaximumStepLength 1.0)
+(NumberOfSpatialSamples 8000)
+(NewSamplesEveryIteration "true")
+(ImageSampler "RandomCoordinate")  // robust to non-overlap
+
+(SampleRegionSize 10.0 10.0 10.0)
+(CheckNumberOfSamplesInsideMask "true")
+(MaskOutsidePixels "false")
+
+// --- Output ---
+(DefaultPixelValue 0)
+(WriteResultImage "true")
+(ResultImageFormat "nii.gz")
+(ResultImagePixelType "float")
+(WriteTransformParametersEachResolution "false")
+(WriteResultImageAfterEachResolution "false")
+(WritePyramidImagesAfterEachResolution "false")
