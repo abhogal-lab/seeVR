@@ -54,7 +54,7 @@
 % See also  imagesc, subplot, colorbar
 % -------------------------------------------------------------------------
 
-function [] = plotMap(sourceImg, mask, paramMap, map, filename, foldername, rotations, opts)
+function [] = plotMap(sourceImg, mask, paramMap, cmap, filename, foldername, rotations, opts)
 % plotMap: Plots parameter map next to source image in transverse, coronal, and sagittal views.
 % Adds a dedicated colour‑bar column to the right (no change to existing subplot logic).
 %
@@ -121,12 +121,12 @@ for ori = 1:3
         imagesc(srcSlice); colormap(gray); freezeColors; axis off image;
 
         subplot(opts.row, opts.col, jj+1);
-        imagesc(prmSlice, opts.scale); colormap(map); freezeColors; axis off image;
+        imagesc(prmSlice, opts.scale); colormap(cmap); freezeColors; axis off image;
     end
 
     % ---- ADD EXTERNAL COLOUR‑BAR (does not affect subplot grid) -------
     cbAx = axes('Position',[0.88 0.1 0.02 0.8],'Visible','off');   % right side of figure
-    colormap(cbAx, map); caxis(cbAx, opts.scale);
+    colormap(cbAx, cmap); caxis(cbAx, opts.scale);
     cb = colorbar(cbAx, 'eastoutside');
     cb.Position = [0.91 0.1 0.02 0.8];   % fully outside image columns
     cb.Color = [1 1 1]; cb.Label.String = 'Parameter'; cb.Label.Color = [1 1 1];
@@ -135,7 +135,7 @@ for ori = 1:3
     % ---- Save output ---------------------------------------------------
     outBase = fullfile(foldername, sprintf('%s_ori%d',filename,ori));
     exportgraphics(gcf,[outBase '.png'],'Resolution',600,'BackgroundColor','black');
-    exportgraphics(gcf,[outBase '.eps'],'Resolution',600,'BackgroundColor','black');
+    %exportgraphics(gcf,[outBase '.eps'],'Resolution',600,'BackgroundColor','black');
     print(gcf, [outBase '.svg'], '-dsvg')
 
 end
