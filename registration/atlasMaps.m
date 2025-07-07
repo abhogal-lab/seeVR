@@ -1,6 +1,7 @@
 function [map, voxelCount, meanVal] = atlasMaps(data, atlas)
 % generate atlas maps
-
+data = double(data);
+atlas = double(atlas);
 atlasMap =  zeros(size(atlas));
 voxelMap =  zeros(size(atlas));
 maxInd = max(atlas(:));
