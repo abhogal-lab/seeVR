@@ -17,8 +17,8 @@
 (HowToCombineTransforms "Compose")
 
 (NumberOfHistogramBins 32)
-(NumberOfResolutions 4)
-(ImagePyramidSchedule 6 6 6  4 4 4  2 2 2  1 1 1)
+(NumberOfResolutions 3)
+(ImagePyramidSchedule 6 6 6  4 4 4  2 2 2 )
 (MaximumNumberOfIterations 1500)
 (MaximumStepLength 1)
 

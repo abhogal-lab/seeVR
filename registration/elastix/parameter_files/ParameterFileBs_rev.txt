@@ -19,28 +19,29 @@
 
 (Metric "TransformBendingEnergyPenalty" "AdvancedMattesMutualInformation")
 //(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
-(Metric0Weight 1)
-(Metric1Weight 1)
+(Metric0Weight 0.9)
+(Metric1Weight 0.3)
 
 
 (MaximumStepLength 1)
 
 // ***************** Transformation **************************
 (NumberOfResolutions 6)
-(FinalGridSpacingInVoxels 8)
-(GridSpacingSchedule   16 8 8 8 4 2)
+(FinalGridSpacingInVoxels 12)
+(GridSpacingSchedule   24 18 12 8 4 2)
 (HowToCombineTransforms "Compose")
+
 // ******************* Similarity measure *********************
 
 (NumberOfHistogramBins 32) 
 
 // ******************** Multiresolution **********************
 
-(ImagePyramidSchedule  16 16 16  8 8 8  4 4 4  2 2 2  1 1 1)
+(ImagePyramidSchedule  24 24 24  12 12 12  6 6 6  4 4 4  2 2 2 )
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 700 700 1000 2000 2000 3000) 
+(MaximumNumberOfIterations 700 700 1000 1000 2000 3000) 
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "CenterOfGravity")
