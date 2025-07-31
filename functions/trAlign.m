@@ -115,8 +115,8 @@ set(handles.slider1, 'Min', -(minRange-1), 'Max', maxRange , 'Sliderstep', [1/sl
 handles.stPt = handles.maxcorr;
 handles.window =  [handles.midlag+1:1:length(handles.lags)];
 
-handles.TS = smooth(rescale(handles.TS));
-handles.probe1 = smooth(rescale(handles.probe1));
+handles.TS = smooth(handles.TS);
+handles.probe1 = smooth(handles.probe1);
 
 axes(handles.traces)
 [ax,h1,h2] = plotyy(handles.xdata,handles.probe1,handles.xdata,handles.TS);
