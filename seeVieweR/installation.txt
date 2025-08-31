@@ -1,5 +1,7 @@
 seeVieweR installation
 
+*DEVELOPPED USING MATLAB 2023b - other versions (especially later than 2024a) might show strange behaviour.
+
 + simply click on the mlappinstall file while matlab is open and it should automatically install
 + open the app from the 'APPS' tab or by typing 'seeVieweR' in the command window
 
