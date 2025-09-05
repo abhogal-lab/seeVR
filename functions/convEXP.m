@@ -1,6 +1,6 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <convHRF: convolved an input signal with a double-gamma hemodynamic response function (HRF) >
+% <convHRF: convolved an input signal with a exponential response function >
 %
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
