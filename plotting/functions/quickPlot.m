@@ -58,7 +58,7 @@ end
 
 % ---------- find or use user-specified slice range ---------------------
 if isempty(nzSlices)
-    sliceSum = squeeze(nansum(nansum(abs(vol), 1), 2));
+    sliceSum = squeeze(sum(sum(abs(v),1),2));
     nzSlices = find(sliceSum > 0);
 
     if isempty(nzSlices)
