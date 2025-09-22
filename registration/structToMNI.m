@@ -118,75 +118,79 @@ else
 end
 
 if opts.useBET
-target_image = refImg_BET;
+    target_image = refImg_BET;
 else
     target_image = refImg;
 end
 
 [trans_params] = nlinReg(moveImg, moveMask, target_image , refMask, opts.bspline_dir, opts.elastixdir);
 
-% update transform parameters
-outputdir = fullfile(opts.bspline_dir,'Inverse');
-mbs = fullfile(outputdir,'mTransformParameters.1.txt');
-
-if ispc
-    adaptElastixTransFile( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
-    adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
+if opts.invert_affine == 0 || opts.invert_bspline == 0
+    return;
 else
-    adaptElastixTransFile_linux( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
-    adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
-end
+    % update transform parameters
+    outputdir = fullfile(opts.bspline_dir,'Inverse');
+    mbs = fullfile(outputdir,'mTransformParameters.1.txt');
 
-%% apply transformations to MNI masks
-
-maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
-maskname = dir('*.nii.gz*');
-
-fileToRename = fullfile(outputdir,'result.nii.gz');
-
-for kk=1:size(maskname,1)
-    maskImg = maskname(kk).name
-    [FILEPATH,NAME,EXT] = fileparts(maskImg);
     if ispc
-        trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+        adaptElastixTransFile( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
+        adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
     else
-        trans_command = ['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+        adaptElastixTransFile_linux( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
+        adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
     end
-    system(trans_command);
-    name1 = fileToRename;
-    name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
-    movefile(name1, name2);
-    %move labels files
-    name1 = fullfile(maskdir,[maskImg(1:1:end-7),'.txt']);
-    name2 = fullfile(outputdir,[maskImg(1:1:end-7),'_labels.txt']);
-    if exist(name1) == 2
-        copyfile(name1, name2);
+
+    %% apply transformations to MNI masks
+
+    maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
+    maskname = dir('*.nii.gz*');
+
+    fileToRename = fullfile(outputdir,'result.nii.gz');
+
+    for kk=1:size(maskname,1)
+        maskImg = maskname(kk).name
+        [FILEPATH,NAME,EXT] = fileparts(maskImg);
+        if ispc
+            trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+        else
+            trans_command = ['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+        end
+        system(trans_command);
+        name1 = fileToRename;
+        name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
+        movefile(name1, name2);
+        %move labels files
+        name1 = fullfile(maskdir,[maskImg(1:1:end-7),'.txt']);
+        name2 = fullfile(outputdir,[maskImg(1:1:end-7),'_labels.txt']);
+        if exist(name1) == 2
+            copyfile(name1, name2);
+        end
     end
-end
 
-clear maskname
-% to probability maps
-if ispc
-    adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '2')
-else
-    adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '2')
-end
-
-probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
-maskname = dir('*.nii.gz*');
-
-for kk=1:size(maskname,1)
-    maskImg = maskname(kk).name
-    [FILEPATH,NAME,EXT] = fileparts(maskImg);
+    clear maskname
+    % to probability maps
     if ispc
-        trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+        adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '2')
     else
-        trans_command = ['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+        adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '2')
     end
-    system(trans_command);
-    name1 = fileToRename;
-    name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
-    movefile(name1, name2)
+
+    probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
+    maskname = dir('*.nii.gz*');
+
+    for kk=1:size(maskname,1)
+        maskImg = maskname(kk).name
+        [FILEPATH,NAME,EXT] = fileparts(maskImg);
+        if ispc
+            trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+        else
+            trans_command = ['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
+        end
+        system(trans_command);
+        name1 = fileToRename;
+        name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
+        movefile(name1, name2)
+    end
 end
 end
 

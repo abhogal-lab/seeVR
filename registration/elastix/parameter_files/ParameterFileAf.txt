@@ -22,7 +22,7 @@
 (MaximumNumberOfIterations 1500)
 (MaximumStepLength 1)
 
-(NumberOfSpatialSamples 5000)
+(NumberOfSpatialSamples 8000)
 (NewSamplesEveryIteration "true")
 //(ImageSampler "RandomCoordinate")
 //(ImageSampler "Random")

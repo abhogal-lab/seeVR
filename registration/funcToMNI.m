@@ -151,20 +151,14 @@ disp('Registering structural image to MNI space')
 [trans_params] = structToMNI(refImg_BET, refMask, opts);
 disp('registration time....')
 toc
-opts.regFuncOutputMNI = fullfile(opts.resultsdir,'funcToMNI'); mkdir(opts.regFuncOutputMNI);
 
+opts.regFuncOutputMNI = fullfile(opts.resultsdir,'funcToMNI'); mkdir(opts.regFuncOutputMNI);
 opts.affineTxParamFile2 = trans_params.affine_to_target;
 opts.bsplineTxParamFile = trans_params.bspline_to_target;
-opts.inverseBsplineTxParamFile = trans_params.bspline_to_input;
-opts.inverseAffineTxParamFile2 = trans_params.affine_to_input;
 
 mtrans1 = fullfile(opts.affine_dir, 'mTransformParameters.0.txt');
 mtrans2 = fullfile(opts.resultsdir,'structToMNI','mTransformParameters.0.txt');
 mtrans3 = fullfile(opts.resultsdir,'structToMNI','mTransformParameters.1.txt');
-
-mInvtrans1 = fullfile(opts.regFuncOutputMNI,'mInverseBSTransformParameters.1.txt');
-mInvtrans2 = fullfile(opts.regFuncOutputMNI,'mInverseAFTransformParameters.0.txt');
-mInvtrans3 = fullfile(opts.regFuncOutputMNI,'mInverseAFTransformParameters.1.txt');
 
 if ispc
     adaptElastixTransFile( opts.affineTxParamFile, mtrans1, 'FinalBSplineInterpolationOrder', '1');
@@ -172,29 +166,12 @@ if ispc
     adaptElastixTransFile( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile( opts.bsplineTxParamFile, mtrans3, 'InitialTransformParametersFileName', mtrans2);
     adaptElastixTransFile( mtrans3, mtrans3, 'FinalBSplineInterpolationOrder', '1');
-    
-    %inverse
-    adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '1');
-    adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'InitialTransformParametersFileName', 'NoInitialTransform');
-    adaptElastixTransFile( opts.inverseAffineTxParamFile2, mInvtrans2, 'FinalBSplineInterpolationOrder', '1');
-
-    adaptElastixTransFile( opts.inverseAffineTxParamFile, mInvtrans3, 'InitialTransformParametersFileName', mInvtrans2);
-    adaptElastixTransFile( mInvtrans2, mInvtrans2, 'InitialTransformParametersFileName', mInvtrans1);
-    
 else
     adaptElastixTransFile_linux( opts.affineTxParamFile, mtrans1, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile_linux( opts.affineTxParamFile2, mtrans2, 'InitialTransformParametersFileName', mtrans1);
     adaptElastixTransFile_linux( mtrans2, mtrans2, 'FinalBSplineInterpolationOrder', '1');
     adaptElastixTransFile_linux( opts.bsplineTxParamFile, mtrans3, 'InitialTransformParametersFileName', mtrans2);
     adaptElastixTransFile_linux( mtrans3, mInvtrans1, 'FinalBSplineInterpolationOrder', '1');
-
-    %inverse
-    adaptElastixTransFile_linux( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '1');
-    adaptElastixTransFile_linux( opts.inverseAffineTxParamFile2, mInvtrans2, 'FinalBSplineInterpolationOrder', '1');
-    adaptElastixTransFile_linux( opts.inverseBsplineTxParamFile, mInvtrans1, 'InitialTransformParametersFileName', 'NoInitialTransform');
-
-    adaptElastixTransFile_linux( opts.inverseAffineTxParamFile, mInvtrans3, 'InitialTransformParametersFileName', mInvtrans2);
-    adaptElastixTransFile_linux( mInvtrans2, mInvtrans2, 'InitialTransformParametersFileName', mInvtrans1);
 end
 
 %% transform functional image to MNI space
@@ -202,72 +179,100 @@ end
 fileToRename = fullfile(opts.regFuncOutputMNI,'result.nii.gz');
 
 if ispc
-        trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',moveImg_BET,' -out ',opts.regFuncOutputMNI,' -tp ',mtrans3 ];
-    else
-        trans_command = ['transformix -in ',moveImg_BET,' -out ',opts.regFuncOutputMNI,' -tp ',mtrans3];
+    trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',moveImg_BET,' -out ',opts.regFuncOutputMNI,' -tp ',mtrans3 ];
+else
+    trans_command = ['transformix -in ',moveImg_BET,' -out ',opts.regFuncOutputMNI,' -tp ',mtrans3];
 end
 system(trans_command);
- name1 = fileToRename;
- name2 = fullfile(opts.regFuncOutputMNI,'inputToTarget.nii.gz');
- movefile(name1, name2);
+name1 = fileToRename;
+name2 = fullfile(opts.regFuncOutputMNI,'inputToTarget.nii.gz');
+movefile(name1, name2);
 
-%% inverse transform MNI images to functional space
-% to mask maps
-if ispc
-    adaptElastixTransFile( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '0');
+if opts.invert_affine == 0 || opts.invert_bspline == 0
+    return;
 else
-    adaptElastixTransFile_linux( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '0');
-end
+opts.inverseAffineTxParamFile2 = trans_params.affine_to_input;
+opts.inverseBsplineTxParamFile = trans_params.bspline_to_input;
+mInvtrans1 = fullfile(opts.regFuncOutputMNI,'mInverseBSTransformParameters.1.txt');
+mInvtrans2 = fullfile(opts.regFuncOutputMNI,'mInverseAFTransformParameters.0.txt');
+mInvtrans3 = fullfile(opts.regFuncOutputMNI,'mInverseAFTransformParameters.1.txt');
 
-maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
-maskname = dir('*.nii.gz*');
-
-fileToRename = fullfile(opts.regFuncOutputMNI,'result.nii.gz');
-
-for kk=1:size(maskname,1)
-    maskImg = maskname(kk).name
-    [FILEPATH,NAME,EXT] = fileparts(maskImg);
     if ispc
-        trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+        %inverse
+        adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '1');
+        adaptElastixTransFile( opts.inverseBsplineTxParamFile, mInvtrans1, 'InitialTransformParametersFileName', 'NoInitialTransform');
+        adaptElastixTransFile( opts.inverseAffineTxParamFile2, mInvtrans2, 'FinalBSplineInterpolationOrder', '1');
+
+        adaptElastixTransFile( opts.inverseAffineTxParamFile, mInvtrans3, 'InitialTransformParametersFileName', mInvtrans2);
+        adaptElastixTransFile( mInvtrans2, mInvtrans2, 'InitialTransformParametersFileName', mInvtrans1);
+
     else
-        trans_command = ['transformix -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+        %inverse
+        adaptElastixTransFile_linux( opts.inverseBsplineTxParamFile, mInvtrans1, 'FinalBSplineInterpolationOrder', '1');
+        adaptElastixTransFile_linux( opts.inverseAffineTxParamFile2, mInvtrans2, 'FinalBSplineInterpolationOrder', '1');
+        adaptElastixTransFile_linux( opts.inverseBsplineTxParamFile, mInvtrans1, 'InitialTransformParametersFileName', 'NoInitialTransform');
+
+        adaptElastixTransFile_linux( opts.inverseAffineTxParamFile, mInvtrans3, 'InitialTransformParametersFileName', mInvtrans2);
+        adaptElastixTransFile_linux( mInvtrans2, mInvtrans2, 'InitialTransformParametersFileName', mInvtrans1);
     end
-    system(trans_command);
-    name1 = fileToRename;
-    name2 = fullfile(opts.regFuncOutputMNI,[NAME(1:1:end-4),'_toFunc.nii.gz']);
-    movefile(name1, name2);
-    %move labels files
-    name1 = fullfile(maskdir,[maskImg(1:1:end-7),'.txt']);
-    name2 = fullfile(opts.regFuncOutputMNI,[maskImg(1:1:end-7),'_labels.txt']);
-    if exist(name1) == 2
-        copyfile(name1, name2);
-    end
-end
 
-clear maskname
-% to probability maps
-if ispc
-    adaptElastixTransFile( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '2')
-else
-    adaptElastixTransFile_linux( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '2')
-end
-
-probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
-maskname = dir('*.nii.gz*');
-
-for kk=1:size(maskname,1)
-    maskImg = maskname(kk).name
-    [FILEPATH,NAME,EXT] = fileparts(maskImg);
+    %% inverse transform MNI images to functional space
+    % to mask maps
     if ispc
-        trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+        adaptElastixTransFile( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '0');
     else
-        trans_command = ['transformix -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+        adaptElastixTransFile_linux( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '0');
     end
-    system(trans_command);
-    name1 = fileToRename;
-    name2 = fullfile(opts.regFuncOutputMNI,[NAME(1:1:end-4),'_toFunc.nii.gz']);
-    movefile(name1, name2)
-end
 
+    maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
+    maskname = dir('*.nii.gz*');
+
+    fileToRename = fullfile(opts.regFuncOutputMNI,'result.nii.gz');
+
+    for kk=1:size(maskname,1)
+        maskImg = maskname(kk).name
+        [FILEPATH,NAME,EXT] = fileparts(maskImg);
+        if ispc
+            trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+        else
+            trans_command = ['transformix -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+        end
+        system(trans_command);
+        name1 = fileToRename;
+        name2 = fullfile(opts.regFuncOutputMNI,[NAME(1:1:end-4),'_toFunc.nii.gz']);
+        movefile(name1, name2);
+        %move labels files
+        name1 = fullfile(maskdir,[maskImg(1:1:end-7),'.txt']);
+        name2 = fullfile(opts.regFuncOutputMNI,[maskImg(1:1:end-7),'_labels.txt']);
+        if exist(name1) == 2
+            copyfile(name1, name2);
+        end
+    end
+
+    clear maskname
+    % to probability maps
+    if ispc
+        adaptElastixTransFile( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '2')
+    else
+        adaptElastixTransFile_linux( mInvtrans3, mInvtrans3, 'FinalBSplineInterpolationOrder', '2')
+    end
+
+    probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
+    maskname = dir('*.nii.gz*');
+
+    for kk=1:size(maskname,1)
+        maskImg = maskname(kk).name
+        [FILEPATH,NAME,EXT] = fileparts(maskImg);
+        if ispc
+            trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+        else
+            trans_command = ['transformix -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ];
+        end
+        system(trans_command);
+        name1 = fileToRename;
+        name2 = fullfile(opts.regFuncOutputMNI,[NAME(1:1:end-4),'_toFunc.nii.gz']);
+        movefile(name1, name2)
+    end
+end
 toc
 end
