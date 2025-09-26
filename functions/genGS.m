@@ -45,123 +45,154 @@
 %
 % resData: residual data after nuisance and probe regressor explained
 % signal variance has been removed. Here the linear offset is also removed.
-function [cleanData,res_ts,resData] = genGS(data, mask, nuisance, probe, opts)
 
-warning('off');
-global opts
+function [cleanData, res_ts, resData] = genGS(data, mask, nuisance, probe, opts)
+% genGS2 — GLM-based residualization to make a "pseudo resting-state" scan
+% Inputs:
+%   data     : 3D/4D fMRI (x,y,z[,t])
+%   mask     : binary ROI mask (x,y,z)
+%   nuisance : T×K_n nuisance regressors (or []), T = #timepoints
+%   probe    : T×K_p main probe(s) (or [])
+%   opts     : struct (kept compatible with your original usage)
+%
+% Outputs:
+%   cleanData : fitted data (intercept + modeled components) — same size as data
+%   res_ts    : mean residual time series (no intercept) within mask
+%   resData   : residual volume time series (no intercept) — same size as data
+%
+% Notes:
+% - If both nuisance and probe are empty, this reduces to mean-removal (intercept model).
+% - `cleanData` is the GLM fit; subtract it from `data` to get residuals+intercept.
+%   We already return `resData` (residuals with intercept removed).
 
-if isempty(probe); clear probe; end
-if isempty(nuisance); clear nuisance; end
+warning('off');  % quiet rank warnings from \ if any (ill-conditioning)
+global opts;     % (requested: keep global opts aspect intact)
+if ~isfield(opts,'save_cleaned'),   opts.save_cleaned = 0;   end
 
-%check arguments
-if exist('probe','var') == 1 && exist('nuisance','var') == 1
-    test1 = probe(1,:); test2 = probe(:,1);
-    if length(test1) > length(test2); probe = probe'; end; clear test1 test2
-    test1 = nuisance(1,:); test2 = nuisance(:,1);
-    if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
-    disp('nuisance and data probes found');
-    check = 1;
-elseif exist('probe','var') == 1
-    test1 = probe(1,:); test2 = probe(:,1);
-    if length(test1) > length(test2); probe = probe'; end; clear test1 test2
-    disp('nuisance and data probes found');
-    check = 2;
-elseif exist('nuisance','var') == 1
-    test1 = nuisance(1,:); test2 = nuisance(:,1);
-    if length(test1) > length(test2); nuisance = nuisance'; end; clear test1 test2
-    disp('nuisance and data probes found');
-    check = 3;
-end
-
-switch check
-    case 1
-        np = [nuisance probe];
-    case 2
-        np = probe;
-    case 3
-        np = nuisance;
-end
-
-[voxel_ts, coordinates] = grabTimeseries(data, mask);
-
-D = [ones([length(np) 1]) np];
-np_coef = []; nintcp = []; nuis = []; nuis_TS = []; ncombi_TS=[];
-np_coef = D\voxel_ts';
-nintcp = squeeze(np_coef(1,:));
-nuis = squeeze(np_coef(2:end,:));
-
-nuis_TS = zeros(size(voxel_ts))';
-for ii=1:size(nuis,1)
-    tmp = np(:,ii)*nuis(ii,:);
-    nuis_TS = nuis_TS + tmp;
-end
-
-offset = ones([length(np) 1])*nintcp;
-ncombi_TS = nuis_TS;
-
-switch ndims(data)
-    case 4
-        [x,y,z,dyn] = size(data);
-        res_data = voxel_ts - ncombi_TS';
-        resData = zeros([x*y*z,dyn]);
-        resData(coordinates,:) = res_data;
-        resData = reshape(resData,[x y z dyn]);
-        
-        offBOLD = zeros([x*y*z,dyn]);
-        offBOLD(coordinates,:) = offset';
-        offBOLD = reshape(offBOLD,[x y z dyn]);
-        cleanData = data - resData + offBOLD;
-    case 3
-        [x,y,dyn] = size(data);
-        res_data = voxel_ts - ncombi_TS';
-        resData = zeros([x*y,dyn]);
-        resData(coordinates,:) = res_data;
-        resData = reshape(resData,[x y dyn]);
-        
-        offBOLD = zeros([x*y,dyn]);
-        offBOLD(coordinates,:) = offset';
-        offBOLD = reshape(offBOLD,[x y dyn]);
-        cleanData = data - resData + offBOLD;
-end
-%%%%%%%%%%%%%%%%% Plotting %%%%%%%%%%%%%%%%%%%%
-switch check
-    case 1
-        figure;
-        probemap = plasma(size(probe,2));
-        nuisancemap = viridis(size(nuisance,2)); nuisancemap = flip(nuisancemap,1);
-        limits = [0 size(probe,1)];
-        subplot(5,1,1); plot(meanTimeseries(data,mask), 'k'); title('original data'); xlim(limits);
-        subplot(5,1,2); hold on; for ii=1:size(probe,2); plot(probe(:,ii), 'Color', probemap(ii,:)); end; title('data probes'); xlim(limits);
-        subplot(5,1,3); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii),-1,1), 'Color', nuisancemap(ii,:)); end; title('rescaled nuisance regressors'); xlim(limits);
-        subplot(5,1,4); plot(meanTimeseries(cleanData,mask), 'k'); title('explained data'); xlim(limits);
-        subplot(5,1,5); plot(meanTimeseries(resData-offBOLD,mask), 'k'); title('residual data'); xlim(limits);
-    case 2
-        figure;
-        probemap = plasma(size(probe,2));
-        limits = [0 size(probe,1)];
-        subplot(4,1,1); plot(meanTimeseries(data,mask), 'k'); title('original data'); xlim(limits);
-        subplot(4,1,2); hold on; for ii=1:size(probe,2); plot(probe(:,ii), 'Color', probemap(ii,:)); end; title('data probes'); xlim(limits);
-        subplot(4,1,3); plot(meanTimeseries(cleanData,mask), 'k'); title('explained data'); xlim(limits);
-        subplot(4,1,4); plot(meanTimeseries(resData-offBOLD,mask), 'k'); title('residual data'); xlim(limits);
-    case 3
-        figure;
-        nuisancemap = viridis(size(nuisance,2)); nuisancemap = flip(nuisancemap,1);
-        limits = [0 size(nuisance,1)];
-        subplot(4,1,1); plot(meanTimeseries(data,mask), 'k'); title('original data'); xlim(limits);
-        subplot(4,1,2); hold on; for ii=1:size(nuisance,2); plot(rescale(nuisance(:,ii),-1,1), 'Color', nuisancemap(ii,:)); end; title('rescaled nuisance regressors'); xlim(limits);
-        subplot(4,1,3); plot(meanTimeseries(cleanData,mask), 'k'); title('explained data'); xlim(limits);
-        subplot(4,1,4); plot(meanTimeseries(resData-offBOLD,mask), 'k'); title('residual data'); xlim(limits);
-end
-
-resData = resData-offBOLD;
-
-if isfield(opts,'figdir')
-    saveas(gcf,fullfile(opts.figdir,'genGS.fig'));
+% ---- Basic checks & shapes ------------------------------------------------
+if ndims(data) == 4
+    [nx, ny, nz, T] = size(data);
 else
-    saveas(gcf,fullfile(pwd,'genGS.fig'));
+    [nx, ny, T] = size(data); nz = 1; data = reshape(data, nx, ny, 1, T);
+end
+mask = logical(mask);
+if any(size(mask) ~= [nx, ny, nz])
+    error('Mask size must match spatial size of data.');
 end
 
-res_ts = meanTimeseries(resData,mask);
-
+% Ensure probe/nuisance are T×K (or empty)
+if ~isempty(probe)
+    if size(probe,1) < size(probe,2), probe = probe'; end
+    if size(probe,1) ~= T, error('probe must have T rows.'); end
+end
+if ~isempty(nuisance)
+    if size(nuisance,1) < size(nuisance,2), nuisance = nuisance'; end
+    if size(nuisance,1) ~= T, error('nuisance must have T rows.'); end
 end
 
+% Build combined regressor matrix (excluding intercept for now)
+if ~isempty(probe) && ~isempty(nuisance)
+    Xr = [nuisance, probe];        % T × K
+elseif ~isempty(probe)
+    Xr = probe;                    % T × Kp
+elseif ~isempty(nuisance)
+    Xr = nuisance;                 % T × Kn
+else
+    Xr = [];                       % Only intercept
+end
+
+% ---- Extract time series from mask ---------------------------------------
+[V_ts, coords] = grabTimeseries(data, mask);  % V × T (V = #voxels in mask)
+V = size(V_ts,1);
+Y = V_ts.';                                    % T × V
+
+% ---- Design matrix with intercept ----------------------------------------
+if isempty(Xr)
+    D = ones(T,1);                 % T × 1 (intercept only)
+else
+    D = [ones(T,1), Xr];          % T × p
+end
+p = size(D,2);
+
+% ---- Solve voxel-wise GLM in one go --------------------------------------
+% coef is p × V
+coef = D \ Y;
+
+% ---- Fitted signals and residuals ----------------------------------------
+% Fitted (T×V):  Yhat = D * coef
+Yhat = D * coef;
+
+% Residuals (T×V): E = Y - Yhat
+E = Y - Yhat;
+
+% By definition, E has no intercept (the intercept is in Yhat).
+% That makes E exactly what you want as "pseudo resting-state" residuals.
+
+% ---- Pack back into volumes ----------------------------------------------
+% Fitted -> cleanData
+cleanData = zeros(nx*ny*nz, T);
+cleanData(coords, :) = Yhat.';                     % V × T
+cleanData = reshape(cleanData, [nx, ny, nz, T]);
+
+% Residuals (no intercept) -> resData
+resData = zeros(nx*ny*nz, T);
+resData(coords, :) = E.';                          % V × T
+resData = reshape(resData, [nx, ny, nz, T]);
+
+% If original was 3D (single time series stack), return same shape
+if nz == 1
+    cleanData = reshape(cleanData, [nx, ny, T]);
+    resData   = reshape(resData,   [nx, ny, T]);
+end
+
+% ---- Mean residual time series within mask --------------------------------
+res_ts = meanTimeseries(resData, mask);   % 1 × T
+
+% ---- Optional plotting (kept lightweight & robust) ------------------------
+try
+    if isfield(opts,'figdir') && ~isempty(opts.figdir)
+        figdir = opts.figdir;
+    else
+        figdir = pwd;
+    end
+    limits = [1, T];
+
+    f = figure('visible','on'); 
+    tiledlayout(f, 4, 1, "Padding","compact","TileSpacing","compact");
+
+    % Original mean
+    nexttile; plot(meanTimeseries(data,mask),'k'); xlim(limits);
+    title('Original mean signal (ROI)'); ylabel('a.u.')
+
+    % Probe(s)
+    if ~isempty(probe)
+        nexttile; hold on
+        for k = 1:size(probe,2), plot(probe(:,k)); end
+        xlim(limits); title('Probe regressor(s)'); ylabel('a.u.')
+    else
+        nexttile; axis off; text(0.02,0.5,'No probe provided');
+    end
+
+    % Nuisance
+    if ~isempty(nuisance)
+        nexttile; hold on
+        for k = 1:size(nuisance,2), plot(nuisance(:,k)); end
+        xlim(limits); title('Nuisance regressor(s)'); ylabel('a.u.')
+    else
+        nexttile; axis off; text(0.02,0.5,'No nuisance provided');
+    end
+
+    % Residual mean
+    nexttile; plot(res_ts,'k'); xlim(limits);
+    title('Residual mean (ROI)'); xlabel('time'); ylabel('a.u.')
+
+    saveas(f, fullfile(figdir,'residual_signal.fig'));
+
+catch
+    % plotting is best-effort; ignore failures in headless/batch
+end
+if opts.save_residual
+    saveMap(resData, opts.resultsdir,'residualData',opts.info.ts, opts);
+end
+
+end

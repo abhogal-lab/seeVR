@@ -1,47 +1,11 @@
-% Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
-% a.bhogal@umcutrecht.nl
-% <gaslessCVR: generates internally normalized CVR maps (i.e. without using respiratory data) >
-%
-% This program is free software: you can redistribute it and/or modify
-% it under the terms of the GNU General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
-%
-% This program is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU General Public License for more details.
-%
-% You should have received a copy of the GNU General Public License
-% along with this program.  If not, see <https://www.gnu.org/licenses/>.
-%
-% *************************************************************************
-% this function is inspited by the following manuscript:
-% Cerebrovascular Reactivity Mapping Using Resting-State BOLD Functional MRI in Healthy Adults and Patients with Moyamoya Disease
-% https://doi.org/10.1148/radiol.2021203568
-% https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6494444/
-% glmCVRidx uses a general linear model to evaluate the voxel-wise signal
-% response relative to some reference signal. Specific data frequency bands
-% can be isolated (i.e. for resting state fMRI analysis).
-%
-% data: input timeseries data (i.e. 4D BOLD MRI dataset)
-%
-% mask: binary mask defining voxels of interest
-%
-% refmask: binary mask that defines the reference signals of interest
-%
-% nuisance: set of nuisance parameters for regression
-%
-% opts: options structure containing required variables for this specific
-% function; i.e. opts.fpass opts.headers.map, opts.info.map, opts,niiwrite, opts.resultsdir
-%
-%
-% BP_ref: the bandpassed reference signal (defined by opts.fpass) from the
-% ROI defined by refmask
-%
-% bpData: a bandpassed version of the input data
 
 function [maps, BP_ref, bpData] = gaslessCVR(data, mask, refmask, nuisance, opts)
+% Copyright (C) Alex A. Bhogal
+% gaslessCVR: resting-state CVR via GLM of a band-passed reference regressor
+% CVR index = beta for the reference regressor; nuisance (if provided) is included
+% solely to remove variance, but is not of direct interest.
+global opts
+%% ---- Quiet common warnings (safe-guard) --------------------------------
 try
     warning('off');
     warning('off', 'MATLAB:rankDeficientMatrix');
@@ -56,203 +20,194 @@ try
 catch
 end
 
-global opts;
-
+%% ---- Inputs & defaults --------------------------------------------------
 refmask = logical(refmask);
-mask = logical(mask);
+mask    = logical(mask);
 
-if isfield(opts,'fpass'); else; opts.fpass = [0.000001 0.1164]; end  %default frequency band see doi: 10.1148/radiol.2021203568
-if isfield(opts,'niiwrite'); else; opts.niiwrite = 0; end %depending on how data is loaded this can be set to 1 to use native load/save functions
-if isfield(opts,'prepNuisance'); else; opts.prepNuisance = 1; end %filter regressors if applicable
+if ~isfield(opts,'fpass');         opts.fpass        = [0.000001 0.1164]; end  % Hz
+if ~isfield(opts,'niiwrite');      opts.niiwrite     = 0;                  end
+if ~isfield(opts,'prepNuisance');  opts.prepNuisance = 1;                  end
+if ~isfield(opts,'TR'); error('opts.TR must be provided (seconds).'); end
+
+% Nuisance orientation to T x K
 if isempty(nuisance)
     np = [];
-    opts.prepNuisance = 0
+    opts.prepNuisance = 0;
 else
-    test1 = nuisance(1,:); test2 = nuisance(:,1);
-    if length(test1) > length(test2); nuisance = nuisance';
+    if size(nuisance,1) < size(nuisance,2)
+        nuisance = nuisance'; % make T x K
     end
-
-    clear test1 test2
 end
-%prepare nuisance probes
+
+% Prepare nuisance (optional preprocessing)
 if opts.prepNuisance
-    reference = meanTimeseries(data, refmask);
-    [np, ~] = prepNuisance(nuisance,reference, opts);
-    clear reference;
+    reference  = meanTimeseries(data, refmask);      % 1 x T
+    [np, ~]    = prepNuisance(nuisance, reference, opts);
+    clear reference
 else
     np = nuisance;
 end
 
-if isempty(np) || nnz(np) == 0
-    opts.CVRidxdir = fullfile(opts.resultsdir,'CVRidx'); mkdir(opts.CVRidxdir);
+% Output dirs
+if isempty(np) || nnz(np)==0
+    opts.CVRidxdir = fullfile(opts.resultsdir,'CVRidx'); 
 else
-    opts.CVRidxdir = fullfile(opts.resultsdir,'CVRidx_inclNuisance'); mkdir(opts.CVRidxdir);
+    opts.CVRidxdir = fullfile(opts.resultsdir,'CVRidx_inclNuisance');
 end
+if ~exist(opts.CVRidxdir,'dir'), mkdir(opts.CVRidxdir); end
+if ~isfield(opts,'figdir'), opts.figdir = opts.CVRidxdir; end
 
-if isfield(opts,'figdir'); else; opts.figdir = opts.CVRidxdir; end % check for seperate figure directory
-
-[xx yy zz N] = size(data);
+%% ---- Data shapes --------------------------------------------------------
+[xx,yy,zz,NT] = size(data);
 data = double(data);
 
-%get voxels
-[voxels coordinates] = grabTimeseries(data, mask);
-[ref_voxels ref_coordinates] = grabTimeseries(data, refmask);
+% Extract voxel time series
+[voxels, coordinates] = grabTimeseries(data, mask);     % V x T
+[ref_voxels, ~]       = grabTimeseries(data, refmask);  % Vr x T
 
-Fs = 1/opts.TR;
-t = 0:1/Fs:1-1/Fs;
-N = size(voxels,2);
-dF = Fs/N;
-mean_ts = mean(ref_voxels,1);
-freq = 0:Fs/length(mean_ts):Fs/2;
-Lowf = opts.fpass(1); Highf = opts.fpass(2); %Hz
+T = size(voxels,2);   % timepoints
+V = size(voxels,1);   % voxels in mask
+assert(T == NT, 'Internal shape mismatch: time dimension must match.');
 
-%check whether signal processing toolbox is available
+%% ---- Band-pass filtering of reference and voxel data --------------------
+Fs   = 1/opts.TR;              % Hz
+Lowf = opts.fpass(1); 
+Highf= opts.fpass(2);
+
+mean_ts = mean(ref_voxels,1);  % 1 x T
+
 if license('test','signal_toolbox') == 1
-    % if opts.filter_order is specified
+    % Choose/compute filter
     if isfield(opts,'filter_order')
-        [b,a] = butter(opts.filter_order,2*[Lowf, Highf]/Fs);
-        BP_ref = filtfilt(b,a,(mean_ts));
+        [b,a]  = butter(opts.filter_order, 2*[Lowf, Highf]/Fs);
+        BP_ref = filtfilt(b,a, mean_ts);
     else
-        % else find optimal filter (automated)
-        SSres = []; BP = [];
+        % Auto-select order by minimizing SSE between original and filtered
+        SSres = zeros(1,4);
+        BP    = zeros(4, numel(mean_ts));
         for forder = 1:4
-            [b,a] = butter(forder,2*[Lowf, Highf]/Fs);
-            BP(forder,:) = filtfilt(b,a,(mean_ts));
-            SSres(forder,:)= sum((mean_ts - BP(forder,:).^2),2);
+            [bb,aa]     = butter(forder, 2*[Lowf, Highf]/Fs);
+            BP(forder,:) = filtfilt(bb,aa, mean_ts);
+            SSres(forder)= sum((mean_ts - BP(forder,:)).^2);
         end
-        %select closest filter
-        [~,I] = min(SSres);
-        [b,a] = butter(I,2*[Lowf, Highf]/Fs);
-        BP_ref = filtfilt(b,a,(mean_ts));
+        [~,I]  = min(SSres);
+        [b,a]  = butter(I, 2*[Lowf, Highf]/Fs);
+        BP_ref = filtfilt(b,a, mean_ts);
         opts.filter_order = I;
     end
 
-    %bandpass signals of interest contained within mask
-    BP_V = zeros(size(voxels));
-    parfor ii=1:size(BP_V,1)
-        BP_V(ii,:) = filtfilt(b,a,voxels(ii,:));
+    % Band-pass all mask voxels
+    BP_V  = zeros(size(voxels));     % V x T
+    parfor ii = 1:V
+        BP_V(ii,:) = filtfilt(b,a, voxels(ii,:));
     end
 
-    %bandpass reference signals contained within refmask
+    % Band-pass reference voxels (not strictly needed further, but kept)
     BP_rV = zeros(size(ref_voxels));
-    parfor ii=1:size(BP_rV,1)
-        BP_rV(ii,:) = filtfilt(b,a,ref_voxels(ii,:));
+    parfor ii = 1:size(ref_voxels,1)
+        BP_rV(ii,:) = filtfilt(b,a, ref_voxels(ii,:));
     end
-
 else
     isplot = 0;
-    BP_ref = bpfilt(mean_ts, Lowf, Highf, isplot);
-    BP_ref = BP_ref';
-    %bandpass signals of interest contained within mask
-    BP_V = zeros(size(voxels));
-    BP_V = bpfilt(voxels,Lowf, Highf, isplot);
-
-    %bandpass reference signals contained within refmask
-    BP_rV = zeros(size(ref_voxels));
-    BP_rV= bpfilt(ref_voxels, Lowf, Highf, isplot);
-
+    BP_ref = bpfilt(mean_ts, Lowf, Highf, isplot); BP_ref = BP_ref';
+    BP_V   = bpfilt(voxels,     Lowf, Highf, isplot);     % V x T
+    BP_rV  = bpfilt(ref_voxels, Lowf, Highf, isplot);
 end
 
+%% ---- QC plot of ref regressor ------------------------------------------
 figure; hold on
-plot(rescale(mean_ts));
-plot(rescale(BP_ref+mean(mean_ts)));
+plot(rescale(mean_ts),'DisplayName','mean reference time-series');
+plot(rescale(BP_ref)+0.2,'DisplayName','BP reference (offset)');
 title('reference regressor before and after bandpass');
-saveas(gcf,fullfile(opts.figdir,'reference_regressor.fig'));
-xlabel('image volumes')
-ylabel('a.u.')
-legend('mean reference time-series', 'BP reference mean-timeseries')
+xlabel('image volumes'); ylabel('a.u.'); legend('show');
+saveas(gcf, fullfile(opts.figdir,'reference_regressor.fig'));
 
-% prep data: s_0 = (s - mean(s))/(2|s - mean(s)|/sqrt(N)
-% reported in https://doi.org/10.1371/journal.pone.0274220
-%BP_V = (BP_V-mean(BP_V))/(2*norm(BP_V-mean(BP_V))/sqrt(N));
-%BP_rV = (BP_rV-mean(BP_rV))/(2*norm(BP_rV-mean(BP_rV))/sqrt(N));
+%% ---- Build GLM design: intercept + (optional) nuisance + reference -----
+BP_ref_scaled = rescale(BP_ref(:));       % T x 1; you can switch to zscore if desired
 
-%regress whole brain & reference signals against band passed reference
-if isempty(np) || nnz(np) == 0
-    try %try using GPU for this
-        BP_ref = gpuArray(rescale(BP_ref)); %reference regressor rescaled
-        D = gpuArray([ones([length(BP_ref) 1]) BP_ref']);
-        coef = D\BP_V';
-        coef = gather(coef);
-    catch
-        BP_ref = rescale(BP_ref); %reference regressor rescaled
-        D = [ones([length(BP_ref) 1]) BP_ref'];
-        coef = D\BP_V';
+if isempty(np) || nnz(np)==0
+    D = [ones(T,1), BP_ref_scaled];       % T x p ; p=2
+    slopeIdx = 2;
+else
+    if size(np,1) ~= T
+        error('nuisance must have T rows to match timepoints.');
     end
-else % include nuisance regressors
-    try %try using GPU for this
-        coef = zeros([(size(np,2)+2) length(coordinates)]);
-        BP_ref = gpuArray(rescale(BP_ref)); %reference regressor rescaled
-        D = gpuArray([ones([length(BP_ref) 1]) np BP_ref']);
-        coef = D\BP_V';
-        coef = gather(coef);
-    catch
-        BP_ref = rescale(BP_ref); %reference regressor rescaled
-        D = [ones([length(BP_ref) 1]) np BP_ref'];
-        coef = D\BP_V';
-    end
+    D = [ones(T,1), np, BP_ref_scaled];   % T x p ; p=2+K, ref is last column
+    slopeIdx = size(D,2);
+end
+p = size(D,2);
+
+% Precompute XtX inverse for SE
+XtX     = D.'*D;                % p x p
+XtX_inv = pinv(XtX);            % robust inverse
+
+%% ---- Solve LS for all voxels at once -----------------------------------
+% We want coef as p x V
+try
+    coef = gather( gpuArray(D) \ gpuArray(BP_V.') );   % (T x p) \ (T x V) -> p x V
+catch
+    coef = D \ BP_V.';                                 % p x V
 end
 
-%fitted values
-Y = gather(coef(end,:).*repmat(BP_ref',[1 size(voxels,1)]) + ones([1 length(coef)]).*coef(end-1,:));
+% Fitted values for full model
+Y = D * coef;                     % (T x p)*(p x V) -> T x V
 
-vSSE = zeros([1 size(voxels,1)]); vSST = zeros([1 size(voxels,1)]); vSTDEVr = zeros([1 size(voxels,1)]);
-tmp1 = (voxels - Y');
-tmp2 = (voxels-mean(voxels,2));
+% Residuals and sums of squares
+E    = BP_V.' - Y;                % T x V
+SSE  = sum(E.^2, 1);              % 1 x V
+muV  = mean(BP_V, 2);             % V x 1
+SST  = sum( (BP_V.' - muV.').^2 , 1 );   % 1 x V
+vR2  = 1 - SSE ./ max(SST, eps);  % 1 x V
 
-parfor ii=1:size(voxels,1)
-    vSSE(1,ii) = (norm(tmp1(ii,:)))^2;
-    vSST(1,ii) = (norm(tmp2(ii,:)))^2;
-end
-vSTDEVr = nanstd((voxels-Y')'); %standard deviation of residuals (t = beta/STDEVr)
+% t-stat for reference beta
+sigma2  = SSE ./ max(T - p, 1);                   % 1 x V
+SE_beta = sqrt( XtX_inv(slopeIdx,slopeIdx) .* sigma2 ); % 1 x V
+vT      = coef(slopeIdx,:) ./ max(SE_beta, eps);  % 1 x V
 
-R2 = zeros([1 xx*yy*zz]); SSE = zeros([1 xx*yy*zz]); Tstat = zeros([1 xx*yy*zz]);
+% CVR index = beta for reference regressor
+CVRidx  = coef(slopeIdx,:);                       % 1 x V
 
-vT = coef(end,:)./vSTDEVr(1,:);
-vR2 = 1 - vSSE./vSST;
-R2(1, coordinates) = vR2; R2 = reshape(R2, [xx yy zz]);
-SSE(1, coordinates) = vSSE; SSE = reshape(SSE, [xx yy zz]);
-Tstat(1, coordinates) = vT; Tstat = reshape(Tstat, [xx yy zz]);
-
-CVRidx = coef(end,:);
+%% ---- Pack band-passed data back into 4-D volume -------------------------
 bpData = zeros(size(data));
-bpData = reshape(bpData,[xx*yy*zz N]);
-bpData(coordinates, :) = BP_V;
-bpData = reshape(bpData,size(data));
+bpData = reshape(bpData,[xx*yy*zz, NT]);
+bpData(coordinates, :) = BP_V;      % V x T
+bpData = reshape(bpData, size(data));
 
-CVRidx_map = zeros([1 numel(mask)]);
+%% ---- Write maps into volumes -------------------------------------------
+R2    = zeros(1, xx*yy*zz);  R2(1,coordinates)    = vR2;   R2    = reshape(R2,[xx yy zz]);
+Tstat = zeros(1, xx*yy*zz);  Tstat(1,coordinates) = vT;    Tstat = reshape(Tstat,[xx yy zz]);
+
+CVRidx_map = zeros(1, numel(mask));
 CVRidx_map(1, coordinates) = CVRidx;
 CVRidx_map = reshape(CVRidx_map, size(mask));
-%remove outliers
-CVRidx_map(CVRidx_map > 100) = 0; CVRidx_map(CVRidx_map < -100) = 0;
 
-%normalized to reference response
-mean_ref_response = ROImean(CVRidx_map,refmask);
-nCVRidx_map = CVRidx_map/mean_ref_response;
-%remove outliers
-nCVRidx_map(nCVRidx_map > 100) = 0; nCVRidx_map(nCVRidx_map < -100) = 0;
+% Outlier clipping (keep your original convention)
+CVRidx_map(CVRidx_map > 100)  = 0; 
+CVRidx_map(CVRidx_map < -100) = 0;
 
-if opts.niiwrite
-    cd(opts.CVRidxdir);
-    niftiwrite(cast(nCVRidx_map, opts.mapDatatype),'GLM_CVR_normalized_map',opts.info.map);
-    niftiwrite(cast(CVRidx_map, opts.mapDatatype),'GLM_CVR_non_normalized_map',opts.info.map);
-    niftiwrite(cast(mask.*R2,opts.mapDatatype),'GLM_CVR_R2_map',opts.info.map);
-    niftiwrite(cast(mask.*Tstat,opts.mapDatatype),'GLM_CVR_Tstat_map',opts.info.map);
-else
-    saveImageData(nCVRidx_map,opts.headers.map,opts.CVRidxdir,'GLM_CVR_normalized_map.nii.gz',64);
-    saveImageData(CVRidx_map,opts.headers.map,opts.CVRidxdir,'GLM_CVR_non_normalized_map.nii.gz',64);
-    saveImageData(mask.*R2, opts.headers.map, opts.CVRidxdir,'GLM_CVR_R2_map.nii.gz', 64);
-    saveImageData(mask.*Tstat, opts.headers.map, opts.CVRidxdir,'GLM_CVR_Tstat_map.nii.gz', 64);
-end
+% Normalize by mean ref ROI response (internally normalized CVR)
+mean_ref_response = ROImean(CVRidx_map, refmask);
+nCVRidx_map = CVRidx_map / mean_ref_response;
 
+% Clip normalized outliers (same convention)
+nCVRidx_map(nCVRidx_map > 100)  = 0; 
+nCVRidx_map(nCVRidx_map < -100) = 0;
+
+% Save
+saveMap(cast(nCVRidx_map, opts.mapDatatype), opts.CVRidxdir,'GLM_CVR_normalized_map',opts.info.map, opts);
+saveMap(cast(CVRidx_map,  opts.mapDatatype), opts.CVRidxdir, 'GLM_CVR_non_normalized_map',opts.info.map, opts);
+saveMap(cast(mask.*R2,    opts.mapDatatype), opts.CVRidxdir, 'GLM_CVR_R2_map',opts.info.map, opts);
+saveMap(cast(mask.*Tstat, opts.mapDatatype), opts.CVRidxdir, 'GLM_CVR_Tstat_map',opts.info.map, opts);
+
+% Outputs struct
 nCVRidx_map(nCVRidx_map == 0) = NaN;
-CVRidx_map(CVRidx_map == 0) = NaN;
+CVRidx_map(CVRidx_map == 0)   = NaN;
 maps.nCVRidx = nCVRidx_map;
-maps.CVRidx = CVRidx_map;
-maps.R2 = R2;
-maps.Tstat = Tstat;
+maps.CVRidx  = CVRidx_map;
+maps.R2      = R2;
+maps.Tstat   = Tstat;
 
-
+%% ---- Restore warnings ---------------------------------------------------
 try
     warning('on');
     warning('on', 'MATLAB:rankDeficientMatrix');
