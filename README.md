@@ -27,20 +27,20 @@
 ### Analysis functions
 - **CVR mapping**: basic/GLM CVR indices, lag-aware CVR. (`basicCVR`, `gasslessCVRx`, `lagCVR`) 
 
-<img src="docs/CVR.png" alt="Logo" width="600"/>
+<img src="docs/CVR.png" alt="Logo" width="800"/>
 
 - **HRF modeling**: convolve and fit (onset/dispersion) via HRF/EXP kernels. (`fitTau`, `convHRF`, `fitHRF`)  
 
-<img src="docs/dispersion.png" alt="Logo" width="600"/>
+<img src="docs/dispersion.png" alt="Logo" width="800"/>
 
 - **Aligment of physiological traces**: manual or automatic. (`autoAlign`, `trAlign`)  
 
-<img src="docs/align.png" alt="Logo" width="300"/>
+<img src="docs/align.png" alt="Logo" width="600"/>
 
 - **Spectral metrics**: fALFF and frequency spectra. (`fALFF`, `freqSpec`)  
 - **Preprocess & cleanup**: nuisance regression, scrubbing, band-pass, normalization, timeseries utilities. (`filtRegressor`, `scrubData`, `genGS`, `remLV`, `smthData`, `denoiseData`, `grabTimeseries`, `normTimeseries`, `chopTimeseries`, `demeanData`, `trAlign`)  
 
-<img src="docs/scrub.png" alt="Logo" width="300"/>
+<img src="docs/scrub.png" alt="Logo" width="600"/>
 
 - **I/O & helpers**: NIfTI handling (via built-in functions or Jimmy Shen’s toolbox), plotting, registration helpers, and more.  
 
