@@ -46,16 +46,15 @@
 ### Tutorials & docs
 - Walk-throughs for **CO₂ CVR** and **breath-hold/resting-state CVR**, with template scripts.
 
-Tutorials available at the [seeVR toolbox website](https://www.seevr.nl/tutorials/)
-
+Tutorials and test data available at the [seeVR toolbox website](https://www.seevr.nl/tutorials/)
 
 ---
 
 ## Repository layout (high level)
 
 - `main_functions/`, `functions/`, `helper/`, `plotting/`, `read_write/`, `registration/` — analysis code, utilities & helpers.  
-- `seeVieweR/` — MATLAB App Designer viewer (3-D/4-D).  
-- `gas_import/`, `resources/`, `project/` — domain-specific helpers/resources.  
+- `seeVieweR/` — [Visualization tool](https://github.com/abhogal-lab/seeVieweR) (3-D/4-D).  
+- `gas_import/`, `resources/` — domain-specific helpers/resources.  
 
 ---
 
