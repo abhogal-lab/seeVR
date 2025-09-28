@@ -25,18 +25,24 @@
 ## Features
 
 ### Analysis functions
-- **CVR mapping**: basic/GLM CVR indices, lag-aware CVR. (`basicCVR`, `glmCVRidx`, `lagCVR`) 
+- **CVR mapping**: basic/GLM CVR indices, lag-aware CVR. (`basicCVR`, `gasslessCVRx`, `lagCVR`) 
 
 <img src="docs/CVR.png" alt="Logo" width="600"/>
 
-- **HRF modeling**: convolve and fit (onset/dispersion) via HRF/EXP kernels. (`fitHRF`, `convHRF`, `convEXP`)  
+- **HRF modeling**: convolve and fit (onset/dispersion) via HRF/EXP kernels. (`fitTau`, `convHRF`, `fitHRF`)  
 
 <img src="docs/dispersion.png" alt="Logo" width="600"/>
 
+- **Aligment of physiological traces**: manual or automatic. (`autoAlign`, `trAlign`)  
+
+<img src="docs/align.png" alt="Logo" width="300"/>
 
 - **Spectral metrics**: fALFF and frequency spectra. (`fALFF`, `freqSpec`)  
 - **Preprocess & cleanup**: nuisance regression, scrubbing, band-pass, normalization, timeseries utilities. (`filtRegressor`, `scrubData`, `genGS`, `remLV`, `smthData`, `denoiseData`, `grabTimeseries`, `normTimeseries`, `chopTimeseries`, `demeanData`, `trAlign`)  
-- **I/O & helpers**: NIfTI handling (via Jimmy Shen’s toolbox), plotting, registration helpers, and more.  
+
+<img src="docs/scrub.png" alt="Logo" width="300"/>
+
+- **I/O & helpers**: NIfTI handling (via built-in functions or Jimmy Shen’s toolbox), plotting, registration helpers, and more.  
 
 ### Visualization (seeVieweR)
 - **3-D/4-D volume viewer** with overlays, color/alpha control, slice masks (X/Y/Z), vessel erosion (skeleton protection), colormap flipping, lighting/denoising toggles, background, and export (PNG/SVG/GIF/MP4).  

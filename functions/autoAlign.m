@@ -37,13 +37,11 @@ switch varCheck
         if iscolumn(probe1); else; probe1 = probe1'; end
         if iscolumn(probe2); else; probe2 = probe2'; end
         if iscolumn(TS); else; TS = TS'; end
-        TS = rescale(TS);
     case 2
         if iscolumn(probe1); else; probe1 = probe1'; end
         TS = probe2;
         if iscolumn(TS); else; TS = TS'; end
-        TS = rescale(TS);
-end
+ end
 
 % generate sliding window
 regr = [];
