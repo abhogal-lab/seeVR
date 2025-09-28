@@ -35,12 +35,12 @@
 
 - **Aligment of physiological traces**: manual or automatic. (`autoAlign`, `trAlign`)  
 
-<img src="docs/align.png" alt="Logo" width="600"/>
+<img src="docs/align.png" alt="Logo" width="500"/>
 
 - **Spectral metrics**: fALFF and frequency spectra. (`fALFF`, `freqSpec`)  
 - **Preprocess & cleanup**: nuisance regression, scrubbing, band-pass, normalization, timeseries utilities. (`filtRegressor`, `scrubData`, `genGS`, `remLV`, `smthData`, `denoiseData`, `grabTimeseries`, `normTimeseries`, `chopTimeseries`, `demeanData`, `trAlign`)  
 
-<img src="docs/scrub.png" alt="Logo" width="600"/>
+<img src="docs/scrub.png" alt="Logo" width="300"/>
 
 - **I/O & helpers**: NIfTI handling (via built-in functions or Jimmy Shen’s toolbox), plotting, registration helpers, and more.  
 
