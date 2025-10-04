@@ -12,26 +12,22 @@
 (Optimizer "AdaptiveStochasticGradientDescent")
 (Transform "AffineTransform")
 (Metric "AdvancedMattesMutualInformation")
-//(Metric "DisplacementMagnitudePenalty")
-
+//(AutomaticScalesEstimation "true")
 (AutomaticTransformInitialization "true")
 (HowToCombineTransforms "Compose")
-
 (NumberOfHistogramBins 32)
-(NumberOfResolutions 3)
-(ImagePyramidSchedule 6 6 6  4 4 4  2 2 2 )
-(MaximumNumberOfIterations 1500)
+(NumberOfResolutions 5)
+(ImagePyramidSchedule 12 12 12  8 8 8  4 4 4  2 2 2  1 1 1)
+(MaximumNumberOfIterations 1000)
 (MaximumStepLength 1)
-
 (NumberOfSpatialSamples 8000)
 (NewSamplesEveryIteration "true")
 //(ImageSampler "Random")
 //(ImageSampler "RandomSparseMask")
 (ImageSampler "MultiInputRandomCoordinate")
 (SampleRegionSize 40.0 40.0 40.0)
-
-(BSplineInterpolationOrder 2)
-(FinalBSplineInterpolationOrder 2)
+(BSplineInterpolationOrder 1)
+(FinalBSplineInterpolationOrder 1)
 (DefaultPixelValue 0)
 (WriteResultImage "true")
 (ResultImagePixelType "float")
@@ -43,7 +39,4 @@
 (WriteTransformParametersEachResolution "false")
 (WriteResultImageAfterEachResolution "false")
 (WritePyramidImagesAfterEachResolution "false")
-
-
-(AutomaticScalesEstimation "true")
-//(Scales 10000.0)
+(Scales 10000.0)

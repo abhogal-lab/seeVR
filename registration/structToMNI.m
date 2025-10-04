@@ -42,6 +42,8 @@ global opts
 
 if isfield(opts,'useBET'); else; opts.useBET = 1; end                      %if this is set to 1, then brain extracted MNI image is used. Input structural image must also be brain extracted.
 if isfield(opts,'T1'); else; opts.T1 = 1; end                              %if this is set to 1, then T1w MNI image is used. High resolution functional images can be registered using opts.T1 = 0 - then T2w MNI image is used as target
+if isfield(opts,'invert_affine'); else; opts.invert_affine = 1; end 
+if isfield(opts,'invert_bspline'); else; opts.invert_bspline = 1; end 
 
 try opts.elastixdir; catch
     error('elastix directory not specified... specify OS-dependent path to elastix: e.g. opts.elastixdir = /.../seeVR/registration/elastix/')

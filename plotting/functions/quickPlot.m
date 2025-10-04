@@ -106,48 +106,85 @@ else
 end
 
 % ----------------------------- plot ------------------------------------
-fig = figure('Color', 'k', 'Name', 'quickPlot', 'Units', 'pixels', ...
-             'Position', [100 100 1400 800]);
+fig = figure('Color','k','InvertHardCopy','off', ...
+             'Name','quickPlot','Units','pixels', ...
+             'Position',[100 100 800 800]);
 
-t = tiledlayout(nRows, nCols, 'Padding', 'compact', 'TileSpacing', 'compact');
+t = tiledlayout(fig, nRows, nCols, 'Padding','compact', 'TileSpacing','compact');
+
+% Reserve a right gutter for the colorbar (left x, bottom y, width, height)
+% ↓ Reduce the width to move the image grid left (e.g., 0.76–0.80 works well)
+t.OuterPosition = [0.04 0.05 0.78 0.90];
 
 for k = 1:maxPlots
-    ax    = nexttile;
+    ax    = nexttile(t);
     slice = vol(r1:r2, c1:c2, sliceIdx(k));
-
     img   = imagesc(ax, slice);
     set(img, 'AlphaData', ~isnan(slice));
     axis(ax, 'image', 'off');
     colormap(ax, cmap);
-
-    if userScale
-        caxis(ax, scale);
-    end
-
-    title(ax, sprintf('z = %d', sliceIdx(k)), ...
-              'Color', 'w', 'FontSize', 8);
+    if userScale, caxis(ax, scale); end
+    title(ax, sprintf('z = %d', sliceIdx(k)), 'Color','w','FontSize',8);
 end
 
-% -------------------------- shared colour‑bar --------------------------
-cbAx = axes('Parent', fig, 'Position', [0.93 0.15 0.02 0.7], 'Visible', 'off');
-colormap(cbAx, cmap);
+% -------------------------- shared colour-bar (labels only) -------------
+gutter     = 0.015;      % gap from tile area to bar (smaller → more left)
+barBottom  = 0.10;
+barHeight  = 0.80;
+barWidth   = 0.018;
 
+panelRight = t.OuterPosition(1) + t.OuterPosition(3);   % right edge of tiles
+xBar       = panelRight + gutter;
+
+% Colour limits
 if userScale
-    caxis(cbAx, scale);
+    clim = scale;
 else
-    caxis(cbAx, [min(vol(:), [], 'omitnan')  max(vol(:), [], 'omitnan')]);
+    clim = [min(vol(:),[],'omitnan')  max(vol(:),[],'omitnan')];
+end
+if ~isfinite(clim(1)) || ~isfinite(clim(2)) || clim(2) <= clim(1)
+    clim = [0 1];
 end
 
-cb = colorbar(cbAx);
-cb.Units        = 'normalized';
-cb.Position     = [0.94 0.15 0.015 0.7];
-cb.Color        = 'w';
-cb.FontSize     = 10;
-cb.Label.String = 'Intensity';
+% --- gradient strip as the "bar" ---
+cbAX = axes('Parent',fig, 'Position',[xBar barBottom barWidth barHeight], ...
+            'Color','k','Box','off');
+vals = linspace(clim(1),clim(2),256).';
+imagesc(cbAX, [0 1], [clim(1) clim(2)], [vals vals]);   % vertical strip
+set(cbAX,'YDir','normal');           % low at bottom, high at top
+colormap(cbAX, cmap);
+caxis(cbAX, clim);
 
+% Hide ticks/axes completely (no tick marks)
+axis(cbAX,'off');
+
+% --- draw labels to the RIGHT (no ticks) ---
 if symScale
-    cb.Ticks = [scale(1) 0 scale(2)];
+    labelVals = [clim(1) 0 clim(2)];
+else
+    labelVals = linspace(clim(1),clim(2),6);  % 6 labels by default
 end
+
+% choose a sensible numeric format
+step = mean(diff(labelVals));
+if step < 1,   fmt = '%.2f';
+elseif step < 10, fmt = '%.1f';
+else            fmt = '%.0f';
+end
+
+labelOffset = 0.2;   % ↑ move labels further right (normalized X units)
+hold(cbAX,'on');
+for v = labelVals
+    y = (v - clim(1)) / max(eps, (clim(2) - clim(1)));  % normalize to [0,1]
+    text(cbAX, 1 + labelOffset, y, sprintf(fmt, v), ...
+         'Units','normalized', 'Color','w', ...
+         'HorizontalAlignment','left', 'VerticalAlignment','middle', ...
+         'Clipping','off', 'FontSize',10);
+end
+hold(cbAX,'off');
+
+
+%cb.Label.Position = [3 0 0];   % nudge label further to the right
 
 % sgtitle('quickPlot – fast slice overview', 'Color', 'w');  % optional
 end

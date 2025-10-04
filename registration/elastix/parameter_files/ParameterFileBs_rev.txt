@@ -15,20 +15,19 @@
 (MovingImagePyramid "MovingSmoothingImagePyramid" "MovingSmoothingImagePyramid")
 
 (Optimizer "AdaptiveStochasticGradientDescent")
-(Transform "RecursiveBSplineTransform" "RecursiveBSplineTransform")
-
-(Metric "TransformBendingEnergyPenalty" "AdvancedMattesMutualInformation")
+(Transform "BSplineTransform" "BSplineTransform")
+(Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
-(Metric0Weight 0.9)
-(Metric1Weight 0.3)
+(Metric0Weight 0.5)
+(Metric1Weight 0.6)
 
 
 (MaximumStepLength 1)
 
 // ***************** Transformation **************************
-(NumberOfResolutions 6)
-(FinalGridSpacingInVoxels 12)
-(GridSpacingSchedule   24 18 12 8 4 2)
+(NumberOfResolutions 5)
+(FinalGridSpacingInVoxels 10)
+(GridSpacingSchedule 24 16 8 4 2)
 (HowToCombineTransforms "Compose")
 
 // ******************* Similarity measure *********************
@@ -37,15 +36,15 @@
 
 // ******************** Multiresolution **********************
 
-(ImagePyramidSchedule  24 24 24  12 12 12  6 6 6  4 4 4  2 2 2 )
+(ImagePyramidSchedule 12 12 12  8 8 8  4 4 4  2 2 2  1 1 1)
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 700 700 1000 1000 2000 3000) 
+(MaximumNumberOfIterations 500 500 1000 1000 2000)  
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "CenterOfGravity")
-(NumberOfSpatialSamples 8000) 
+(NumberOfSpatialSamples 6000) 
 (NewSamplesEveryIteration "true")
 //(ImageSampler "RandomSparseMask")
 (ImageSampler "MultiInputRandomCoordinate" "MultiInputRandomCoordinate")
@@ -57,8 +56,8 @@
 (UseAdaptiveStepSizes "true")
 // ************* Interpolation and Resampling ****************
 
-(BSplineInterpolationOrder 2)
-(FinalBSplineInterpolationOrder 2)
+(BSplineInterpolationOrder 1)
+(FinalBSplineInterpolationOrder 1)
 (ShowExactMetricValue "false") 
 (WriteTransformParametersEachResolution "false")
 (WriteResultImageAfterEachResolution "false")
