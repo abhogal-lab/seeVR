@@ -68,3 +68,6 @@ Tutorials and test data available at the [seeVR toolbox website](https://www.see
 ### Option A — clone for the toolbox (analysis code)
 ```bash
 git clone https://github.com/abhogal-lab/seeVR.git
+
+- Or just download and add to MATLAB path 
+
