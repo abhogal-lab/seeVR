@@ -87,10 +87,10 @@ end
 
 
 if ispc
-    bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',anatImg,' -p ',param_af,' -p ',param_bs,' -out ',anatdir ];
+    bspline_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',anatImg,' -p ',param_af,' -p ',param_bs,' -out ',anatdir ]);
 
 else
-    bspline_command = ['elastix -f ',refImg,' -m0 ',anatImg,' -p ',param_af,' -p ',param_bs,' -out ',anatdir ];
+    bspline_command = strjoin(['elastix -f ',refImg,' -m0 ',anatImg,' -p ',param_af,' -p ',param_bs,' -out ',anatdir ]);
 
 end
 
@@ -145,9 +145,9 @@ else
 end
 
 if ispc
-    reverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',anatImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
+    reverse_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',anatImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir]);
 else
-    reverse_command = ['elastix -f ',anatImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
+    reverse_command = strjoin(['elastix -f ',anatImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir]);
 end
 dos(reverse_command);
 

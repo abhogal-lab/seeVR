@@ -63,9 +63,9 @@ for ii=1:size(data,4)
     moving = fullfile(opts.outputdir_mc,'moving_image.nii');
 
     if ispc
-        affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',ref_img,' -m ',moving,' -p ',param_af,' -out ',opts.outputdir_mc,' > ouput.txt'];
+        affine_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',ref_img,' -m ',moving,' -p ',param_af,' -out ',opts.outputdir_mc,' > ouput.txt']);
     else
-        affine_command = ['elastix -f ',ref_img,' -m ',moving,' -p ',param_af,' -out ',opts.outputdir_mc,' > ouput.txt'];
+        affine_command = strjoin(['elastix -f ',ref_img,' -m ',moving,' -p ',param_af,' -out ',opts.outputdir_mc,' > ouput.txt']);
     end
 
     dos(affine_command);
@@ -76,9 +76,9 @@ for ii=1:size(data,4)
 
     %%
     if ispc
-        rename_command = ['copy ',affine_transmat,' ',outputdir_tr,'\TransformParameters.',int2str(ii),'.txt'];
+        rename_command = strjoin(['copy ',affine_transmat,' ',outputdir_tr,'\TransformParameters.',int2str(ii),'.txt']);
     else
-        rename_command = ['cp ',affine_transmat,' ',outputdir_tr,'\TransformParameters.',int2str(ii),'.txt'];
+        rename_command = strjoin(['cp ',affine_transmat,' ',outputdir_tr,'\TransformParameters.',int2str(ii),'.txt']);
     end
 
     dos(rename_command);

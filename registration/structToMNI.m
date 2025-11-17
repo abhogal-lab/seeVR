@@ -42,8 +42,6 @@ global opts
 
 if isfield(opts,'useBET'); else; opts.useBET = 1; end                      %if this is set to 1, then brain extracted MNI image is used. Input structural image must also be brain extracted.
 if isfield(opts,'T1'); else; opts.T1 = 1; end                              %if this is set to 1, then T1w MNI image is used. High resolution functional images can be registered using opts.T1 = 0 - then T2w MNI image is used as target
-if isfield(opts,'invert_affine'); else; opts.invert_affine = 1; end 
-if isfield(opts,'invert_bspline'); else; opts.invert_bspline = 1; end 
 
 try opts.elastixdir; catch
     error('elastix directory not specified... specify OS-dependent path to elastix: e.g. opts.elastixdir = /.../seeVR/registration/elastix/')
@@ -120,79 +118,75 @@ else
 end
 
 if opts.useBET
-    target_image = refImg_BET;
+target_image = refImg_BET;
 else
     target_image = refImg;
 end
 
 [trans_params] = nlinReg(moveImg, moveMask, target_image , refMask, opts.bspline_dir, opts.elastixdir);
 
-if opts.invert_affine == 0 || opts.invert_bspline == 0
-    return;
+% update transform parameters
+outputdir = fullfile(opts.bspline_dir,'Inverse');
+mbs = fullfile(outputdir,'mTransformParameters.1.txt');
+
+if ispc
+    adaptElastixTransFile( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
+    adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
 else
-    % update transform parameters
-    outputdir = fullfile(opts.bspline_dir,'Inverse');
-    mbs = fullfile(outputdir,'mTransformParameters.1.txt');
+    adaptElastixTransFile_linux( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
+    adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
+end
 
+%% apply transformations to MNI masks
+
+maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
+maskname = dir('*.nii.gz*');
+
+fileToRename = fullfile(outputdir,'result.nii.gz');
+
+for kk=1:size(maskname,1)
+    maskImg = maskname(kk).name
+    [FILEPATH,NAME,EXT] = fileparts(maskImg);
     if ispc
-        adaptElastixTransFile( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
-        adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
+        trans_command = strjoin([fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
     else
-        adaptElastixTransFile_linux( trans_params.bspline_to_input, mbs, 'InitialTransformParametersFileName', trans_params.affine_to_input)
-        adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '0') % nearest neighbor interpolation for binary masks
+        trans_command = strjoin(['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
     end
-
-    %% apply transformations to MNI masks
-
-    maskdir = fullfile(opts.elastixdir,'MNI','labels'); cd(maskdir);
-    maskname = dir('*.nii.gz*');
-
-    fileToRename = fullfile(outputdir,'result.nii.gz');
-
-    for kk=1:size(maskname,1)
-        maskImg = maskname(kk).name
-        [FILEPATH,NAME,EXT] = fileparts(maskImg);
-        if ispc
-            trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
-        else
-            trans_command = ['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
-        end
-        system(trans_command);
-        name1 = fileToRename;
-        name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
-        movefile(name1, name2);
-        %move labels files
-        name1 = fullfile(maskdir,[maskImg(1:1:end-7),'.txt']);
-        name2 = fullfile(outputdir,[maskImg(1:1:end-7),'_labels.txt']);
-        if exist(name1) == 2
-            copyfile(name1, name2);
-        end
+    system(trans_command);
+    name1 = fileToRename;
+    name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
+    movefile(name1, name2);
+    %move labels files
+    name1 = fullfile(maskdir,[maskImg(1:1:end-7),'.txt']);
+    name2 = fullfile(outputdir,[maskImg(1:1:end-7),'_labels.txt']);
+    if exist(name1) == 2
+        copyfile(name1, name2);
     end
+end
 
-    clear maskname
-    % to probability maps
+clear maskname
+% to probability maps
+if ispc
+    adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '2')
+else
+    adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '2')
+end
+
+probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
+maskname = dir('*.nii.gz*');
+
+for kk=1:size(maskname,1)
+    maskImg = maskname(kk).name
+    [FILEPATH,NAME,EXT] = fileparts(maskImg);
     if ispc
-        adaptElastixTransFile( mbs, mbs, 'FinalBSplineInterpolationOrder', '2')
+        trans_command = strjoin([fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
     else
-        adaptElastixTransFile_linux( mbs, mbs, 'FinalBSplineInterpolationOrder', '2')
+        trans_command = strjoin(['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
     end
-
-    probmaskdir = fullfile(opts.elastixdir,'MNI','prob'); cd(probmaskdir);
-    maskname = dir('*.nii.gz*');
-
-    for kk=1:size(maskname,1)
-        maskImg = maskname(kk).name
-        [FILEPATH,NAME,EXT] = fileparts(maskImg);
-        if ispc
-            trans_command = [fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
-        else
-            trans_command = ['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ];
-        end
-        system(trans_command);
-        name1 = fileToRename;
-        name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
-        movefile(name1, name2)
-    end
+    system(trans_command);
+    name1 = fileToRename;
+    name2 = fullfile(outputdir,[NAME(1:1:end-4),'_toInput.nii.gz']);
+    movefile(name1, name2)
 end
 end
 

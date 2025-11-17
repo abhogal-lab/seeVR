@@ -38,7 +38,7 @@ for kk = 1:length(dirinfo)
         catch ME
             warning('Failed to run transformixReg on %s: %s', TxImg, ME.message);
         end
-    else
+    else.
         fprintf('Skipping unsupported file: %s\n', dirinfo(kk).name);
     end
-end
+end.

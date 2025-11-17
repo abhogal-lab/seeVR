@@ -16,6 +16,7 @@ for ii=1:maxInd
 
     voxels = tmp; voxels(isnan(voxels)) = [];
     voxelCount(ii) = numel(voxels);
+    tmp(isnan(tmp)) = [];
     meanVal(ii) = nanmean(tmp);
 
     atlasMap(atlas == ii) = meanVal(ii);

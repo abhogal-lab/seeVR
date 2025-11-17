@@ -63,23 +63,23 @@ elastixroot = opts.elastixdir;
 if ispc
     elastixrootOS = fullfile(elastixroot,'windows');
     if opts.usemask
-        affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
+        affine_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ]);
     else
-        affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg, ' -m ',moveImg,' -p ',param_af,' -out ',regdir ];
+        affine_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',refImg, ' -m ',moveImg,' -p ',param_af,' -out ',regdir ]);
     end
 elseif ismac
     elastixrootOS = fullfile(elastixroot,'mac','bin'); %not tested - may be buggy
     if opts.usemask
-        affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
+        affine_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ]);
     else
-        affine_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg, ' -m ',moveImg,' -p ',param_af,' -out ',regdir ];
+        affine_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',refImg, ' -m ',moveImg,' -p ',param_af,' -out ',regdir ]);
     end
 else
     elastixrootOS = fullfile(elastixroot,'linux','bin');
     if opts.usemask
-        affine_command = ['elastix -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ];
+        affine_command = strjoin(['elastix -f ',refImg,' -fmask ',refMask, ' -m ',moveImg,' -mmask ',moveMask,' -p ',param_af,' -out ',regdir ]);
     else
-        affine_command = ['elastix -f ',refImg, ' -m ',moveImg,' -p ',param_af,' -out ',regdir ];
+        affine_command = strjoin(['elastix -f ',refImg, ' -m ',moveImg,' -p ',param_af,' -out ',regdir ]);
     end
 end
 
@@ -105,9 +105,9 @@ if opts.invert_affine
     end
 
     if ispc
-        inverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg, ' -m ',moveImg_new,' -p ',param_af_rev,' -out ',invdir ];
+        inverse_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',moveImg, ' -m ',moveImg_new,' -p ',param_af_rev,' -out ',invdir ]);
     else
-        inverse_command = ['elastix -f ',moveImg,' -m ',moveImg_new,' -p ',param_af_rev,' -out ',invdir ];
+        inverse_command = strjoin(['elastix -f ',moveImg,' -m ',moveImg_new,' -p ',param_af_rev,' -out ',invdir ]);
     end
 
     system(inverse_command);

@@ -92,15 +92,15 @@ end
 
 if ispc
     if opts.usemask
-        bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ', refMask,' -m ',moveImg,' -mMask ',moveMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+        bspline_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -fmask ', refMask,' -m ',moveImg,' -mMask ',moveMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ]);
     else
-        bspline_command = [fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+        bspline_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',refImg,' -m ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ]);
     end
 else
     if opts.usemask
-        bspline_command = ['elastix -f ',refImg,' -fmask ', refMask,' -m ',moveImg,' -mMask ',moveMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+        bspline_command = strjoin(['elastix -f ',refImg,' -fmask ', refMask,' -m ',moveImg,' -mMask ',moveMask,' -p ',param_af,' -p ',param_bs,' -out ',regdir ]);
     else
-        bspline_command = ['elastix -f ',refImg,' -m0 ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ];
+        bspline_command = strjoin(['elastix -f ',refImg,' -m0 ',moveImg,' -p ',param_af,' -p ',param_bs,' -out ',regdir ]);
     end
 end
 
@@ -157,9 +157,9 @@ if opts.invert_bspline
     end
 
     if ispc
-        reverse_command = [fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
+        reverse_command = strjoin([fullfile(elastixrootOS,'elastix'),' -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir]);
     else
-        reverse_command = ['elastix -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir];
+        reverse_command = strjoin(['elastix -f ',moveImg,' -m ',input_img,' -p ',param_af_rev,' -p ',param_bs_rev,' -out ',outputdir]);
     end
     dos(reverse_command);
 

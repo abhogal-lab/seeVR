@@ -51,9 +51,9 @@ if isfield(opts,'passes'); else; opts.passes = 10; end                     %maxi
 if isfield(opts,'win_size'); else; opts.win_size = 1; end                  %the number of voxels to consider around the voxel of interest when opts.refine_tau = 1;
 if isfield(opts,'max_tau'); else; opts.max_tau = 300; end                  %maximum exponential dispersion time constant - data dependent
 if isfield(opts,'save_unrefined'); else; opts.save_unrefined = 0; end      %save maps before refinement step to check effect
-if isfield(opts,'save_responses'); else; opts.save_responses = 0; end      %save tau fits; good for checking fit quality
 if isfield(opts,'filloutliers'); else; opts.filloutliers = 1; end          %spike removal
 if isfield(opts,'medfilt_maps'); else; opts.medfilt_maps = 1; end          %cleans up tau maps with median filter but does not change statistical maps.
+%if isfield(opts,'save_responses'); else; opts.save_responses = 0; end      %save tau fits; good for checking fit quality
 
 opts.dynamicdir = fullfile(opts.resultsdir,'tau'); mkdir(opts.dynamicdir);
 savedir = opts.dynamicdir;
@@ -273,13 +273,15 @@ saveMap(cast(mask.*r,opts.mapDatatype), savedir, 'r_map', opts.info.map, opts);
 saveMap(cast(mask.*(r.^2),opts.mapDatatype), savedir, 'expVariance_r2_map', opts.info.map, opts);
 
 
-tau_fits = zeros(numel(mask), size(data,4));
-tau_fits(coordinates,:) = responseFits;
-tau_fits = reshape(tau_fits, (size(data)));
 
-if opts.save_responses
-    saveMap(cast(tau_fits,opts.tsDatatype), savedir, 'tau_fits', opts.info.ts, opts);
-end
+
+% if opts.save_responses
+%     tau_fits = zeros(numel(mask), size(responseFits,4));
+%     tau_fits(coordinates,:) = responseFits;
+%     tau_fits = reshape(tau_fits, (size(data)));
+%     saveMap(cast(tau_fits,opts.tsDatatype), savedir, 'tau_fits', opts.info.ts, opts);
+%     clear tau_fits
+% end
 
 maps.expHRF.signal_magnitude = b1_map;
 maps.expHRF.signal_dispersion = b2_map;
