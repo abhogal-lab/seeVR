@@ -15,10 +15,9 @@
 
 ## Why use seeVR?
 
-- **Purpose-built for CVR & hemodynamics**: pipelines and helpers aimed at hypercapnia/breath-hold/resting-state use cases.  
+- **Purpose-built for CVR & hemodynamics**: pipelines and helpers aimed at hypercapnia/breath-hold/resting-state use cases - goto www.seeVR.nl.  
 - **From data to maps**: CVR, lag-corrected CVR, HRF/dispersion/onset metrics, spectral features (fALFF), plus utilities (regression, filtering, masks).  
 - **Batteries included**: seeVieweR 3-D/4-D viewer for overlays, masks, erosion, slice controls, and movie/snapshot export.  
-- **Published & used by the community**: tutorials and references available (ISMRM, MR-Hub, lab tutorials).  
 
 ---
 
@@ -47,6 +46,12 @@
 - Walk-throughs for **CO₂ CVR** and **breath-hold/resting-state CVR**, with template scripts.
 
 Tutorials and test data available at the [seeVR toolbox website](https://www.seevr.nl/tutorials/)
+
+---
+
+### Bug Reporting
+- contact me if you need some advice on how to put together a pipeline
+- functions have been developped on a Windows machine, they probably work in Linux environment, but no guarantees for MAC. That said, I will work through errors in any case.
 
 ---
 
