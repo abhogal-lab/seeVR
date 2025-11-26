@@ -532,18 +532,18 @@ if opts.cvr_maps
             saveMap(cast(mask.*bTstat,opts.mapDatatype), opts.corrCVRdir, 'lin_regr_CVR_Tstat_map', opts.info.map, opts);
             maps.XCORR.CVR.bCVR   = bCVR;  maps.XCORR.CVR.bR2   = bR2;
             maps.XCORR.CVR.bSSE   = bSSE;  maps.XCORR.CVR.bTstat= bTstat;
-            CVR(1,:,:,:)   = mask.*bCVR;   %#ok<AGROW>
-            TSTAT(1,:,:,:) = mask.*bTstat; %#ok<AGROW>
-            RC(1,:,:,:)    = mask.*bR2;    %#ok<AGROW>
+            CVR(1,:,:,:)   = mask.*bCVR;   
+            TSTAT(1,:,:,:) = mask.*bTstat; 
+            RC(1,:,:,:)    = mask.*bR2;    
         else
             saveMap(cast(mask.*bCVR,  opts.mapDatatype), opts.corrCVRdir, 'lin_regr_CVR_effective_probe_map',       opts.info.map, opts);
             saveMap(cast(mask.*bR2,   opts.mapDatatype), opts.corrCVRdir, 'lin_regr_CVR_effective_probe_R2_map',    opts.info.map, opts);
             saveMap(cast(mask.*bTstat,opts.mapDatatype), opts.corrCVRdir, 'lin_regr_CVR_effective_probe_Tstat_map', opts.info.map, opts);
             maps.XCORR.CVR.bCVR_eff   = bCVR;  maps.XCORR.CVR.bR2_eff   = bR2;
             maps.XCORR.CVR.bSSE_eff   = bSSE;  maps.XCORR.CVR.bTstat_eff= bTstat;
-            CVR(2,:,:,:)   = mask.*bCVR;   %#ok<AGROW>
-            TSTAT(2,:,:,:) = mask.*bTstat; %#ok<AGROW>
-            RC(2,:,:,:)    = mask.*bR2;    %#ok<AGROW>
+            CVR(2,:,:,:)   = mask.*bCVR;   
+            TSTAT(2,:,:,:) = mask.*bTstat; 
+            RC(2,:,:,:)    = mask.*bR2;    
         end
 
         % --- Lag-corrected CVR (shift per voxel using correlation-derived indices) ---
@@ -624,9 +624,9 @@ if opts.cvr_maps
                 end
             end
             if opts.robust
-                CVR(3,:,:,:)   = mask.*cCVR;   %#ok<AGROW>
-                TSTAT(3,:,:,:) = mask.*cTstat; %#ok<AGROW>
-                RC(3,:,:,:)    = mask.*cR2;    %#ok<AGROW>
+                CVR(3,:,:,:)   = mask.*cCVR;   
+                TSTAT(3,:,:,:) = mask.*cTstat; 
+                RC(3,:,:,:)    = mask.*cR2;    
             end
         else
             saveMap(cast(mask.*cCVR, opts.mapDatatype), opts.corrCVRdir, 'lag_corrected_effective_CVR_map',       opts.info.map, opts);
@@ -646,9 +646,9 @@ if opts.cvr_maps
                 end
             end
             if opts.robust
-                CVR(4,:,:,:)   = mask.*cCVR;   %#ok<AGROW>
-                TSTAT(4,:,:,:) = mask.*cTstat; %#ok<AGROW>
-                RC(4,:,:,:)    = mask.*cR2;    %#ok<AGROW>
+                CVR(4,:,:,:)   = mask.*cCVR;   
+                TSTAT(4,:,:,:) = mask.*cTstat; 
+                RC(4,:,:,:)    = mask.*cR2;    
             end
         end
         disp('Stimulus response data is saved');

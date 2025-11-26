@@ -1,9 +1,19 @@
 % Copyright (C) Alex A. Bhogal, 2023, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% a.bhogal@umcutrecht.nl
 % <fitTau: fits a convolved hemodynamic response function to extract dynamic (i.e. TAU) CVR information >
 %
-% (GPL header unchanged)
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
 % *************************************************************************
 % this function is inspited by the manuscript from Poublanc et al.:
@@ -218,6 +228,8 @@ end
 
 %% save maps and calculate stats
 
+%% save maps and calculate stats
+
 responseFits = zeros(length(coordinates), length(t));
 b = [];
 b(1,:) = b1_map(coordinates);
@@ -230,36 +242,52 @@ r_corr = zeros(1,length(coordinates));
 
 % ---------- NEW: tau-corrected CVR storage ----------
 tau_cvr = nan(1, length(coordinates));
+
 % FFT of ORIGINAL (possibly interpolated) probe in native units
 probe_fft_orig = fftinput(probe);
 
+% Global validity + dynamic range of original probe
+valid_probe      = ~(isnan(probe) | isinf(probe));
+probe_dyn        = probe(valid_probe);
+range_probe      = max(probe_dyn) - min(probe_dyn);
+range_probe      = range_probe + eps;   % avoid divide-by-zero
+
 parfor ii = 1:length(coordinates)
-    % model fit (using rescaled probe)
+
+    % ---------------------------
+    % 1) Model fit (unchanged)
+    % ---------------------------
     responseFits(ii,:) = model(b(:,ii), t);
 
     SSE(1,ii) = (norm(ts(ii,:) - responseFits(ii,:)))^2;
-    SST(1,ii) = (norm(ts(ii,:)-mean(ts(ii,:))))^2;
+    SST(1,ii) = (norm(ts(ii,:) - mean(ts(ii,:))))^2;
     r_corr(1,ii) = corr(ts(ii,:)', responseFits(ii,:)');
 
-    % ---------------------------------------------------------
-    % Tau-corrected CVR:
-    %   - use voxel-specific tau
-    %   - convolve ORIGINAL probe with exponential dispersion
-    %   - regress voxel ts against dispersed probe
-    % ---------------------------------------------------------
+    % ---------------------------
+    % 2) Tau-corrected CVR
+    % ---------------------------
     tau_i = b(2,ii);
 
-    % exponential kernel with unit amplitude (tau = tau_i)
-    kernel_fft = fftexponential(tau_i, 1, t);
+    % Exponential kernel (unit amplitude)
+    kernel_fft      = fftexponential(tau_i, 1, t);
     dispersed_probe = real(ifft(ifftshift(probe_fft_orig .* kernel_fft)));
 
-    % same weighting strategy: ignore zeros / NaNs in ts
-    valid_idx = ~(ts(ii,:) == 0 | isnan(ts(ii,:)));
-    x = dispersed_probe(valid_idx)';
-    y = ts(ii,valid_idx)';
+    % Renormalize dispersed probe to have the SAME dynamic range
+    % as the original probe (over valid probe points)
+    dp_valid = dispersed_probe(valid_probe);
+    range_dp = max(dp_valid) - min(dp_valid);
+    range_dp = range_dp + eps;  % avoid NaN/Inf
+
+    scaleFactor = range_probe / range_dp;
+    dispersed_probe = dispersed_probe * scaleFactor;
+
+    % Same weighting strategy as tau fit: ignore 0/NaN in ts
+    valid_ts = ~(ts(ii,:) == 0 | isnan(ts(ii,:)));
+    x = dispersed_probe(valid_ts)';
+    y = ts(ii,valid_ts)';
 
     if numel(x) > 2 && any(x) && any(y)
-        % linear regression with intercept: y = beta1*x + beta0
+        % Linear regression with intercept: y = beta1*x + beta0
         X = [x, ones(numel(x),1)];
         beta = X \ y;
         tau_cvr(ii) = beta(1);   % slope = tau-corrected CVR
@@ -281,6 +309,7 @@ tau_cvr_map = zeros(1, numel(mask));
 tau_cvr_map(1, coordinates) = tau_cvr;
 tau_cvr_map = reshape(tau_cvr_map, size(mask));
 
+
 if opts.medfilt_maps
     b1_map      = medfilt3(b1_map);
     b2_map      = medfilt3(b2_map);
@@ -300,7 +329,7 @@ if opts.save_responses
     tau_fits = zeros(numel(mask), length(t));
     tau_fits(coordinates, :) = responseFits;
     tau_fits = reshape(tau_fits, [xx, yy, zz, length(t)]);
-    saveMap(cast(tau_fits, opts.tsDatatype), savedir, 'tau_fits', opts.info.ts, opts);
+    saveMap(tau_fits, savedir, 'tau_fits', opts.info.ts, opts);
     maps.fitted_responses = tau_fits;
     clear tau_fits
 end
