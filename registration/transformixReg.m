@@ -53,9 +53,9 @@ else
 end
 
 if ispc
-    transform_command = strjoin([fullfile(elastixrootOS, 'transformix'),' -in ',inputImg,' -out ',transformdir, ' -tp ', transformfile]);
+    transform_command = ([fullfile(elastixrootOS, 'transformix'),' -in ',inputImg,' -out ',transformdir, ' -tp ', transformfile]);
 else
-    transform_command = strjoin(['transformix -in ',inputImg,' -out ',transformdir, ' -tp ', transformfile]);
+    transform_command = (['transformix -in ',inputImg,' -out ',transformdir, ' -tp ', transformfile]);
 end
 dos(transform_command);
 

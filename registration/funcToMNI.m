@@ -202,9 +202,9 @@ end
 fileToRename = fullfile(opts.regFuncOutputMNI,'result.nii.gz');
 
 if ispc
-        trans_command = strjoin([fullfile(elastixrootOS,'transformix'),' -in ',moveImg_BET,' -out ',opts.regFuncOutputMNI,' -tp ',mtrans3 ]);
+        trans_command = ([fullfile(elastixrootOS,'transformix'),' -in ',moveImg_BET,' -out ',opts.regFuncOutputMNI,' -tp ',mtrans3 ]);
     else
-        trans_command = strjoin(['transformix -in ',moveImg_BET,' -out ',opts.regFuncOutputMNI,' -tp ',mtrans3]);
+        trans_command = (['transformix -in ',moveImg_BET,' -out ',opts.regFuncOutputMNI,' -tp ',mtrans3]);
 end
 system(trans_command);
  name1 = fileToRename;
@@ -228,9 +228,9 @@ for kk=1:size(maskname,1)
     maskImg = maskname(kk).name
     [FILEPATH,NAME,EXT] = fileparts(maskImg);
     if ispc
-        trans_command = strjoin([fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ]);
+        trans_command = ([fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ]);
     else
-        trans_command = strjoin(['transformix -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ]);
+        trans_command = (['transformix -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ]);
     end
     system(trans_command);
     name1 = fileToRename;
@@ -259,9 +259,9 @@ for kk=1:size(maskname,1)
     maskImg = maskname(kk).name
     [FILEPATH,NAME,EXT] = fileparts(maskImg);
     if ispc
-        trans_command = strjoin([fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ]);
+        trans_command = ([fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ]);
     else
-        trans_command = strjoin(['transformix -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ]);
+        trans_command = (['transformix -in ',maskImg,' -out ',opts.regFuncOutputMNI,' -tp ',mInvtrans3 ]);
     end
     system(trans_command);
     name1 = fileToRename;

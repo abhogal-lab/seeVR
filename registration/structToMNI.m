@@ -148,9 +148,9 @@ for kk=1:size(maskname,1)
     maskImg = maskname(kk).name
     [FILEPATH,NAME,EXT] = fileparts(maskImg);
     if ispc
-        trans_command = strjoin([fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
+        trans_command = ([fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
     else
-        trans_command = strjoin(['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
+        trans_command = (['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
     end
     system(trans_command);
     name1 = fileToRename;
@@ -179,9 +179,9 @@ for kk=1:size(maskname,1)
     maskImg = maskname(kk).name
     [FILEPATH,NAME,EXT] = fileparts(maskImg);
     if ispc
-        trans_command = strjoin([fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
+        trans_command = ([fullfile(elastixrootOS,'transformix'),' -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
     else
-        trans_command = strjoin(['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
+        trans_command = (['transformix -in ',maskImg,' -out ',outputdir,' -tp ',mbs ]);
     end
     system(trans_command);
     name1 = fileToRename;
