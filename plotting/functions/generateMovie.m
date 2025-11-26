@@ -67,6 +67,11 @@
 %__________________________________________________________________________
 
 function generateMovie(mask,source,data,cmap,trace,opts)
+mask = double(mask);
+source = double(source);
+data = double(data);
+trace = double(trace);
+
 %GENERATEMOVIE  Montage movie of 4-D fMRI volumes + stimulus trace.
 %   Full documentation omitted here for brevity ─ nothing changed
 %   except the colour-bar implementation.  See previous version for help.

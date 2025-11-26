@@ -55,18 +55,11 @@ tNSR = 1/tSNR;
 
 %save image
 
-if opts.niiwrite
-    cd(opts.resultsdir);
-    niftiwrite(cast(SDm,opts.mapDatatype),'tSD',opts.info.map);
-    niftiwrite(cast(tSNR,opts.mapDatatype),'tSNR',opts.info.map);
-    niftiwrite(cast(SDinv,opts.mapDatatype),'SDinv',opts.info.map);
-    niftiwrite(cast(tNSR,opts.mapDatatype),'tNSR',opts.info.map);
-else
-    saveImageData(SDm,opts.headers.map,opts.resultsdir,'tSD.nii.gz',64);
-    saveImageData(tSNR,opts.headers.map,opts.resultsdir,'tSNR.nii.gz',64);
-    saveImageData(SDinv,opts.headers.map,opts.resultsdir,'SDinv.nii.gz',64);
-    saveImageData(tNSR,opts.headers.map,opts.resultsdir,'tNSR.nii.gz',64);
-end
+saveMap(SDm, opts.resultsdir, 'tSD', opts.info.map, opts)
+saveMap(tSNR, opts.resultsdir, 'tSNR', opts.info.map, opts)
+saveMap(SDinv, opts.resultsdir, 'SDinv', opts.info.map, opts)
+saveMap(tNSR, opts.resultsdir, 'tNSR', opts.info.map, opts)
+
 
 %update WBmask to exclude unreliable signals
 mmask = mask;
@@ -83,33 +76,29 @@ end
 mmask(isinf(tNSR)) = 0; mmask(tNSR > opts.LVthresh) = 0; %This step should remove vessels and garbage data
 
 %saves new brain mask excluding voxels
-if opts.niiwrite
-    name = fullfile(opts.resultsdir,['mWBmask_',num2str(opts.LVthresh)]);
-    name(name == '.') = '_';
-    niftiwrite(cast(mmask,opts.maskDatatype),name,opts.info.mask);
-else
-    saveImageData(mmask,opts.headers.mask,opts.resultsdir,['mWBmask_',num2str(opts.LVthresh),'.nii.gz'],64);
-end
+name = ['mWBmask_',num2str(opts.LVthresh)];
+name(name == '.') = '_';
+saveMap(mmask, opts.resultsdir, name, opts.info.mask, opts)
 
-    disp('saving tSD map');
-    disp('saving tSNR map');
-    disp('saving 1/tSD map')
-    disp('saving tNSR map')
-    disp('saving updated whole brain mask')
-    
-    % Plot
-    figure;
-    z = round(size(data,3)/2);
-    subplot(1,3,1)
-    imagesc(imrotate(mean(data(:,:,z,:),4),90));
-    title('mean image', 'Color', 'w'); colormap(gray); cleanPlot;
-    subplot(1,3,2)
-    imagesc(imrotate(mask(:,:,z),90));
-    title('original mask', 'Color', 'w'); cleanPlot;
-    subplot(1,3,3)
-    imagesc(imrotate(mmask(:,:,z),90));
-    title('modified mask', 'Color', 'w'); cleanPlot;
-    set(gcf, 'Units', 'pixels', 'Position', [200, 500, 600, 160]);
+disp('saving tSD map');
+disp('saving tSNR map');
+disp('saving 1/tSD map')
+disp('saving tNSR map')
+disp('saving updated whole brain mask')
+
+% Plot
+figure;
+z = round(size(data,3)/2);
+subplot(1,3,1)
+imagesc(imrotate(mean(data(:,:,z,:),4),90));
+title('mean image', 'Color', 'w'); colormap(gray); cleanPlot;
+subplot(1,3,2)
+imagesc(imrotate(mask(:,:,z),90));
+title('original mask', 'Color', 'w'); cleanPlot;
+subplot(1,3,3)
+imagesc(imrotate(mmask(:,:,z),90));
+title('modified mask', 'Color', 'w'); cleanPlot;
+set(gcf, 'Units', 'pixels', 'Position', [200, 500, 600, 160]);
 
 end
 
