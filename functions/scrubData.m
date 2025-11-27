@@ -244,7 +244,4 @@ mape_map   = reshape(mape_map,   [nx, ny, nz]);
 saveMap(cast(euclid_map, opts.mapDatatype), opts.resultsdir,'euclidean_distance',opts.info.map, opts);
 saveMap(cast(mape_map,   opts.mapDatatype), opts.resultsdir,'MAPE',opts.info.map, opts);
 
-niftiwrite(cast(euclid_map, opts.mapDatatype), 'euclidean_distance', opts.info.map);
-niftiwrite(cast(mape_map,   opts.mapDatatype), 'MAPE',               opts.info.map);
-
 end
