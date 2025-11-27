@@ -1,6 +1,5 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% a.bhogal@umcutrecht.nl
 % <trAlign: aligns an input signal with a reference signal >
 %
 % This program is free software: you can redistribute it and/or modify

@@ -52,7 +52,7 @@ if isfield(opts,'win_size');      else; opts.win_size = 1; end
 if isfield(opts,'max_tau');       else; opts.max_tau = 300; end
 if isfield(opts,'save_unrefined');else; opts.save_unrefined = 0; end
 if isfield(opts,'filloutliers');  else; opts.filloutliers = 1; end
-if isfield(opts,'medfilt_maps');  else; opts.medfilt_maps = 1; end
+if isfield(opts,'medfilt_maps');  else; opts.medfilt_maps = 0; end
 if isfield(opts,'save_responses');else; opts.save_responses = 0; end
 
 opts.dynamicdir = fullfile(opts.resultsdir,'tau'); mkdir(opts.dynamicdir);
@@ -326,12 +326,16 @@ saveMap(cast(mask.*(r.^2),      opts.mapDatatype), savedir, 'expVariance_r2_map'
 saveMap(cast(mask.*tau_cvr_map, opts.mapDatatype), savedir, 'tau_corrected_CVR',    opts.info.map, opts);
 
 if opts.save_responses
+    try
     tau_fits = zeros(numel(mask), length(t));
     tau_fits(coordinates, :) = responseFits;
     tau_fits = reshape(tau_fits, [xx, yy, zz, length(t)]);
-    saveMap(tau_fits, savedir, 'tau_fits', opts.info.ts, opts);
+    saveMap(cast(tau_fits, opts.info.ts.Datatype), savedir, 'tau_fits', opts.info.ts, opts);
     maps.fitted_responses = tau_fits;
     clear tau_fits
+    catch
+        disp('error: confirm length of data matches info/header')
+    end
 end
 
 maps.expHRF.signal_magnitude     = b1_map;
