@@ -97,7 +97,7 @@ else
     handles.figdir = pwd;
 end
 
-handles.dyn   = numel(handles.TS);
+handles.dyn   = numel(handles.TS);       % TS length is ground truth
 handles.xdata = 1:handles.dyn;
 
 % Pre-smooth master signals (we will always slice from these for display)
@@ -113,15 +113,34 @@ end
                                      rescale(handles.TS), ...
                                      'none');
 
-% Choose initial alignment based only on non-negative lags,
-% to keep indexing consistent with the original behaviour
+% ---------- choose initial lag: best that allows a full window ----------
 posIdx  = handles.lags >= 0;
 rPos    = handles.rAll(posIdx);
 lagsPos = handles.lags(posIdx);
 
-% Find maximum correlation for non-negative lags
-[handles.M, idxPos] = max(rPos);
-handles.maxcorr = lagsPos(idxPos);        % this is a lag value (>=0)
+NcorrSm = numel(handles.corrvec_sm);
+dyn     = handles.dyn;
+
+% Sort positive-lag correlations by magnitude (descending)
+[sortedR, sortIdx] = sort(rPos, 'descend');
+sortedLags         = lagsPos(sortIdx);
+
+chosenLag = sortedLags(1);
+chosenR   = sortedR(1);
+
+for k = 1:numel(sortedLags)
+    L  = sortedLags(k);
+    st = L;               % original semantics: st = lag
+    en = st + dyn - 1;
+    if st >= 1 && en <= NcorrSm
+        chosenLag = L;
+        chosenR   = sortedR(k);
+        break;
+    end
+end
+
+handles.maxcorr = chosenLag;       % chosen initial lag
+handles.M       = chosenR;
 handles.midlag  = find(handles.lags == 0, 1);  % index of zero lag
 
 % Store r for plotting (now includes both negative and positive lags)
@@ -134,32 +153,62 @@ handles.window = 1:numel(handles.lags);
 handles.st = handles.maxcorr;
 handles.en = handles.st + handles.dyn - 1;
 
-% Safety clamp: avoid going out of bounds if the auto guess is at the edge
 Ncorr = numel(handles.corrvec_sm);
-if handles.st < 1
+
+% Ensure that we can get a window of length dyn from corrvec_sm if possible
+if Ncorr >= handles.dyn
+    if handles.st < 1
+        handles.st = 1;
+    end
+    if handles.st > Ncorr - handles.dyn + 1
+        handles.st = Ncorr - handles.dyn + 1;
+    end
+    handles.en = handles.st + handles.dyn - 1;
+else
+    % corrvec shorter than TS: take full corrvec and pad probe to match dyn
     handles.st = 1;
-end
-if handles.en > Ncorr
     handles.en = Ncorr;
-    handles.st = handles.en - handles.dyn + 1;
 end
 
-% Main aligned probes (smoothed for display)
-handles.probe1 = handles.corrvec_sm(handles.st:handles.en);
+% Main aligned probes (smoothed for display) - always pad to dyn
+win1 = handles.corrvec_sm(handles.st:handles.en);
+if numel(win1) < handles.dyn
+    win1 = [win1, nan(1, handles.dyn - numel(win1))];
+end
+handles.probe1 = win1(1:handles.dyn);
+
 if isfield(handles,'corrvec2_sm')
-    handles.probe2 = handles.corrvec2_sm(handles.st:handles.en);
+    N2  = numel(handles.corrvec2_sm);
+    idx = handles.st:handles.en;
+    vals = nan(1, numel(idx));
+    valid = idx >= 1 & idx <= N2;
+    vals(valid) = handles.corrvec2_sm(idx(valid));
+    if numel(vals) < handles.dyn
+        vals = [vals, nan(1, handles.dyn - numel(vals))];
+    end
+    handles.probe2 = vals(1:handles.dyn);
 end
 
 % Extended probes (±5% extra from original input corrvec/corrvec2)
 handles = computeExtendedProbes(handles);
 
-% Slider setup:
-% offset 0 = auto-lag guess, slider refines around it
-minRange = handles.maxcorr; % how far we can walk back towards start
-maxRange = numel(handles.corrvec) - numel(handles.TS) - handles.maxcorr;
-slRange  = maxRange + minRange;
+% ------------------------ Slider setup ------------------------
+% offset 0 = auto-lag guess, slider refines around it.
+leftMaxShift  = max(0, handles.maxcorr - 1);
+rightMaxShift = max(0, numel(handles.corrvec) - numel(handles.TS) - handles.maxcorr);
+
+sliderMin = -leftMaxShift;
+sliderMax =  rightMaxShift;
+
+% If range is degenerate (no real room to move), still give a tiny range
+if sliderMax <= sliderMin
+    sliderMin = -1;
+    sliderMax =  1;
+end
+
+slRange = sliderMax - sliderMin;
 if slRange <= 0
-    slRange = 1; % avoid NaNs in sliderstep if corner case
+    slRange = 1;
 end
 
 handles.lastSliderVal = 0;
@@ -167,8 +216,8 @@ handles.offset        = 0;
 handles.stPt          = handles.maxcorr;  % initial lag indicator for plot
 
 set(handles.slider1, ...
-    'Min', -(minRange-1), ...
-    'Max',  maxRange, ...
+    'Min', sliderMin, ...
+    'Max', sliderMax, ...
     'Sliderstep', [1/slRange 1/slRange], ...
     'Value', handles.lastSliderVal);
 
@@ -277,20 +326,36 @@ handles.en = handles.st + handles.dyn - 1;
 
 Ncorr = numel(handles.corrvec_sm);
 
-% Clamp to valid window if user goes to extremes
-if handles.st < 1
-    handles.st = 1;
+if Ncorr >= handles.dyn
+    if handles.st < 1
+        handles.st = 1;
+    end
+    if handles.st > Ncorr - handles.dyn + 1
+        handles.st = Ncorr - handles.dyn + 1;
+    end
     handles.en = handles.st + handles.dyn - 1;
-end
-if handles.en > Ncorr
+else
+    handles.st = 1;
     handles.en = Ncorr;
-    handles.st = handles.en - handles.dyn + 1;
 end
 
-% Update main probes (smoothed)
-handles.probe1 = handles.corrvec_sm(handles.st:handles.en);
+% Update main probes (smoothed, padded to dyn)
+win1 = handles.corrvec_sm(handles.st:handles.en);
+if numel(win1) < handles.dyn
+    win1 = [win1, nan(1, handles.dyn - numel(win1))];
+end
+handles.probe1 = win1(1:handles.dyn);
+
 if isfield(handles,'corrvec2_sm')
-    handles.probe2 = handles.corrvec2_sm(handles.st:handles.en);
+    N2  = numel(handles.corrvec2_sm);
+    idx = handles.st:handles.en;
+    vals = nan(1, numel(idx));
+    valid = idx >= 1 & idx <= N2;
+    vals(valid) = handles.corrvec2_sm(idx(valid));
+    if numel(vals) < handles.dyn
+        vals = [vals, nan(1, handles.dyn - numel(vals))];
+    end
+    handles.probe2 = vals(1:handles.dyn);
 end
 
 % Update extended probes (from original input with ±5% extra)

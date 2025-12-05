@@ -66,9 +66,9 @@ dos(transform_command);
 [~, name, ext2] = fileparts(name);
 
 name1 = fullfile(transformdir,'result.nii.gz');
-name2 = fullfile(transformdir,strjoin(['tr_',name,'.nii.gz']));
+name2 = fullfile(transformdir,(['tr_',name,'.nii.gz']));
 movefile(name1, name2);
 % load registered image
-[image,~] = loadImage(transformdir, strjoin(['tr_',name,'.nii.gz']));
+[image,~] = loadImage(transformdir, (['tr_',name,'.nii.gz']));
 
 end
