@@ -89,15 +89,19 @@ disp('saving updated whole brain mask')
 % Plot
 figure;
 z = round(size(data,3)/2);
-subplot(1,3,1)
+subplot(1,4,1)
 imagesc(imrotate(mean(data(:,:,z,:),4),90));
 title('mean image', 'Color', 'w'); colormap(gray); cleanPlot;
-subplot(1,3,2)
+subplot(1,4,2)
 imagesc(imrotate(mask(:,:,z),90));
 title('original mask', 'Color', 'w'); cleanPlot;
-subplot(1,3,3)
+subplot(1,4,3)
 imagesc(imrotate(mmask(:,:,z),90));
 title('modified mask', 'Color', 'w'); cleanPlot;
+set(gcf, 'Units', 'pixels', 'Position', [200, 500, 600, 160]);
+subplot(1,4,4)
+imagesc(imrotate(mask(:,:,z)-mmask(:,:,z),90));
+title('difference', 'Color', 'w'); cleanPlot;
 set(gcf, 'Units', 'pixels', 'Position', [200, 500, 600, 160]);
 
 end

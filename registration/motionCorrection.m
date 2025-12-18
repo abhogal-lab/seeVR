@@ -3,8 +3,10 @@ function [data_mcf, motion_params] = motionCorrection(data,opts)
 global opts
 if ~isfield(opts,'info.map');
     disp('no header present, loading input data to produce headers')
-    [pathstr, name, ext] = fileparts(data)
+    [pathstr, name, ext] = fileparts(data);
     [data,~] = loadTimeseries(pathstr,[name,ext]);
+else
+    [pathstr, ~, ~] = fileparts(opts.info.map.Filename);
 end
 
 global opts
@@ -13,7 +15,6 @@ try opts.elastixdir; catch
 end
 
 if isfield(opts,'use_mean'); else; opts.use_mean = 1; end
-
 
 elastixroot = opts.elastixdir;
 
@@ -32,9 +33,59 @@ if exist(fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_mcf.txt')) 
 else
     error(['check elastix parameter file. Expected: ',fullfile(opts.elastixdir,'parameter_files','ParameterFileAf_mcf.txt')])
 end
+
 opts.outputdir_mc = fullfile(opts.savedir,'motion_corrected');
 mkdir(opts.outputdir_mc);
 
+% =====================================================================
+% Helper: map MATLAB class to NIfTI Datatype and BitsPerPixel
+% =====================================================================
+inClass = class(data);   % we will preserve this
+
+    function info = syncDatatype(info, cls)
+        switch cls
+            case 'double'
+                info.Datatype     = 'double';
+                info.BitsPerPixel = 64;
+            case 'single'
+                info.Datatype     = 'single';
+                info.BitsPerPixel = 32;
+            case 'uint8'
+                info.Datatype     = 'uint8';
+                info.BitsPerPixel = 8;
+            case 'int8'
+                info.Datatype     = 'int8';
+                info.BitsPerPixel = 8;
+            case 'uint16'
+                info.Datatype     = 'uint16';
+                info.BitsPerPixel = 16;
+            case 'int16'
+                info.Datatype     = 'int16';
+                info.BitsPerPixel = 16;
+            case 'uint32'
+                info.Datatype     = 'uint32';
+                info.BitsPerPixel = 32;
+            case 'int32'
+                info.Datatype     = 'int32';
+                info.BitsPerPixel = 32;
+            otherwise
+                warning('Unsupported input class %s, defaulting to double in NIfTI.', cls);
+                info.Datatype     = 'double';
+                info.BitsPerPixel = 64;
+        end
+        % make sure PixelDimensions has enough entries
+        if numel(info.PixelDimensions) < numel(info.ImageSize)
+            info.PixelDimensions(end+1:numel(info.ImageSize)) = 1;
+        end
+        % remove low-level raw header if present (avoids headerBytes assert)
+        if isfield(info,'raw')
+            info = rmfield(info,'raw');
+        end
+    end
+
+% =====================================================================
+% Reference image (only saving logic changed)
+% =====================================================================
 if opts.use_mean
     reference = mean(data,4); %use mean image
 else
@@ -42,14 +93,22 @@ else
 end
 
 cd(opts.outputdir_mc)
-niftiwrite(cast(reference, opts.mapDatatype),'reference_image',opts.info.map);
+
+refInfo           = opts.info.map;
+refInfo.ImageSize = size(reference);
+refInfo           = syncDatatype(refInfo, inClass);
+
+niftiwrite(cast(reference, inClass),'reference_image',refInfo,'Compressed',false,'Version','NIfTI1');
 ref_img = fullfile(opts.outputdir_mc,'reference_image.nii');
 
-data_mcf = zeros(size(data));
-data_tr = zeros(size(data));
+% =====================================================================
+% Main loop (Elastix calls unchanged, only moving-image saving fixed)
+% =====================================================================
+data_mcf = [];
+data_tr  = []; %#ok<NASGU>
 
 affine_transmat = fullfile(opts.outputdir_mc,'TransformParameters.0.txt');
-outputdir_tr = fullfile(opts.outputdir_mc,'transformation_files');
+outputdir_tr    = fullfile(opts.outputdir_mc,'transformation_files');
 mkdir(outputdir_tr);
 
 for ii=1:size(data,4)
@@ -58,8 +117,12 @@ for ii=1:size(data,4)
 
     cd(opts.outputdir_mc)
     moving_img = squeeze(data(:,:,:,ii));
-    niftiwrite(cast(moving_img, opts.mapDatatype),'moving_image',opts.info.map);
 
+    movInfo           = opts.info.map;
+    movInfo.ImageSize = size(moving_img);
+    movInfo           = syncDatatype(movInfo, inClass);
+
+    niftiwrite(cast(moving_img, inClass),'moving_image',movInfo,'Compressed',false,'Version','NIfTI1');
     moving = fullfile(opts.outputdir_mc,'moving_image.nii');
 
     if ispc
@@ -72,7 +135,14 @@ for ii=1:size(data,4)
 
     %load registered image
     [img, ~] = loadImage(opts.outputdir_mc,'result.0.nii.gz');
-    data_mcf(:,:,:,ii) = img;
+
+    if ii == 1
+        % Allocate based on what Elastix actually returns
+        inClass = class(img);  % likely 'single' if ResultImagePixelType "float"
+        data_mcf = zeros([size(img) size(data,4)], inClass);
+    end
+
+    data_mcf(:,:,:,ii) = img;  % no cast needed, types match
 
     %%
     if ispc
@@ -86,10 +156,26 @@ for ii=1:size(data,4)
 end
 
 disp('...completed motion correction')
-cd(opts.outputdir_mc)
-data_mcf = cast(data_mcf, opts.tsDatatype);
-niftiwrite(data_mcf,'data_mcf',opts.info.ts);
 
+% =====================================================================
+% Final save of data_mcf (fixed)
+% =====================================================================
+cd(opts.outputdir_mc)
+
+if isfield(opts,'info') && isfield(opts.info,'ts')
+    outInfo = opts.info.ts;
+else
+    outInfo = opts.info.map;
+end
+
+outInfo.ImageSize = size(data_mcf);
+outInfo           = syncDatatype(outInfo, inClass);
+
+niftiwrite(cast(data_mcf, inClass),'data_mcf',outInfo,'Compressed',false,'Version','NIfTI1');
+
+% =====================================================================
+% Motion parameters (unchanged)
+% =====================================================================
 cd(fullfile(opts.outputdir_mc,'transformation_files'))
 
 disp('generating motion file')
@@ -108,7 +194,7 @@ for idx=1:length(names)
         if contains(tline, '(TransformParameters')
             % Extract numerical parameters
             param_str = extractBetween(tline, '(TransformParameters ', ')');
-            param_vals = str2num(param_str{1}); 
+            param_vals = str2num(param_str{1}); %#ok<ST2NM>
             motion_params = [motion_params; param_vals];
             break;
         end
@@ -117,7 +203,7 @@ for idx=1:length(names)
     fclose(fid);
 end
 
-output_filename = fullfile(opts.outputdir_mc,'motion_params.txt')
+output_filename = fullfile(opts.outputdir_mc,'motion_params.txt');
 % Write the concatenated parameters to output file
 writematrix(motion_params, output_filename, 'Delimiter',  '\t');
 disp('motion parameters are saved in motion_params.txt file')
@@ -140,5 +226,6 @@ sgtitle('Motion Parameters Over Time');
 saveas(gcf,fullfile(opts.outputdir_mc,'motion_parameters.png'))
 saveas(gcf,fullfile(opts.outputdir_mc,'motion_parameters.fig'))
 close(gcf)
+
 cd(pathstr);
 end
