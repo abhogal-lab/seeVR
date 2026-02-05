@@ -140,9 +140,9 @@ if opts.save_unrefined && opts.refine_tau
     b2_map = reshape(b2_vec, [xx yy zz]);
     b3_map = reshape(b3_vec, [xx yy zz]);
     savedir = opts.dynamicdir;
-    saveMap(cast(mask.*b1_map,opts.mapDatatype), savedir, 'exp_scaling_unrefined',  opts.info.map, opts);
-    saveMap(cast(mask.*b2_map,opts.mapDatatype), savedir, 'exp_tau_unrefined',      opts.info.map, opts);
-    saveMap(cast(mask.*b3_map,opts.mapDatatype), savedir, 'exp_offset_unrefined',   opts.info.map, opts);
+    saveMap(mask.*b1_map, savedir, 'exp_scaling_unrefined', opts.info.map, opts);
+    saveMap(mask.*b2_map, savedir, 'exp_tau_unrefined', opts.info.map, opts);
+    saveMap(mask.*b3_map, savedir, 'exp_offset_unrefined', opts.info.map, opts);
 end
 
 if opts.refine_tau
@@ -317,13 +317,13 @@ if opts.medfilt_maps
     tau_cvr_map = medfilt3(tau_cvr_map);
 end
 
-saveMap(cast(mask.*b1_map,      opts.mapDatatype), savedir, 'signal_magnitude',     opts.info.map, opts);
-saveMap(cast(mask.*b2_map,      opts.mapDatatype), savedir, 'signal_dispersion',    opts.info.map, opts);
-saveMap(cast(mask.*b3_map,      opts.mapDatatype), savedir, 'signal_offset',        opts.info.map, opts);
-saveMap(cast(mask.*cR2,         opts.mapDatatype), savedir, 'R2_map',               opts.info.map, opts);
-saveMap(cast(mask.*r,           opts.mapDatatype), savedir, 'r_map',                opts.info.map, opts);
-saveMap(cast(mask.*(r.^2),      opts.mapDatatype), savedir, 'expVariance_r2_map',   opts.info.map, opts);
-saveMap(cast(mask.*tau_cvr_map, opts.mapDatatype), savedir, 'tau_corrected_CVR',    opts.info.map, opts);
+saveMap(mask.*b1_map, savedir, 'signal_magnitude',     opts.info.map, opts);
+saveMap(mask.*b2_map, savedir, 'signal_dispersion',    opts.info.map, opts);
+saveMap(mask.*b3_map, savedir, 'signal_offset',        opts.info.map, opts);
+saveMap(mask.*cR2, savedir, 'R2_map',               opts.info.map, opts);
+saveMap(mask.*r, savedir, 'r_map',                opts.info.map, opts);
+saveMap(mask.*(r.^2), savedir, 'expVariance_r2_map',   opts.info.map, opts);
+saveMap(mask.*tau_cvr_map, savedir, 'tau_corrected_CVR',    opts.info.map, opts);
 
 if opts.save_responses
     try

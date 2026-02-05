@@ -429,12 +429,7 @@ end
 
 %generate transit maps
 
-if opts.niiwrite
-    cd(opts.carpetdir)
-    niftiwrite(cast(carpet_mask, opts.maskDatatype),'carpetMask',opts.info.mask);
-else
-    saveImageData(carpet_mask, opts.headers.mask, opts.carpetdir, 'carpetMask.nii.gz', 64);
-end
+    saveMap(carpet_mask, opts.carpetdir,'carpetMask',opts.info.map, opts);
 
 for ii=1:mm
     transit_map = zeros([1 numel(mask)]);
@@ -443,12 +438,9 @@ for ii=1:mm
     if any(transit_line(ii,:)<0)
         transit_map(transit_map ~= 0) =  transit_map(transit_map ~= 0) + abs(min(transit_line(ii,:)));
     end
-    if opts.niiwrite
-        cd(opts.carpetdir)
-        niftiwrite(cast(transit_map/opts.carpet.interp_factor,opts.mapDatatype),['transitMap_',int2str(ii)],opts.info.map);
-    else
-        saveImageData(transit_map/opts.carpet.interp_factor, opts.headers.map, opts.carpetdir, ['transitMap_',int2str(ii),'.nii.gz'], 64);
-    end
+
+    saveMap(transit_map/opts.carpet.interp_factor, opts.carpetdir,['transitMap_',int2str(ii)],opts.info.map, opts);
+
     mapNr = ['transitMap_',int2str(ii)];
     eval(['maps.',mapNr,' = transit_map']);
 end
@@ -461,12 +453,9 @@ transit_map = reshape(transit_map,size(mask));
 if any(transit_line(ii,:)<0)
     transit_map(transit_map ~= 0) =  transit_map(transit_map ~= 0) + abs(min(transit_line(ii,:)));
 end
-if opts.niiwrite
-    cd(opts.carpetdir)
-    niftiwrite(cast(transit_map/opts.carpet.interp_factor, opts.mapDatatype),'meanTransitMap',opts.info.map);
-else
-    saveImageData(transit_map/opts.carpet.interp_factor, opts.headers.map, opts.carpetdir, 'meanTransitMap.nii.gz', 64);
-end
+
+saveMap(transit_map/opts.carpet.interp_factor, opts.carpetdir,'meanTransitMap',opts.info.map, opts);
+
 maps.meanTransit = transit_map/opts.carpet.interp_factor;
 %% Main Fig 2: Create figure with neuro assigned edges and average BOLD signal
 

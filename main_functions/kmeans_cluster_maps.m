@@ -54,10 +54,6 @@ clusteredVolume(validIdx) = clusterIdx;
 % Reshape clusteredVolume back to 3D
 clusteredVolume = reshape(clusteredVolume, [xDim, yDim, zDim]);
 
-if opts.niiwrite
-    cd(opts.resultsdir);
-    niftiwrite(cast(clusteredVolume, opts.mapDatatype),['kmClusterMap_',int2str(numClusters),'_clusters'],opts.info.map);
-else
-    saveImageData(clusteredVolume, opts.headers.map, opts.resultsdir, ['kmClusterMap_',int2str(numClusters),'_clusters.nii.gz'], 64);
-end
+saveMap(clusteredVolume, opts.resultsdir,['gmmClusterMap_',int2str(numClusters),'_clusters'],opts.info.map, opts);
+
 end

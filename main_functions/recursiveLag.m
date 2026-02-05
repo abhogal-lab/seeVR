@@ -284,14 +284,14 @@ if opts.smoothmap
     opts.FWHM = [3 3 3];
     maps.recursiveLag_map_smoothed = filterData(single(maps.recursiveLag_map), mask, mask, opts);
     opts.FWHM = fwhm_tmp; clear fwhm_tmp
-    saveMap(cast(maps.recursiveLag_map_smoothed, opts.mapDatatype), savedir, 'recursive_lag_map_smoothed', opts.info.map, opts);
+    saveMap(maps.recursiveLag_map_smoothed, savedir, 'recursive_lag_map_smoothed', opts.info.map, opts);
 end
 
 % -------------------------------------------------------------------------
 % Save maps ---------------------------------------------------------------
 % -------------------------------------------------------------------------
 if ~exist(savedir, 'dir'), mkdir(savedir); end
-saveMap(cast(lag_img, opts.mapDatatype), savedir, 'recursive_lag_map', opts.info.map, opts);
-saveMap(cast(R_img,   opts.mapDatatype), savedir, 'recursive_r_map',   opts.info.map, opts);
+saveMap(lag_img, savedir, 'recursive_lag_map', opts.info.map, opts);
+saveMap(R_img, savedir, 'recursive_r_map',   opts.info.map, opts);
 
 end

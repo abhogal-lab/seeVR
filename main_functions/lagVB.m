@@ -451,9 +451,9 @@ if opts.cvr
     maps.TLagCorr = reshape(maps.TLagCorr, mapSize);
 
     % Save
-    saveMap(cast(mask .* maps.cvrLagCorr, opts.mapDatatype), opts.VBdir, 'cvrLagCorr', opts.info.map, opts);
-    saveMap(cast(mask .* maps.R2LagCorr, opts.mapDatatype), opts.VBdir, 'R2LagCorr', opts.info.map, opts);
-    saveMap(cast(mask .* maps.TLagCorr,  opts.mapDatatype), opts.VBdir, 'Tstat_LagCorr',  opts.info.map, opts);
+    saveMap(mask .* maps.cvrLagCorr, opts.VBdir, 'cvrLagCorr', opts.info.map, opts);
+    saveMap(mask .* maps.R2LagCorr, opts.VBdir, 'R2LagCorr', opts.info.map, opts);
+    saveMap(mask .* maps.TLagCorr, opts.VBdir, 'Tstat_LagCorr',  opts.info.map, opts);
 end
 disp('finished running bayesian analysis')
 disp('...saving maps in .mat file' )

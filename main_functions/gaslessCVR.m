@@ -194,10 +194,10 @@ nCVRidx_map(nCVRidx_map > 100)  = 0;
 nCVRidx_map(nCVRidx_map < -100) = 0;
 
 % Save
-saveMap(cast(nCVRidx_map, opts.mapDatatype), opts.CVRidxdir,'GLM_CVR_normalized_map',opts.info.map, opts);
-saveMap(cast(CVRidx_map,  opts.mapDatatype), opts.CVRidxdir, 'GLM_CVR_non_normalized_map',opts.info.map, opts);
-saveMap(cast(mask.*R2,    opts.mapDatatype), opts.CVRidxdir, 'GLM_CVR_R2_map',opts.info.map, opts);
-saveMap(cast(mask.*Tstat, opts.mapDatatype), opts.CVRidxdir, 'GLM_CVR_Tstat_map',opts.info.map, opts);
+saveMap(nCVRidx_map, opts.CVRidxdir,'GLM_CVR_normalized_map',opts.info.map, opts);
+saveMap(CVRidx_map, opts.CVRidxdir, 'GLM_CVR_non_normalized_map',opts.info.map, opts);
+saveMap(R2, opts.CVRidxdir, 'GLM_CVR_R2_map',opts.info.map, opts);
+saveMap(Tstat, opts.CVRidxdir, 'GLM_CVR_Tstat_map',opts.info.map, opts);
 
 % Outputs struct
 nCVRidx_map(nCVRidx_map == 0) = NaN;

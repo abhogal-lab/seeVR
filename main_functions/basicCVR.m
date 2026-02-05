@@ -1,24 +1,24 @@
 % Copyright (C) Alex A. Bhogal, 2021, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
 % <basicCVR: generates a basic CVR map using baseline and stimulus indices >
-% 
+%
 % This program is free software: you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
-% 
+%
 % This program is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU General Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 % Using a defined baseline period and stimulus period, this function
 % returns a map of the signal change at each voxel between those epochs.
 %
 % *************************************************************************
-% data: absolute timeseries data (i.e. 4D BOLD MRI dataset that is not 
+% data: absolute timeseries data (i.e. 4D BOLD MRI dataset that is not
 % expressed in %signal change)
 %
 % mask: binary mask defining voxels of interest
@@ -52,11 +52,7 @@ delta = stim - base; delta(~mask) = NaN;
 delta(delta > 20) = 0; delta(delta < -20) = 0; %remove large BOLD
 delta(isnan(delta)) = 0;
 disp('Saving CVR map')
-if opts.niiwrite
-    cd(opts.resultsdir)
-    niftiwrite(cast(delta, opts.mapDatatype),'basicCVR',opts.info.map);
-else
-saveImageData(delta,opts.headers.map,opts.resultsdir,'basicCVR.nii.gz', 64);
-end
+saveMap(delta, opts.resultsdir,'basicCVR', opts.info.map, opts);
+
 end
 

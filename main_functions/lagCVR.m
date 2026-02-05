@@ -395,9 +395,9 @@ if opts.corr_model
         savedir = opts.corrlagdir;
         switch pp
             case 1
-                saveMap(cast(mask.*tmpLag,opts.mapDatatype), savedir, 'hemodynamic_lag_map_refined_probe', opts.info.map, opts);
-                saveMap(cast(mask.*lag_map,opts.mapDatatype), savedir, 'raw_hemodynamic_lag_map_refined_probe', opts.info.map, opts);
-                saveMap(cast(mask.*r_map,opts.mapDatatype),   savedir, 'r_map_refined_probe', opts.info.map, opts);
+                saveMap(mask.*tmpLag, savedir, 'hemodynamic_lag_map_refined_probe', opts.info.map, opts);
+                saveMap(mask.*lag_map, savedir, 'raw_hemodynamic_lag_map_refined_probe', opts.info.map, opts);
+                saveMap(mask.*r_map, savedir, 'r_map_refined_probe', opts.info.map, opts);
 
                 maps.XCORR.lag_opti       = tmpLag;
                 maps.XCORR.uncorrlag_opti = lag_map;
@@ -419,9 +419,9 @@ if opts.corr_model
                 end
 
             case 2
-                saveMap(cast(mask.*tmpLag,opts.mapDatatype), savedir, 'hemodynamic_lag_map_input_probe', opts.info.map, opts);
-                saveMap(cast(mask.*lag_map,opts.mapDatatype), savedir, 'raw_hemodynamic_lag_map_input_probe', opts.info.map, opts);
-                saveMap(cast(mask.*r_map,opts.mapDatatype),   savedir, 'r_map_input_probe', opts.info.map, opts);
+                saveMap(mask.*tmpLag, savedir, 'hemodynamic_lag_map_input_probe', opts.info.map, opts);
+                saveMap(mask.*lag_map, savedir, 'raw_hemodynamic_lag_map_input_probe', opts.info.map, opts);
+                saveMap(mask.*r_map, savedir, 'r_map_input_probe', opts.info.map, opts);
 
                 maps.XCORR.lag_input       = tmpLag;
                 maps.XCORR.uncorrlag_input = lag_map;
@@ -458,7 +458,7 @@ if opts.trace_corr && opts.robust
         robustIR(1,ii) = LAG2(IR(1,ii), ii);
     end
     robustIR = reshape(robustIR, size(mask));
-    saveMap(cast(logical(mask).*robustIR, opts.mapDatatype), opts.corrlagdir, 'robust_hemodymic_lag_map_r', opts.info.map, opts);
+    saveMap(logical(mask).*robustIR, opts.corrlagdir, 'robust_hemodymic_lag_map_r', opts.info.map, opts);
     maps.XCORR.robust_lag_r = robustIR;
     clear LAG RL LAG2 IR robustIR
 else
@@ -527,18 +527,18 @@ if opts.cvr_maps
 
         % Save (base)
         if pp == 1
-            saveMap(cast(mask.*bCVR,  opts.mapDatatype), opts.corrCVRdir, 'lin_regr_CVR_map',       opts.info.map, opts);
-            saveMap(cast(mask.*bR2,   opts.mapDatatype), opts.corrCVRdir, 'lin_regr_CVR_R2_map',    opts.info.map, opts);
-            saveMap(cast(mask.*bTstat,opts.mapDatatype), opts.corrCVRdir, 'lin_regr_CVR_Tstat_map', opts.info.map, opts);
+            saveMap(mask.*bCVR, opts.corrCVRdir, 'lin_regr_CVR_map',       opts.info.map, opts);
+            saveMap(mask.*bR2, opts.corrCVRdir, 'lin_regr_CVR_R2_map',    opts.info.map, opts);
+            saveMap(mask.*bTstat, opts.corrCVRdir, 'lin_regr_CVR_Tstat_map', opts.info.map, opts);
             maps.XCORR.CVR.bCVR   = bCVR;  maps.XCORR.CVR.bR2   = bR2;
             maps.XCORR.CVR.bSSE   = bSSE;  maps.XCORR.CVR.bTstat= bTstat;
             CVR(1,:,:,:)   = mask.*bCVR;   
             TSTAT(1,:,:,:) = mask.*bTstat; 
             RC(1,:,:,:)    = mask.*bR2;    
         else
-            saveMap(cast(mask.*bCVR,  opts.mapDatatype), opts.corrCVRdir, 'lin_regr_CVR_effective_probe_map',       opts.info.map, opts);
-            saveMap(cast(mask.*bR2,   opts.mapDatatype), opts.corrCVRdir, 'lin_regr_CVR_effective_probe_R2_map',    opts.info.map, opts);
-            saveMap(cast(mask.*bTstat,opts.mapDatatype), opts.corrCVRdir, 'lin_regr_CVR_effective_probe_Tstat_map', opts.info.map, opts);
+            saveMap(mask.*bCVR, opts.corrCVRdir, 'lin_regr_CVR_effective_probe_map',       opts.info.map, opts);
+            saveMap(mask.*bR2, opts.corrCVRdir, 'lin_regr_CVR_effective_probe_R2_map',    opts.info.map, opts);
+            saveMap(mask.*bTstat, opts.corrCVRdir, 'lin_regr_CVR_effective_probe_Tstat_map', opts.info.map, opts);
             maps.XCORR.CVR.bCVR_eff   = bCVR;  maps.XCORR.CVR.bR2_eff   = bR2;
             maps.XCORR.CVR.bSSE_eff   = bSSE;  maps.XCORR.CVR.bTstat_eff= bTstat;
             CVR(2,:,:,:)   = mask.*bCVR;   
@@ -607,9 +607,9 @@ if opts.cvr_maps
         cTstat(1,coordinates)= cT;  cTstat=reshape(cTstat,[xx yy zz]);
 
         if pp == 1
-            saveMap(cast(mask.*cCVR, opts.mapDatatype), opts.corrCVRdir, 'lag_corrected_CVR_map',       opts.info.map, opts);
-            saveMap(cast(mask.*cR2,  opts.mapDatatype), opts.corrCVRdir, 'lag_corrected_CVR_R2_map',    opts.info.map, opts);
-            saveMap(cast(mask.*cTstat,opts.mapDatatype),opts.corrCVRdir, 'lag_corrected_CVR_Tstat_map', opts.info.map, opts);
+            saveMap(mask.*cCVR, opts.corrCVRdir, 'lag_corrected_CVR_map',       opts.info.map, opts);
+            saveMap(mask.*cR2, opts.corrCVRdir, 'lag_corrected_CVR_R2_map',    opts.info.map, opts);
+            saveMap(mask.*cTstat, opts.corrCVRdir, 'lag_corrected_CVR_Tstat_map', opts.info.map, opts);
             maps.XCORR.CVR.cCVR   = cCVR;  maps.XCORR.CVR.cR2   = cR2;
             maps.XCORR.CVR.cSSE   = cSSE;  maps.XCORR.CVR.cTstat= cTstat;
 
@@ -629,9 +629,9 @@ if opts.cvr_maps
                 RC(3,:,:,:)    = mask.*cR2;    
             end
         else
-            saveMap(cast(mask.*cCVR, opts.mapDatatype), opts.corrCVRdir, 'lag_corrected_effective_CVR_map',       opts.info.map, opts);
-            saveMap(cast(mask.*cR2,  opts.mapDatatype), opts.corrCVRdir, 'lag_corrected_effective_CVR_R2_map',    opts.info.map, opts);
-            saveMap(cast(mask.*cTstat,opts.mapDatatype),opts.corrCVRdir, 'lag_corrected_effective_CVR_Tstat_map', opts.info.map, opts);
+            saveMap(mask.*cCVR, opts.corrCVRdir, 'lag_corrected_effective_CVR_map',       opts.info.map, opts);
+            saveMap(mask.*cR2, opts.corrCVRdir, 'lag_corrected_effective_CVR_R2_map',    opts.info.map, opts);
+            saveMap(mask.*cTstat,opts.corrCVRdir, 'lag_corrected_effective_CVR_Tstat_map', opts.info.map, opts);
             maps.XCORR.CVR.cCVR_eff   = cCVR;  maps.XCORR.CVR.cR2_eff   = cR2;
             maps.XCORR.CVR.cSSE_eff   = cSSE;  maps.XCORR.CVR.cTstat_eff= cTstat;
 
@@ -682,8 +682,8 @@ if opts.cvr_maps && opts.eff_probe && opts.trace_corr && opts.robust
         maps.XCORR.CVR.robustCVR_TSTAT = robustIT;
     end
     if opts.robustR
-        saveMap(mask.*robustIR,                    opts.corrCVRdir, 'CVR_based_on_highest_r_map',     opts.info.map, opts);
-        saveMap(mask.*(robustIR.^2),               opts.corrCVRdir, 'CVR_based_on_highest_r_r2_map',  opts.info.map, opts);
+        saveMap(mask.*robustIR, opts.corrCVRdir, 'CVR_based_on_highest_r_map',     opts.info.map, opts);
+        saveMap(mask.*(robustIR.^2), opts.corrCVRdir, 'CVR_based_on_highest_r_r2_map',  opts.info.map, opts);
         maps.XCORR.CVR.robustCVR_R = robustIR;
     end
     clear TSTAT RC CVR CVR2 robustIT robustIR
@@ -855,11 +855,11 @@ if opts.glm_model
 
         % Save GLM outputs
         if pp == 1
-            saveMap(cast(mask.*GLM_Estimate,opts.mapDatatype), opts.glmlagdir, 'GLM_refined_probe_beta_map',              opts.info.map, opts);
-            saveMap(cast(mask.*tmpLag,     opts.mapDatatype), opts.glmlagdir, 'GLM_refined_probe_hemodynamic_lag_map',  opts.info.map, opts);
-            saveMap(cast(mask.*GLM_lags,   opts.mapDatatype), opts.glmlagdir, 'raw_GLM_refined_probe_hemodynamic_lag_map', opts.info.map, opts);
-            saveMap(cast(mask.*cR2,        opts.mapDatatype), opts.glmlagdir, 'GLM_refined_probe_R2_map',                opts.info.map, opts);
-            saveMap(cast(mask.*cTstat,     opts.mapDatatype), opts.glmlagdir, 'GLM_refined_probe_Tstat_map',             opts.info.map, opts);
+            saveMap(mask.*GLM_Estimate, opts.glmlagdir, 'GLM_refined_probe_beta_map',              opts.info.map, opts);
+            saveMap(mask.*tmpLag, opts.glmlagdir, 'GLM_refined_probe_hemodynamic_lag_map',  opts.info.map, opts);
+            saveMap(mask.*GLM_lags, opts.glmlagdir, 'raw_GLM_refined_probe_hemodynamic_lag_map', opts.info.map, opts);
+            saveMap(mask.*cR2, opts.glmlagdir, 'GLM_refined_probe_R2_map',                opts.info.map, opts);
+            saveMap(mask.*cTstat, opts.glmlagdir, 'GLM_refined_probe_Tstat_map',             opts.info.map, opts);
 
             maps.GLM.optiReg_ES            = GLM_Estimate;
             maps.GLM.optiReg_lags          = tmpLag;
@@ -868,11 +868,11 @@ if opts.glm_model
             maps.GLM.optiReg_SSE           = cSSE;
             maps.GLM.optiReg_Tstat         = cTstat;
         else
-            saveMap(cast(mask.*GLM_Estimate,opts.mapDatatype), opts.glmlagdir, 'GLM_input_probe_beta_map',               opts.info.map, opts);
-            saveMap(cast(mask.*tmpLag,     opts.mapDatatype), opts.glmlagdir, 'GLM_input_probe_hemodynamic_lag_map',     opts.info.map, opts);
-            saveMap(cast(mask.*GLM_lags,   opts.mapDatatype), opts.glmlagdir, 'raw_GLM_input_probe_hemodynamic_lag_map', opts.info.map, opts);
-            saveMap(cast(mask.*cR2,        opts.mapDatatype), opts.glmlagdir, 'GLM_input_probe_R2_map',                   opts.info.map, opts);
-            saveMap(cast(mask.*cTstat,     opts.mapDatatype), opts.glmlagdir, 'GLM_input_probe_Tstat_map',                opts.info.map, opts);
+            saveMap(mask.*GLM_Estimate, opts.glmlagdir, 'GLM_input_probe_beta_map',               opts.info.map, opts);
+            saveMap(mask.*tmpLag, opts.glmlagdir, 'GLM_input_probe_hemodynamic_lag_map',     opts.info.map, opts);
+            saveMap(mask.*GLM_lags, opts.glmlagdir, 'raw_GLM_input_probe_hemodynamic_lag_map', opts.info.map, opts);
+            saveMap(mask.*cR2, opts.glmlagdir, 'GLM_input_probe_R2_map',                   opts.info.map, opts);
+            saveMap(mask.*cTstat, opts.glmlagdir, 'GLM_input_probe_Tstat_map',                opts.info.map, opts);
 
             maps.GLM.inputReg_ES           = GLM_Estimate;
             maps.GLM.inputReg_lags         = tmpLag;
@@ -917,9 +917,9 @@ if opts.glm_model
             cCVR = reshape(cCVR, [xx yy zz]);
 
             if pp == 1
-                saveMap(cast(mask.*cCVR, opts.mapDatatype), opts.glmCVRdir, 'GLM_refined_probe_lag_corrected_CVR_map', opts.info.map, opts);
+                saveMap(mask.*cCVR, opts.glmCVRdir, 'GLM_refined_probe_lag_corrected_CVR_map', opts.info.map, opts);
             else
-                saveMap(cast(mask.*cCVR, opts.mapDatatype), opts.glmCVRdir, 'GLM_input_probe_lag_corrected_CVR_map',   opts.info.map, opts);
+                saveMap(mask.*cCVR, opts.glmCVRdir, 'GLM_input_probe_lag_corrected_CVR_map',   opts.info.map, opts);
             end
             maps.GLM.CVR.optiReg_cCVR = cCVR;
 
@@ -945,14 +945,14 @@ if opts.glm_model
             cTstat(1,coordinates) = cT;   cTstat= reshape(cTstat,[xx yy zz]);
 
             if pp == 1
-                saveMap(cast(mask.*cR2,   opts.mapDatatype), opts.glmCVRdir, 'GLM_refined_probe_lag_corrected_R2_map',   opts.info.map, opts);
-                saveMap(cast(mask.*cTstat,opts.mapDatatype), opts.glmCVRdir, 'GLM_refined_probe_lag_corrected_Tstat_map',opts.info.map, opts);
+                saveMap(mask.*cR2, opts.glmCVRdir, 'GLM_refined_probe_lag_corrected_R2_map',   opts.info.map, opts);
+                saveMap(mask.*cTstat, opts.glmCVRdir, 'GLM_refined_probe_lag_corrected_Tstat_map',opts.info.map, opts);
                 maps.GLM.CVR.optiReg_cR2   = cR2;
                 maps.GLM.CVR.optiReg_cSSE  = cSSE;
                 maps.GLM.CVR.optiReg_cTstat= cTstat;
             else
-                saveMap(cast(mask.*cR2,   opts.mapDatatype), opts.glmCVRdir, 'GLM_input_probe_lag_corrected_R2_map',     opts.info.map, opts);
-                saveMap(cast(mask.*cTstat,opts.mapDatatype), opts.glmCVRdir, 'GLM_input_probe_lag_corrected_Tstat_map',  opts.info.map, opts);
+                saveMap(mask.*cR2, opts.glmCVRdir, 'GLM_input_probe_lag_corrected_R2_map',     opts.info.map, opts);
+                saveMap(mask.*cTstat, opts.glmCVRdir, 'GLM_input_probe_lag_corrected_Tstat_map',  opts.info.map, opts);
                 maps.GLM.CVR.inputReg_cR2   = cR2;
                 maps.GLM.CVR.inputReg_cSSE  = cSSE;
                 maps.GLM.CVR.inputReg_cTstat= cTstat;

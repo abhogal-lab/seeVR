@@ -91,8 +91,14 @@ if ~isfield(opts,'framerate'),  opts.framerate  = 24;             end
 
 % ---------- temporal controls -----------------------------------------
 if ~isfield(opts,'win'),        opts.win        = 3;              end
-if ~isfield(opts,'step'),       opts.step       = 3;       end
+if ~isfield(opts,'step'),       opts.step       = 3;              end
+if ~isfield(opts,'step_size'),  opts.step_size  = opts.step;      end   % <--- add
 if ~isfield(opts,'start_ind'),  opts.start_ind  = 1;              end
+
+% ---------- trace display ---------------------------------------------
+if ~isfield(opts,'trace_colors'),     opts.trace_colors = [];     end   % Nx3 or []
+if ~isfield(opts,'trace_shade_mode'), opts.trace_shade_mode = 'first'; end % 'first'|'mean'|'none'
+if ~isfield(opts,'trace_shade_index'),opts.trace_shade_index = 1; end   % which trace shades background
 
 % ---------- slice controls --------------------------------------------
 if ~isfield(opts,'start'),      opts.start      = 10;              end
@@ -142,7 +148,7 @@ end
 %% 4 — main loop
 fig=figure('Color','k','Units','pixels','Position',[10 80 1600 900]);
 
-for ii=opts.start_ind:opts.step_size:dyn-win
+for ii = opts.start_ind : opts.step_size : dyn - win
     t = tiledlayout(traceRow,opts.col,'Padding','loose','TileSpacing','compact');
     sliceCounter=1;
 
@@ -168,60 +174,129 @@ for ii=opts.start_ind:opts.step_size:dyn-win
     end
 
     % 4b — custom-positioned trace panel with colormap-shaded background ----
-    % Get position of full grid to anchor custom axis
     parentPos = get(t, 'Position');         % [x y width height] of tiledlayout
     traceHeightFrac = 0.12;                 % adjustable height for trace subplot
 
-    % Create trace axis manually (not part of tiledlayout)
     traceAx = axes('Parent', fig, ...
-        'Position', [parentPos(1), ...
-        parentPos(2), ...
-        parentPos(3), ...
-        parentPos(4) * traceHeightFrac], ...
+        'Position', [parentPos(1), parentPos(2), parentPos(3), parentPos(4) * traceHeightFrac], ...
         'Color', 'k');
-
     hold(traceAx, 'on')
 
-    % Normalize trace to [0,1] for shading
-    traceNorm = (trace - min(trace)) / (max(trace) - min(trace) + eps);
+    % ---- Ensure trace is [dyn x nTraces] ----------------------------------
+    if ~isempty(trace)
+        if size(trace,1) ~= dyn && size(trace,2) == dyn
+            trace = trace.';  % user provided [nTraces x dyn]
+        end
+    end
 
-    % Define background colormap for the trace panel
-    if isfield(opts, 'trace_cmap') && ~isempty(opts.trace_cmap)
-        traceCmap = opts.trace_cmap;  % User-supplied colormap (Nx3)
+    if isempty(trace)
+        nTr = 0;
+        traceNorm = nan(dyn,1);
     else
-        traceCmap = gray(128);        % Default to grayscale if not specified
+        nTr = size(trace,2);
+
+        % ---- Normalize each trace independently to [0,1] -------------------
+        traceNorm = nan(dyn, nTr);
+
+        for k = 1:nTr
+            x = double(trace(:,k));
+
+            % Force column
+            x = x(:);
+
+            % Make length match dyn (crop or pad with NaN)
+            if numel(x) > dyn
+                x = x(1:dyn);
+            elseif numel(x) < dyn
+                x(end+1:dyn,1) = NaN;
+            end
+
+            good = isfinite(x);
+            if any(good)
+                xmin = min(x(good));
+                xmax = max(x(good));
+                denom = (xmax - xmin);
+                if denom < eps
+                    traceNorm(:,k) = 0.5;  % constant trace -> flat line mid-height
+                else
+                    traceNorm(:,k) = (x - xmin) ./ (denom + eps);
+                end
+            end
+        end
+
     end
 
-    % Interpolate trace values to colormap indices
-    cmapIdx = round(1 + traceNorm * (size(traceCmap, 1)-1));
-    cmapIdx = min(max(cmapIdx, 1), size(traceCmap,1));
-
-    % Draw shaded background rectangles
-    for tIdx = 1:dyn
-        fill(traceAx, ...
-            [tIdx-0.5, tIdx+0.5, tIdx+0.5, tIdx-0.5], ...
-            [0, 0, 1, 1], ...
-            traceCmap(cmapIdx(tIdx),:), ...
-            'EdgeColor', 'none');
+    % ---- Trace colors ------------------------------------------------------
+    if nTr <= 1
+        traceColors = cmap(end,:);  % keep your old behavior for single trace
+    else
+        if ~isempty(opts.trace_colors)
+            traceColors = opts.trace_colors;
+            if size(traceColors,1) < nTr
+                traceColors = [traceColors; lines(nTr - size(traceColors,1))];
+            end
+            traceColors = traceColors(1:nTr,:);
+        else
+            traceColors = lines(nTr);
+        end
     end
 
-    % Plot trace line (top color of main cmap)
-    plot(traceNorm, 'Parent', traceAx, ...
-        'LineWidth', 2.5, 'Color', cmap(end,:));
+    % ---- Background shading colormap --------------------------------------
+    if isfield(opts, 'trace_cmap') && ~isempty(opts.trace_cmap)
+        traceCmap = opts.trace_cmap;   % user-supplied colormap (Nx3)
+    else
+        traceCmap = gray(128);
+    end
 
-    % Vertical time marker (bottom color of main cmap)
+    % Choose what drives shading: 'first' (default), 'mean', or 'none'
+    doShade = nTr > 0 && ~strcmpi(opts.trace_shade_mode,'none');
+
+    if doShade
+        switch lower(opts.trace_shade_mode)
+            case 'mean'
+                shadeVec = mean(traceNorm, 2, 'omitnan');
+            otherwise % 'first'
+                kShade = min(max(1, round(opts.trace_shade_index)), nTr);
+                shadeVec = traceNorm(:, kShade);
+        end
+
+        shadeVec(~isfinite(shadeVec)) = 0; % safe fallback
+
+        cmapIdx = round(1 + shadeVec * (size(traceCmap, 1)-1));
+        cmapIdx = min(max(cmapIdx, 1), size(traceCmap,1));
+
+        for tIdx = 1:dyn
+            fill(traceAx, ...
+                [tIdx-0.5, tIdx+0.5, tIdx+0.5, tIdx-0.5], ...
+                [0, 0, 1, 1], ...
+                traceCmap(cmapIdx(tIdx),:), ...
+                'EdgeColor', 'none');
+        end
+    end
+
+    % ---- Plot traces -------------------------------------------------------
+    xAxis = 1:dyn;
+    for k = 1:max(nTr,1)
+        if nTr == 0
+            break
+        end
+        plot(traceAx, xAxis, traceNorm(:,k), ...
+            'LineWidth', 2.0, ...
+            'Color', traceColors(k,:));
+    end
+
+    % ---- Vertical time marker ---------------------------------------------
     tMid = ii + (win-1)/2;
     line(traceAx, [tMid tMid], [0 1], ...
         'Color', cmap(1,:), 'LineWidth', 3, 'Clipping', 'off');
 
-    % Axis formatting
+    % ---- Axis formatting ---------------------------------------------------
     xlim(traceAx, [1 dyn]);
     ylim(traceAx, [0 1]);
     set(traceAx, 'Color', 'k', 'XColor', 'w', 'YColor', 'none', ...
         'LineWidth', 1.5, 'FontSize', 10, ...
         'XTick', [], 'YTick', []);
     xlabel(traceAx, 'Dynamic scans', 'Color', 'w');
-
 
     % 4c — colour-bar (right edge) -------------------------------------
     % Attach to a dummy axes for controlled positioning
