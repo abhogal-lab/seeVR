@@ -43,6 +43,8 @@ tic
 ty   = class(data);
 data = double(data);
 mask = logical(mask);
+chunk = 500; %for progress bar
+
 if iscolumn(probe); probe = probe'; end
 
 if isfield(opts,'interp_factor'); else; opts.interp_factor = 1; end
@@ -111,8 +113,10 @@ ub = double([ Inf, opts.max_tau, Inf]);
 options = optimoptions('lsqnonlin', 'Display', 'none', ...
     'FunctionTolerance', 1.0000e-8, 'StepTolerance', 1.0000e-8, 'MaxIter', 500);
 
-queue = createParallelProgressBar(numel(coordinates));
-parfor ii = 1:length(coordinates)
+N = numel(coordinates);
+queue = createParallelProgressBar(N, 'UpdateEvery', 1, 'Message', 'Fitting Dispersion');  %  <---
+
+parfor ii = 1:N
     valid_idx = ~(ts(ii, :) == 0 | isnan(ts(ii, :)));
     weights   = double(valid_idx);
 
@@ -123,9 +127,13 @@ parfor ii = 1:length(coordinates)
     catch
         disp(['Error voxel ', int2str(ii)]);
     end
-    pause(0.00001);
-    send(queue, ii);
+
+    % Send progress only every "chunk" iterations
+    if mod(ii, chunk) == 0
+        send(queue, chunk);
+    end
 end
+try send(queue, inf); catch; end %force close queue
 
 b1_vec = zeros([1, xx*yy*zz]);
 b2_vec = b1_vec; b3_vec = b1_vec;
@@ -226,7 +234,6 @@ if opts.refine_tau
     b3_map = reshape(b3_vec, [xx yy zz]);
 end
 
-%% save maps and calculate stats
 
 %% save maps and calculate stats
 
@@ -251,6 +258,10 @@ valid_probe      = ~(isnan(probe) | isinf(probe));
 probe_dyn        = probe(valid_probe);
 range_probe      = max(probe_dyn) - min(probe_dyn);
 range_probe      = range_probe + eps;   % avoid divide-by-zero
+
+
+N = numel(coordinates);
+queue = createParallelProgressBar(N, 'UpdateEvery', 1, 'Message', 'Calculating Stats');  %  <---
 
 parfor ii = 1:length(coordinates)
 
@@ -294,7 +305,13 @@ parfor ii = 1:length(coordinates)
     else
         tau_cvr(ii) = NaN;
     end
+
+      % Send progress only every "chunk" iterations
+    if mod(ii, chunk) == 0
+        send(queue, chunk);
+    end
 end
+try send(queue, inf); catch; end %force close queue
 
 R2  = 1 - SSE./SST;
 cR2 = zeros(1, numel(mask)); 
@@ -308,7 +325,6 @@ r   = reshape(r,   size(mask));
 tau_cvr_map = zeros(1, numel(mask));
 tau_cvr_map(1, coordinates) = tau_cvr;
 tau_cvr_map = reshape(tau_cvr_map, size(mask));
-
 
 if opts.medfilt_maps
     b1_map      = medfilt3(b1_map);

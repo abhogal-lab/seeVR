@@ -205,7 +205,9 @@ vec = nan(Nvox,1,'single');
 [bestIdx, bestBeta, bestR2, bestSig2, postLag, postVar] = deal(vec);
 
 %% ---------- PARFOR voxel loop -----------------------------------------
-queue = createParallelProgressBar(numel(coords));  %  <---
+N = numel(Nvox);
+queue = createParallelProgressBar(N, 'UpdateEvery', 1, 'Message', 'Fitting VB Lag & CVR');  %  <---
+
 parfor v = 1:Nvox
     label = tissueLabels(coords(v));
     if label == 1
@@ -277,9 +279,12 @@ parfor v = 1:Nvox
     postLag(v) = sum(w .* lagVals);
     postVar(v) = sum(w .* (lagVals - postLag(v)).^2);
 
-    pause(0.00001);
-    send(queue, v);
+    % Send progress only every "chunk" iterations
+    if mod(ii, chunk) == 0
+        send(queue, chunk);
+    end
 end
+try send(queue, inf); catch; end %force close queue
 
 %% ---------- assemble maps ---------------------------------------------
 mapSize = [X Y Z];
@@ -403,6 +408,9 @@ if opts.cvr
         shifted_regr(ii,:) = corr_regr;
     end
 
+    N = numel(coordinates);
+    queue = createParallelProgressBar(N, 'UpdateEvery', 1, 'Message', 'Voxel-wise Regression');  %  <---
+
     % Fit voxelwise regressions
     regr_coef = zeros(2, Nvox);  % intercept + slope
     parfor ii = 1:Nvox
@@ -413,7 +421,14 @@ if opts.cvr
 
         X = [ones(length(A),1), A'];
         regr_coef(:,ii) = X \ B';
+
+        % Send progress only every "chunk" iterations
+        if mod(ii, chunk) == 0
+            send(queue, chunk);
+        end
+
     end
+    try send(queue, inf); catch; end %force close queue
 
     % Extract beta
     cvr_lag = regr_coef(2,:);

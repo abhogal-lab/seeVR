@@ -24,11 +24,11 @@ function [newprobe, maps] = lagCVR(refmask, mask, data, probe, nuisance, opts)
 % This version fixes several correctness issues in lagCVR while preserving the
 % original structure and outputs. Requested: keep the `global opts` aspect intact.
 
-refmask = logical(refmask); 
+refmask = logical(refmask);
 mask    = logical(mask);
 probe   = double(probe);
 data    = double(data);
-
+chunk = 500; %for progress bar
 try
     warning('off');
     warning('off', 'MATLAB:rankDeficientMatrix');
@@ -42,7 +42,7 @@ end
 global opts;
 
 % Clean data
-data(isnan(data)) = 0; 
+data(isnan(data)) = 0;
 data(isinf(data)) = 0;
 
 % Check for stats toolbox (for PCA/licols usage flag)
@@ -170,7 +170,7 @@ if opts.filloutliers
     B = B';
     tmp = zeros([numel(mask) size(data,4)]);
     tmp(coordinates,:) = B;
-    data = reshape(tmp, size(data)); 
+    data = reshape(tmp, size(data));
     clear tmp B;
 else
     [orig_voxel_ts, coordinates] = grabTimeseries(data, mask); % V x T
@@ -198,7 +198,7 @@ end
 if opts.refine_regressor
     probename = 'final_probe.mat';
     if exist(probename,'file') && opts.load_probe
-        s = load(probename); 
+        s = load(probename);
         newprobe = s.newprobe;
         disp('found existing probe; skipping generation of BOLD regressor');
     else
@@ -297,7 +297,7 @@ if opts.corr_model
         parfor ii = 1:length(coordinates)
             rvec(pp,ii) = corr_probe(index(pp,ii), ii);
         end
-        r_map  = zeros([xx*yy*zz 1]); 
+        r_map  = zeros([xx*yy*zz 1]);
         lag_map= zeros([1 xx*yy*zz]);
         r_map(coordinates)   = rvec(pp,:);
         r_map  = reshape(r_map, [xx yy zz]);
@@ -345,7 +345,7 @@ if opts.corr_model
                 % Recompute correlations for refined TS
                 a2 = mat2cell(newTS, ones(1,size(newTS,1)), size(newTS,2));
                 b2 = cellfun(@(x) xcorr(x, regr, opts.adjhighlag, 'coeff'), a2, 'uniformoutput', false);
-                corr_probe = cell2mat(b2)'; 
+                corr_probe = cell2mat(b2)';
                 corr_probe(idx_trim,:) = []; % same trim
 
                 % Find new best lags
@@ -481,7 +481,7 @@ if opts.cvr_maps
                 coef = glmfit(rs_newprobe, probe);
                 eff_probe = coef(2,1)*rs_newprobe + coef(1,1);
                 if ~isempty(opts.figdir)
-                    f = figure('visible','off'); 
+                    f = figure('visible','off');
                     subplot(3,1,1); plot(probe,'b'); title('initial probe'); ylabel('mmHg')
                     subplot(3,1,2); plot(newprobe);  title('BOLD regressor'); ylabel('% BOLD')
                     subplot(3,1,3); plot(probe,'b'); hold on; plot(eff_probe,'r'); title('effective probe'); ylabel('mmHg')
@@ -496,22 +496,22 @@ if opts.cvr_maps
         C = [ones([length(A) 1]) A(:)];  % T x 2
         regr_coef = C \ wb_voxel_ts';    % 2 x V
 
-        bCVR = zeros([1 xx*yy*zz]); 
-        bR2  = zeros([1 xx*yy*zz]); 
-        bSSE = zeros([1 xx*yy*zz]); 
+        bCVR = zeros([1 xx*yy*zz]);
+        bR2  = zeros([1 xx*yy*zz]);
+        bSSE = zeros([1 xx*yy*zz]);
         bTstat=zeros([1 xx*yy*zz]);
 
         bCVR(1,coordinates) = regr_coef(2,:); % slope
-        bCVR(bCVR > 30)  = 0; 
+        bCVR(bCVR > 30)  = 0;
         bCVR(bCVR < -30) = 0;
         bCVR = reshape(bCVR, [xx yy zz]);
 
         % fitted values
         X = wb_voxel_ts;     % V x T
         Y = A(:) * regr_coef(2,:) + ones(length(A),1) * regr_coef(1,:);
-        
-        SSE = zeros([1 size(X,1)]); 
-        SST = zeros([1 size(X,1)]); 
+
+        SSE = zeros([1 size(X,1)]);
+        SST = zeros([1 size(X,1)]);
         STDEVr = zeros([1 size(X,1)]);
         parfor ii = 1:size(X,1)
             STDEVr(1,ii) = nanstd(X(ii,:) - Y(:,ii)'); % as in original code
@@ -532,25 +532,25 @@ if opts.cvr_maps
             saveMap(mask.*bTstat, opts.corrCVRdir, 'lin_regr_CVR_Tstat_map', opts.info.map, opts);
             maps.XCORR.CVR.bCVR   = bCVR;  maps.XCORR.CVR.bR2   = bR2;
             maps.XCORR.CVR.bSSE   = bSSE;  maps.XCORR.CVR.bTstat= bTstat;
-            CVR(1,:,:,:)   = mask.*bCVR;   
-            TSTAT(1,:,:,:) = mask.*bTstat; 
-            RC(1,:,:,:)    = mask.*bR2;    
+            CVR(1,:,:,:)   = mask.*bCVR;
+            TSTAT(1,:,:,:) = mask.*bTstat;
+            RC(1,:,:,:)    = mask.*bR2;
         else
             saveMap(mask.*bCVR, opts.corrCVRdir, 'lin_regr_CVR_effective_probe_map',       opts.info.map, opts);
             saveMap(mask.*bR2, opts.corrCVRdir, 'lin_regr_CVR_effective_probe_R2_map',    opts.info.map, opts);
             saveMap(mask.*bTstat, opts.corrCVRdir, 'lin_regr_CVR_effective_probe_Tstat_map', opts.info.map, opts);
             maps.XCORR.CVR.bCVR_eff   = bCVR;  maps.XCORR.CVR.bR2_eff   = bR2;
             maps.XCORR.CVR.bSSE_eff   = bSSE;  maps.XCORR.CVR.bTstat_eff= bTstat;
-            CVR(2,:,:,:)   = mask.*bCVR;   
-            TSTAT(2,:,:,:) = mask.*bTstat; 
-            RC(2,:,:,:)    = mask.*bR2;    
+            CVR(2,:,:,:)   = mask.*bCVR;
+            TSTAT(2,:,:,:) = mask.*bTstat;
+            RC(2,:,:,:)    = mask.*bR2;
         end
 
         % --- Lag-corrected CVR (shift per voxel using correlation-derived indices) ---
         disp('Generating lag-adjusted maps');
-        cCVR  = zeros([1 xx*yy*zz]); 
-        cR2   = zeros([1 xx*yy*zz]); 
-        cSSE  = zeros([1 xx*yy*zz]); 
+        cCVR  = zeros([1 xx*yy*zz]);
+        cR2   = zeros([1 xx*yy*zz]);
+        cSSE  = zeros([1 xx*yy*zz]);
         cTstat= zeros([1 xx*yy*zz]);
 
         % Use indices from correlation stage (index_map)
@@ -569,6 +569,9 @@ if opts.cvr_maps
             shifted_regr(ii,:) = corr_regr;
         end
 
+        N = numel(coordinates);
+        queue = createParallelProgressBar(N, 'UpdateEvery', 1, 'Message', 'Calculating CVR');  %  <---
+
         regr_coef = zeros([2 length(coordinates)]);
         parfor ii = 1:length(coordinates)
             A = shifted_regr(ii,:);
@@ -578,17 +581,28 @@ if opts.cvr_maps
             B = B(keep);
             C = [ones([length(A) 1]) A(:)];
             regr_coef(:,ii) = C \ B(:);
+
+            % Send progress only every "chunk" iterations
+            if mod(ii, chunk) == 0
+                send(queue, chunk);
+            end
+
         end
+        try send(queue, inf); catch; end %force close queue
 
         cCVR(1,coordinates) = regr_coef(2,:); % slope
-        cCVR(cCVR > 30)  = 0; 
-        cCVR(cCVR < -30) = 0; 
+        cCVR(cCVR > 30)  = 0;
+        cCVR(cCVR < -30) = 0;
         cCVR = reshape(cCVR, [xx yy zz]);
 
         % Stats for lag-corrected
-        SSE = zeros([1 size(wb_voxel_ts,1)]); 
-        SST = zeros([1 size(wb_voxel_ts,1)]); 
+        SSE = zeros([1 size(wb_voxel_ts,1)]);
+        SST = zeros([1 size(wb_voxel_ts,1)]);
         cT  = zeros([1 size(wb_voxel_ts,1)]);
+
+        N = numel(coordinates);
+        queue = createParallelProgressBar(N, 'UpdateEvery', 1, 'Message', 'Calculating Stats');  %  <---
+
         parfor ii = 1:size(wb_voxel_ts,1)
             A = shifted_regr(ii,:);
             Xv = wb_voxel_ts(ii,:);
@@ -599,7 +613,15 @@ if opts.cvr_maps
             cT(1,ii) = regr_coef(2,ii) ./ nanstd(Xv - Y(:)'); % original style t~
             SSE(1,ii)= (norm(Xv - Y(:)'))^2;
             SST(1,ii)= (norm(Xv - mean(Xv)))^2;
+
+            % Send progress only every "chunk" iterations
+            if mod(ii, chunk) == 0
+                send(queue, chunk);
+            end
+
         end
+        try send(queue, inf); catch; end %force close queue
+
         R2 = 1 - SSE ./ SST;
 
         cR2(1,coordinates)   = R2;  cR2  = reshape(cR2, [xx yy zz]);
@@ -624,9 +646,9 @@ if opts.cvr_maps
                 end
             end
             if opts.robust
-                CVR(3,:,:,:)   = mask.*cCVR;   
-                TSTAT(3,:,:,:) = mask.*cTstat; 
-                RC(3,:,:,:)    = mask.*cR2;    
+                CVR(3,:,:,:)   = mask.*cCVR;
+                TSTAT(3,:,:,:) = mask.*cTstat;
+                RC(3,:,:,:)    = mask.*cR2;
             end
         else
             saveMap(mask.*cCVR, opts.corrCVRdir, 'lag_corrected_effective_CVR_map',       opts.info.map, opts);
@@ -646,9 +668,9 @@ if opts.cvr_maps
                 end
             end
             if opts.robust
-                CVR(4,:,:,:)   = mask.*cCVR;   
-                TSTAT(4,:,:,:) = mask.*cTstat; 
-                RC(4,:,:,:)    = mask.*cR2;    
+                CVR(4,:,:,:)   = mask.*cCVR;
+                TSTAT(4,:,:,:) = mask.*cTstat;
+                RC(4,:,:,:)    = mask.*cR2;
             end
         end
         disp('Stimulus response data is saved');
@@ -738,13 +760,25 @@ if opts.glm_model
                     regr_coef(ii,:,:) = gather(C \ wbG(:,keep)');
                 end
             else
+
+                N = numel(coordinates);
+                queue = createParallelProgressBar(N, 'UpdateEvery', 1, 'Message', 'Calculating GLM-based Lag');  %  <---
+
                 parfor ii = 1:size(regr_matrix,1)
                     A = regr_matrix(ii,:);
                     keep = ~isnan(A);
                     C = [ones([nnz(keep) 1]) A(keep)'];
                     regr_coef(ii,:,:) = C \ wb_voxel_ts(:,keep)';
+
+                    % Send progress only every "chunk" iterations
+                    if mod(ii, chunk) == 0
+                        send(queue, chunk);
+                    end
+
                 end
             end
+            try send(queue, inf); catch; end %force close queue
+
 
             % Select best lag per voxel by R2
             maxindex = zeros([1 size(wb_voxel_ts,1)]);
@@ -777,13 +811,23 @@ if opts.glm_model
                     regr_coef(ii,:,:) = gather(C \ wbG(:,keep)');
                 end
             else
+
+                N = numel(coordinates);
+                queue = createParallelProgressBar(N, 'UpdateEvery', 1, 'Message', 'Calculating GLM-based Lag');  %  <---
+
                 parfor ii = 1:size(regr_matrix,1)
                     A = regr_matrix(ii,:);
                     keep = ~isnan(A);
                     C = [ones([nnz(keep) 1]) norm_np(keep,:) A(keep)'];
                     regr_coef(ii,:,:) = C \ wb_voxel_ts(:,keep)';
+
+                    % Send progress only every "chunk" iterations
+                    if mod(ii, chunk) == 0
+                        send(queue, chunk);
+                    end
                 end
             end
+            try send(queue, inf); catch; end %force close queue
 
             % Select best lag per voxel by R2 with full fitted Y
             maxindex = zeros([1 size(wb_voxel_ts,1)]);
@@ -820,7 +864,7 @@ if opts.glm_model
         tmpLag = reshape(tmpLag,[xx yy zz]);
 
         % Stats at selected lag per voxel
-        SSE = zeros([1 size(wb_voxel_ts,1)]); 
+        SSE = zeros([1 size(wb_voxel_ts,1)]);
         SST = zeros([1 size(wb_voxel_ts,1)]);
         cT  = zeros([1 size(wb_voxel_ts,1)]);
         for ii = 1:size(wb_voxel_ts,1)
@@ -889,7 +933,7 @@ if opts.glm_model
             shifted_regr = NaN([length(coordinates), dyn*opts.interp_factor]);
 
             % Use probe here (as in original)
-            regr_row = probe(:)'; 
+            regr_row = probe(:)';
             for ii = 1:length(coordinates)
                 s = maxindex(ii); % voxel-specific lag choice
                 rr = circshift(regr_row, s);
@@ -912,7 +956,7 @@ if opts.glm_model
             end
 
             cCVR(1,coordinates) = regr_coef(2,:);
-            cCVR(cCVR > 30)  = 0; 
+            cCVR(cCVR > 30)  = 0;
             cCVR(cCVR < -30) = 0;
             cCVR = reshape(cCVR, [xx yy zz]);
 
@@ -924,8 +968,8 @@ if opts.glm_model
             maps.GLM.CVR.optiReg_cCVR = cCVR;
 
             % Stats
-            SSE = zeros([1 size(wb_voxel_ts,1)]); 
-            SST = zeros([1 size(wb_voxel_ts,1)]); 
+            SSE = zeros([1 size(wb_voxel_ts,1)]);
+            SST = zeros([1 size(wb_voxel_ts,1)]);
             cT  = zeros([1 size(wb_voxel_ts,1)]);
             parfor ii = 1:size(wb_voxel_ts,1)
                 A = shifted_regr(ii,:);

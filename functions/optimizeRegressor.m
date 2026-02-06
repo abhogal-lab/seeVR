@@ -187,7 +187,14 @@ plot(keep_probes','LineWidth',2); title('probe iterations');
 legend(legendInfo)
 subplot(3,1,3);
 plot(newprobe,'LineWidth',2); title('optimized probe');
-saveas(gcf,fullfile(opts.resultsdir,'all_probes.fig'));
+try % patched: safe saveas (no-op if no figure)
+    h = gcf;
+    if ~isempty(h) && ishghandle(h)
+        saveas(h, fullfile(opts.resultsdir,'all_probes.fig'));
+    end
+catch
+    % no-op
+end
 %save the final probe
 save(fullfile(opts.resultsdir,'final_probe.mat'), 'newprobe');
 
