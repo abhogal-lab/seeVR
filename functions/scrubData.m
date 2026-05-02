@@ -43,7 +43,7 @@
 %
 % np0: nuisance signals with high correlation to input that are rejected
 %
-function [cleanData, np0, np1] = scrubData2(data, mask, nuisance, probe, opts)
+function [cleanData, np0, np1] = scrubData(data, mask, nuisance, probe, opts)
 % scrubData2 — GLM-based nuisance removal (preserve probe effects)
 %
 % Inputs

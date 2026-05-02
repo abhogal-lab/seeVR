@@ -35,11 +35,6 @@
 % refMask: path (i.e. directory AND filename with extention) to fixed, or
 % anatomical mask (binary image)
 %
-% mapdir: path to where parameter files (derived from functional data) are
-% stored. These should have the same dimensions as the functional data
-% (except for -t dimention). All .nii* files in this directory will be
-% transformed to anat space
-%
 % opts: options structure containing required variables for this specific
 % function; i.e. opts.resultsdir and opts.elastixdir
 %

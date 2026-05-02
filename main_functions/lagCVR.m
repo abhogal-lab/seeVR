@@ -734,6 +734,7 @@ if opts.glm_model
                 regr = probe(:)';    % row
         end
 
+    
         % Build lagged regressor matrix
         Tfull = dyn * opts.interp_factor;
         regr_matrix = zeros(numel(lags), Tfull);
@@ -760,24 +761,14 @@ if opts.glm_model
                     regr_coef(ii,:,:) = gather(C \ wbG(:,keep)');
                 end
             else
-
-                N = numel(coordinates);
-                queue = createParallelProgressBar(N, 'UpdateEvery', 1, 'Message', 'Calculating GLM-based Lag');  %  <---
-
+              
                 parfor ii = 1:size(regr_matrix,1)
                     A = regr_matrix(ii,:);
                     keep = ~isnan(A);
                     C = [ones([nnz(keep) 1]) A(keep)'];
                     regr_coef(ii,:,:) = C \ wb_voxel_ts(:,keep)';
-
-                    % Send progress only every "chunk" iterations
-                    if mod(ii, chunk) == 0
-                        send(queue, chunk);
-                    end
-
                 end
             end
-            try send(queue, inf); catch; end %force close queue
 
 
             % Select best lag per voxel by R2
@@ -812,19 +803,11 @@ if opts.glm_model
                 end
             else
 
-                N = numel(coordinates);
-                queue = createParallelProgressBar(N, 'UpdateEvery', 1, 'Message', 'Calculating GLM-based Lag');  %  <---
-
                 parfor ii = 1:size(regr_matrix,1)
                     A = regr_matrix(ii,:);
                     keep = ~isnan(A);
                     C = [ones([nnz(keep) 1]) norm_np(keep,:) A(keep)'];
                     regr_coef(ii,:,:) = C \ wb_voxel_ts(:,keep)';
-
-                    % Send progress only every "chunk" iterations
-                    if mod(ii, chunk) == 0
-                        send(queue, chunk);
-                    end
                 end
             end
             try send(queue, inf); catch; end %force close queue

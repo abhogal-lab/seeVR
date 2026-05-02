@@ -62,6 +62,7 @@ if useUntouch
     % Use untouch only for voxel array + raw header
     nii    = load_untouch_nii(image_path);
     image  = double(nii.img);
+    %image  = (nii.img);
     header = nii.hdr;
 else
     % Standard MATLAB NIfTI reader

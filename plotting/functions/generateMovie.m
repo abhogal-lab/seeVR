@@ -73,8 +73,7 @@ data = double(data);
 trace = double(trace);
 
 %GENERATEMOVIE  Montage movie of 4-D fMRI volumes + stimulus trace.
-%   Full documentation omitted here for brevity ─ nothing changed
-%   except the colour-bar implementation.  See previous version for help.
+
 %__________________________________________________________________________
 
 %% 0 — defaults
@@ -164,7 +163,7 @@ for ii = opts.start_ind : opts.step_size : dyn - win
             axis off
 
             nexttile;                    % processed
-            tmp = mean(data(:,:,s,ii:ii+win),4,'omitnan').*mask(:,:,s);
+            tmp = mean(data(:,:,s,ii:ii+win),4,'omitnan').*mask(:,:,s); tmp(tmp == 0) = NaN;
             imagesc(tmp,opts.scale); colormap(cmap);
             if exist('freezeColors','file'), freezeColors,end
             axis off
@@ -280,9 +279,15 @@ for ii = opts.start_ind : opts.step_size : dyn - win
         if nTr == 0
             break
         end
-        plot(traceAx, xAxis, traceNorm(:,k), ...
-            'LineWidth', 2.0, ...
-            'Color', traceColors(k,:));
+        if k == 1
+            plot(traceAx, xAxis, traceNorm(:,k), ...
+                'LineWidth', 5.0, ...
+                'Color', 'r');
+        else
+            plot(traceAx, xAxis, traceNorm(:,k), ...
+                'LineWidth', 1.0, ...
+                'Color', traceColors(k,:));
+        end
     end
 
     % ---- Vertical time marker ---------------------------------------------

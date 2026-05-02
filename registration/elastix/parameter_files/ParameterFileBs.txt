@@ -16,6 +16,8 @@
 
 (Optimizer "AdaptiveStochasticGradientDescent")
 (Transform "BSplineTransform")
+
+//(Metric "AdvancedMattesMutualInformation")
 (Metric "AdvancedMattesMutualInformation" "TransformBendingEnergyPenalty")
 //(Metric "AdvancedNormalizedCorrelation" "TransformBendingEnergyPenalty")
 (Metric0Weight 0.8)
@@ -24,9 +26,9 @@
 (MaximumStepLength 1)
 
 // ***************** Transformation **************************
-(NumberOfResolutions 4)
+(NumberOfResolutions 5)
 (FinalGridSpacingInVoxels 12)
-(GridSpacingSchedule  12 8 6 4)
+(GridSpacingSchedule 24 12 6 2 1)
 (HowToCombineTransforms "Compose")
 
 // ******************* Similarity measure *********************
@@ -36,11 +38,11 @@
 // ******************** Multiresolution **********************
 
 
-(ImagePyramidSchedule  12 12 12 6 6 6  4 4 4  2 2 2)
+(ImagePyramidSchedule  12 12 12 6 6 6  4 4 4  2 2 2 1 1 1)
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 500 1000 1000 2000)  
+(MaximumNumberOfIterations 500 1000 1000 2000 2000)  
 
 // **************** Image sampling **********************
 (AutomaticTransformInitializationMethod "GeometricalCenter")

@@ -1,59 +1,146 @@
+function [clusteredVolume, clusterCenters] = cluster_maps(maps, numClusters, opts)
+global opts
 % Copyright (C) Alex A. Bhogal, 2025, University Medical Center Utrecht,
 % a.bhogal@umcutrecht.nl
-% <cluster_maps: performs k-means clusting using input maps
-%
-% This program is free software: you can redistribute it and/or modify
-% it under the terms of the GNU General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
-%
-% This program is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU General Public License for more details.
-%
-% You should have received a copy of the GNU General Public License
-% along with this program.  If not, see <https://www.gnu.org/licenses/>.
-%
-% *************************************************************************
-%
-%% maps: Cell array containing 3D parameter maps {map1, map2, ..., mapN}
-%
-% numClusters: Number of clusters to segment the volume into
-%
-% clusteredVolume: 3D volume with voxels labeled by cluster index
-%
-% clusterCenters: Centers of the clusters
+% <cluster_maps: performs k-means clustering using input maps
 
+% -------------------------------------------------------------------------
+% opts.gpu = 1  -> attempt GPU usage
+% opts.gpu = 0  -> CPU only
+%
+% Notes:
+% - GPU execution for kmeans depends on MATLAB/toolbox/version support.
+% - If GPU kmeans is not supported, the function falls back to CPU.
+% -------------------------------------------------------------------------
 
-function [clusteredVolume, clusterCenters] = cluster_maps(maps, numClusters, opts)
+if nargin < 3 || isempty(opts)
+    opts = struct;
+end
+if ~isfield(opts, 'gpu') || isempty(opts.gpu)
+    opts.gpu = 0;
+end
+
+useGPU = logical(opts.gpu);
 
 % Get dimensions of the 3D maps
-global opts
-
 [xDim, yDim, zDim] = size(maps{1});
 numMaps = length(maps);
 
-% Reshape the 3D maps into a 2D matrix (each row is a voxel, each column is a feature)
-featureMatrix = zeros(xDim * yDim * zDim, numMaps);
-for i = 1:numMaps
-    featureMatrix(:, i) = reshape(maps{i}, [], 1);
+% Check that all maps have identical dimensions
+for i = 2:numMaps
+    if ~isequal(size(maps{i}), [xDim, yDim, zDim])
+        error('All maps must have identical dimensions.');
+    end
 end
 
-% Remove any NaN or Inf values that may corrupt clustering
-validIdx = all(~isnan(featureMatrix), 2) & all(~isinf(featureMatrix), 2);
-validFeatures = featureMatrix(validIdx, :);
+% Choose numeric class based on first map
+outClass = class(maps{1});
+if ~isfloat(maps{1})
+    outClass = 'single';
+end
 
-% Perform K-means clustering on the valid features
-[clusterIdx, clusterCenters] = kmeans(validFeatures, numClusters, 'Replicates', 10, 'MaxIter', 200);
+% ---------------------------------------------------------------------
+% Build feature matrix
+% ---------------------------------------------------------------------
+if useGPU
+    try
+        g = gpuDevice; %#ok<NASGU>
+        featureMatrix = gpuArray.zeros(xDim * yDim * zDim, numMaps, outClass);
 
-% Initialize the output volume with NaNs
+        for i = 1:numMaps
+            featureMatrix(:, i) = reshape(gpuArray(cast(maps{i}, outClass)), [], 1);
+        end
+
+        validIdx = all(~isnan(featureMatrix), 2) & all(~isinf(featureMatrix), 2);
+        validFeatures = featureMatrix(validIdx, :);
+
+        % Try GPU kmeans
+        try
+            [clusterIdx, clusterCenters] = kmeans(validFeatures, numClusters, ...
+                'Replicates', 10, 'MaxIter', 200);
+
+            % Gather outputs back to CPU
+            clusterIdx = gather(clusterIdx);
+            clusterCenters = gather(clusterCenters);
+            validIdx = gather(validIdx);
+
+        catch
+            warning('GPU kmeans failed or is unsupported in this MATLAB version. Falling back to CPU');
+
+            % Fall back to CPU
+            featureMatrix = gather(featureMatrix);
+            validIdx = gather(validIdx);
+            validFeatures = featureMatrix(validIdx, :);
+
+            [clusterIdx, clusterCenters] = kmeans(validFeatures, numClusters, ...
+                'Replicates', 10, 'MaxIter', 200);
+        end
+
+    catch
+        warning('GPU requested but unavailable. Falling back to CPU');
+
+        % CPU path
+        featureMatrix = zeros(xDim * yDim * zDim, numMaps, outClass);
+        for i = 1:numMaps
+            featureMatrix(:, i) = reshape(cast(maps{i}, outClass), [], 1);
+        end
+
+        validIdx = all(~isnan(featureMatrix), 2) & all(~isinf(featureMatrix), 2);
+        validFeatures = featureMatrix(validIdx, :);
+
+        [clusterIdx, clusterCenters] = kmeans(validFeatures, numClusters, ...
+            'Replicates', 10, 'MaxIter', 200);
+    end
+
+else
+    % -----------------------------------------------------------------
+    % CPU path
+    % -----------------------------------------------------------------
+    featureMatrix = zeros(xDim * yDim * zDim, numMaps, outClass);
+    for i = 1:numMaps
+        featureMatrix(:, i) = reshape(cast(maps{i}, outClass), [], 1);
+    end
+
+    validIdx = all(~isnan(featureMatrix), 2) & all(~isinf(featureMatrix), 2);
+    validFeatures = featureMatrix(validIdx, :);
+
+    [clusterIdx, clusterCenters] = kmeans(validFeatures, numClusters, ...
+        'Replicates', 10, 'MaxIter', 200);
+end
+
+% ---------------------------------------------------------------------
+% Rebuild clustered volume
+% ---------------------------------------------------------------------
 clusteredVolume = NaN(xDim * yDim * zDim, 1);
 clusteredVolume(validIdx) = clusterIdx;
-
-% Reshape clusteredVolume back to 3D
 clusteredVolume = reshape(clusteredVolume, [xDim, yDim, zDim]);
 
-saveMap(clusteredVolume, opts.resultsdir,['gmmClusterMap_',int2str(numClusters),'_clusters'],opts.info.map, opts);
+% Save output
+% Original header
+infostruct = opts.info.map;
+
+% New size from clustered output
+newSize = size(clusteredVolume);
+
+% Old size
+oldSize = infostruct.ImageSize;
+
+% Update ImageSize
+infostruct.ImageSize = newSize;
+
+% --- Adjust voxel size to preserve FOV ---
+if isfield(infostruct, 'PixelDimensions') && numel(oldSize) >= 3
+    scaleFactor = oldSize(1:3) ./ newSize(1:3);
+    infostruct.PixelDimensions(1:3) = infostruct.PixelDimensions(1:3) .* scaleFactor;
+end
+
+% Optional: ensure datatype matches
+infostruct.Datatype = class(clusteredVolume);
+infostruct.BitsPerPixel = 8 * whos('clusteredVolume').bytes / numel(clusteredVolume);
+
+% Save
+saveMap(clusteredVolume, opts.resultsdir, ...
+    ['gmmClusterMap_', int2str(numClusters), '_clusters'], ...
+    infostruct, opts);
 
 end
