@@ -212,7 +212,7 @@ switch loadType
         opts.originalScaling.map  = origScale;
         opts.originalScaling.mask = origScale;
 
-    %% ----------------- MASK ----------------- %%
+        %% ----------------- MASK ----------------- %%
     case 'mask'
         opts.info.mask = info;
         if isfield(opts.info.mask, 'MultiplicativeScaling')
@@ -222,16 +222,17 @@ switch loadType
 
         opts.originalScaling.mask = origScale;
 
-    %% ----------------- MAP ----------------- %%
+        %% ----------------- MAP ----------------- %%
     case 'map'
         opts.info.map    = info;
         opts.mapDatatype = info.Datatype;
 
         opts.originalScaling.map = origScale;
+        opts.voxelsize = voxDim;
 
-    %% ----------------- IMAGE / ANATOMY / AUTO ------- %%
+        %% ----------------- IMAGE / ANATOMY / AUTO ------- %%
     otherwise  % {'auto','image','anat'}
-        opts.voxelsize_image = voxDim;
+        opts.voxelsize = voxDim;
         opts.imagepath       = pathname;
         opts.imagefile       = filename;
         opts.info.image      = info;
